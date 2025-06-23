@@ -13,7 +13,6 @@ const CONFIG = {
         debounceDelay: 2000
     }
 };
-
 document.addEventListener('DOMContentLoaded', function() {
     initNavigation();
     initScrollAnimations();
@@ -24,21 +23,15 @@ document.addEventListener('DOMContentLoaded', function() {
     preloadImages();
     console.log('Site EveryWater chargé avec succès!');
 });
-
-// Navigation et header
 function initNavigation() {
     const navbar = document.querySelector('.header');
     const hamburger = document.querySelector('.hamburger');
     const navMenu = document.querySelector('.nav-menu');
-
-    // Menu hamburger
     if (hamburger && navMenu) {
         hamburger.addEventListener('click', function() {
             navMenu.classList.toggle('active');
             hamburger.classList.toggle('active');
         });
-
-        // Fermer le menu mobile au clic sur un lien
         document.querySelectorAll('.nav-link, .nav-menu a').forEach(link => {
             link.addEventListener('click', function() {
                 navMenu.classList.remove('active');
@@ -46,8 +39,6 @@ function initNavigation() {
             });
         });
     }
-
-    // Header au scroll
     if (navbar) {
         window.addEventListener('scroll', function() {
             if (window.scrollY > 100) {
@@ -58,13 +49,11 @@ function initNavigation() {
         });
     }
 }
-
 function initScrollAnimations() {
     const observerOptions = {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
     };
-
     const observer = new IntersectionObserver(function(entries) {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -72,17 +61,14 @@ function initScrollAnimations() {
             }
         });
     }, observerOptions);
-
     document.querySelectorAll('.service-card, .feature, .contact-card, .info-card, .subscription-card').forEach(el => {
         el.classList.add('scroll-animate');
         observer.observe(el);
     });
 }
-
 function initCounters() {
     const counters = document.querySelectorAll('.stat-number');
     const observerOptions = { threshold: 0.5 };
-
     const counterObserver = new IntersectionObserver(function(entries) {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -91,18 +77,15 @@ function initCounters() {
             }
         });
     }, observerOptions);
-
     counters.forEach(counter => {
         counterObserver.observe(counter);
     });
 }
-
 function animateCounter(element) {
     const target = parseInt(element.getAttribute('data-count') || element.textContent.replace(/\D/g, ''));
     const duration = CONFIG.animation.counterDuration;
     const step = target / (duration / 16);
     let current = 0;
-
     const timer = setInterval(function() {
         current += step;
         if (current >= target) {
@@ -113,55 +96,42 @@ function animateCounter(element) {
         }
     }, 16);
 }
-
 function initOrderForm() {
     const orderForm = document.getElementById('orderForm');
     if (!orderForm) return;
-
-    // Vérifier s'il y a déjà un event listener
     if (orderForm.hasAttribute('data-listener-attached')) {
         return;
     }
     orderForm.setAttribute('data-listener-attached', 'true');
-
     const deliveryDateInput = document.getElementById('deliveryDate');
     if (deliveryDateInput) {
         const today = new Date();
         today.setDate(today.getDate() + 1);
         deliveryDateInput.min = today.toISOString().split('T')[0];
     }
-    
     const productSelect = document.getElementById('productType');
     const quantityInput = document.getElementById('quantity');
-    
     if (productSelect) {
         productSelect.addEventListener('change', updateOrderSummary);
     }
     if (quantityInput) {
         quantityInput.addEventListener('input', updateOrderSummary);
     }
-    
-    // UN SEUL event listener pour le formulaire
     orderForm.addEventListener('submit', sendOrder, { once: false });
     updateOrderSummary();
 }
-
 function updateOrderSummary() {
     const productSelect = document.getElementById('productType');
     const quantityInput = document.getElementById('quantity');
     const subtotalSpan = document.getElementById('subtotal');
     const deliveryFeeSpan = document.getElementById('deliveryFee');
     const totalPriceSpan = document.getElementById('totalPrice');
-    
     if (!productSelect || !quantityInput) return;
-    
     const selectedOption = productSelect.options[productSelect.selectedIndex];
     const price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
     const quantity = parseInt(quantityInput.value) || 0;
     const isSubscription = selectedOption.value.includes('subscription');
-    
     let subtotal, deliveryFee, total;
-    
     if (isSubscription) {
         subtotal = price;
         deliveryFee = 0;
@@ -174,9 +144,8 @@ function updateOrderSummary() {
         total = subtotal + deliveryFee;
         quantityInput.disabled = false;
     }
-    
     if (subtotalSpan) {
-        subtotalSpan.textContent = subtotal.toFixed(2) + '$' + (isSubscription ? '/mois' : '');
+        subtotalSpan.textContent = subtotal.toFixed(2) + '$' + (isSubscription ? '/semaine' : '');
     }
     if (deliveryFeeSpan) {
         if (isSubscription) {
@@ -186,51 +155,38 @@ function updateOrderSummary() {
         }
     }
     if (totalPriceSpan) {
-        totalPriceSpan.textContent = total.toFixed(2) + '$' + (isSubscription ? '/mois' : '');
+        totalPriceSpan.textContent = total.toFixed(2) + '$' + (isSubscription ? '/semaine' : '');
     }
 }
 
 async function sendOrder(event) {
     event.preventDefault();
-    
-    // PROTECTION ANTI-DUPLICATION
     const currentTime = Date.now();
-    
-    // Vérifier si une soumission est déjà en cours
     if (CONFIG.submission.isProcessing) {
         console.log('⚠️ Soumission déjà en cours, annulation...');
         showNotification('Une commande est déjà en cours de traitement, veuillez patienter.', 'info');
         return;
     }
-    
-    // Vérifier le délai entre les soumissions
     if (currentTime - CONFIG.submission.lastOrderTime < CONFIG.submission.debounceDelay) {
         console.log('⚠️ Soumission trop rapide, annulation...');
         showNotification('Veuillez attendre avant de soumettre une nouvelle commande.', 'info');
         return;
     }
-    
-    // Marquer comme en cours de traitement
     CONFIG.submission.isProcessing = true;
     CONFIG.submission.lastOrderTime = currentTime;
-    
     const form = event.target;
     const formData = new FormData(form);
-
-    // Désactiver le bouton de soumission
     const submitButton = form.querySelector('button[type="submit"]');
     const originalButtonText = submitButton ? submitButton.textContent : '';
     if (submitButton) {
         submitButton.disabled = true;
         submitButton.textContent = 'Envoi en cours...';
     }
-
     try {
         if (!validateOrderForm(form)) {
             showNotification('Veuillez remplir tous les champs obligatoires.', 'error');
             return;
         }
-        
         const orderData = {
             customerName: formData.get('customerName'),
             customerPhone: formData.get('customerPhone'),
@@ -241,7 +197,6 @@ async function sendOrder(event) {
             specialInstructions: formData.get('specialInstructions'),
             timestamp: new Date().toLocaleString('fr-FR')
         };
-
         await sendOrderToDiscord(orderData);
         showNotification('Commande envoyée avec succès! Nous vous contacterons bientôt.', 'success');
         form.reset();
@@ -251,30 +206,24 @@ async function sendOrder(event) {
         console.error('Erreur lors de l\'envoi de la commande:', error);
         showNotification('Erreur lors de l\'envoi de la commande. Veuillez réessayer.', 'error');
     } finally {
-        // Remettre le bouton dans son état normal
         if (submitButton) {
             submitButton.disabled = false;
             submitButton.textContent = originalButtonText;
         }
-        
-        // Permettre une nouvelle soumission après un délai
         setTimeout(() => {
             CONFIG.submission.isProcessing = false;
-        }, 1000); // 1 seconde minimum entre les tentatives
+        }, 1000);
     }
 }
-
 function validateOrderForm(form) {
     let isValid = true;
     const requiredFields = form.querySelectorAll('[required]');
-
     requiredFields.forEach(field => {
         field.classList.remove('is-invalid');
         const existingError = field.parentNode.querySelector('.error-message');
         if (existingError) {
             existingError.remove();
         }
-
         if (!field.value.trim()) {
             isValid = false;
             field.classList.add('is-invalid');
@@ -293,22 +242,18 @@ function validateOrderForm(form) {
     });
     return isValid;
 }
-
 async function sendOrderToDiscord(orderData) {
     if (!orderData || !orderData.productType) {
         throw new Error('Données de commande manquantes');
     }
-    
     const productSelect = document.getElementById('productType');
     if (!productSelect) {
         throw new Error('Sélecteur de produit introuvable');
     }
-    
     const selectedOption = productSelect.options[productSelect.selectedIndex];
     const productName = selectedOption.text;
     const price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
     const isSubscription = selectedOption.value.includes('subscription');
-    
     let subtotal, deliveryFee, total;
     if (isSubscription) {
         subtotal = price;
@@ -320,7 +265,6 @@ async function sendOrderToDiscord(orderData) {
         deliveryFee = subtotal >= 50 ? 0 : 5;
         total = subtotal + deliveryFee;
     }
-    
     let embedColor;
     if (isSubscription) {
         embedColor = 0x6f42c1;
@@ -331,9 +275,7 @@ async function sendOrderToDiscord(orderData) {
     } else {
         embedColor = 0xffa500;
     }
-    
     const orderNumber = `EW-${Date.now().toString().slice(-6)}`;
-    
     const embed = {
         title: isSubscription ? "📋 NOUVEL ABONNEMENT - Every Water" : "🛒 NOUVELLE COMMANDE - Every Water",
         description: `**Numéro:** \`${orderNumber}\`\n${isSubscription ? '🔄 **Abonnement mensuel récurrent**' : total >= 50 ? '🎉 **Commande éligible à la livraison gratuite !**' : '📦 Commande en cours de traitement...'}`,
@@ -400,7 +342,6 @@ async function sendOrderToDiscord(orderData) {
         },
         timestamp: new Date().toISOString()
     };
-
     const messageContent = {
         content: isSubscription ?
             `🔄 **NOUVEL ABONNEMENT EVERY WATER** 🔄\n\n` +
@@ -415,14 +356,11 @@ async function sendOrderToDiscord(orderData) {
             `${total >= 50 ? '✅ Livraison gratuite appliquée' : '⚠️ Frais de livraison: 5$'}`,
         embeds: [embed]
     };
-
     try {
         if (!CONFIG.webhooks.orders) {
             throw new Error('URL du webhook de commandes non configurée');
         }
-        
         console.log(`📤 Envoi de la commande ${orderNumber} vers Discord...`);
-        
         const response = await fetch(CONFIG.webhooks.orders, {
             method: 'POST',
             headers: { 
@@ -431,7 +369,6 @@ async function sendOrderToDiscord(orderData) {
             },
             body: JSON.stringify(messageContent)
         });
-        
         if (!response.ok) {
             const errorText = await response.text();
             console.error('❌ Erreur Discord:', response.status, errorText);
@@ -444,34 +381,26 @@ async function sendOrderToDiscord(orderData) {
             }
             throw new Error(`Erreur Discord: ${response.status} - ${errorText}`);
         }
-        
         console.log(`✅ ${isSubscription ? 'Abonnement' : 'Commande'} ${orderNumber} envoyé(e) avec succès sur Discord`);
         return { success: true, orderNumber };
-        
     } catch (error) {
         console.error('❌ Erreur lors de l\'envoi vers Discord:', error);
         throw error;
     }
 }
-
 function initContactForm() {
     const contactForm = document.getElementById('contactForm');
     if (!contactForm) return;
-    
-    // Vérifier s'il y a déjà un event listener
     if (contactForm.hasAttribute('data-listener-attached')) {
         return;
     }
     contactForm.setAttribute('data-listener-attached', 'true');
-    
     contactForm.addEventListener('submit', handleContactSubmit);
 }
-
 async function handleContactSubmit(e) {
     e.preventDefault();
     const form = e.target;
     const formData = new FormData(form);
-    
     const contactData = {
         name: formData.get('contactName'),
         email: formData.get('contactEmail'),
@@ -479,12 +408,10 @@ async function handleContactSubmit(e) {
         message: formData.get('contactMessage'),
         timestamp: new Date().toLocaleString('fr-FR')
     };
-    
     if (!validateContactForm(contactData)) {
         showNotification('Veuillez corriger les erreurs dans le formulaire.', 'error');
         return;
     }
-    
     try {
         await sendContactToDiscord(contactData);
         showNotification('Message envoyé avec succès! Nous vous répondrons dans les plus brefs délais.', 'success');
@@ -494,7 +421,6 @@ async function handleContactSubmit(e) {
         showNotification('Erreur lors de l\'envoi du message. Veuillez réessayer.', 'error');
     }
 }
-
 function validateContactForm(data) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!data.name || !data.name.trim()) return false;
@@ -502,12 +428,10 @@ function validateContactForm(data) {
     if (!data.message || !data.message.trim()) return false;
     return true;
 }
-
 async function sendContactToDiscord(contactData) {
     if (!contactData || !contactData.subject) {
         throw new Error('Données de contact manquantes');
     }
-
     const subjectLabels = {
         'information': '📋 Demande d\'information',
         'quote': '💰 Demande de devis',
@@ -515,9 +439,7 @@ async function sendContactToDiscord(contactData) {
         'partnership': '🤝 Partenariat',
         'other': '❓ Autre demande'
     };
-
     const subjectText = subjectLabels[contactData.subject] || contactData.subject;
-
     const subjectColors = {
         'information': 0x17a2b8,
         'quote': 0x28a745,
@@ -525,9 +447,7 @@ async function sendContactToDiscord(contactData) {
         'partnership': 0x6f42c1,
         'other': 0x6c757d
     };
-
     const embedColor = subjectColors[contactData.subject] || 0x006bb3;
-
     const getPriority = (subject) => {
         switch(subject) {
             case 'complaint': return '🔴 **URGENT**';
@@ -536,7 +456,6 @@ async function sendContactToDiscord(contactData) {
             default: return '🔵 **NORMAL**';
         }
     };
-
     const embed = {
         title: "📧 NOUVEAU MESSAGE DE CONTACT",
         description: `**Priorité:** ${getPriority(contactData.subject)}\n**Sujet:** ${subjectText}`,
@@ -582,7 +501,6 @@ async function sendContactToDiscord(contactData) {
         },
         timestamp: new Date().toISOString()
     };
-
     const messageContent = {
         content: `📨 **NOUVEAU MESSAGE DE CONTACT** 📨\n\n` +
                 `**De:** ${contactData.name} (${contactData.email})\n` +
@@ -591,7 +509,6 @@ async function sendContactToDiscord(contactData) {
                 `📞 **Rappel:** Ce client souhaite être recontacté directement par téléphone ou mail.`,
         embeds: [embed]
     };
-    
     try {
         if (!CONFIG.webhooks.contact) {
             throw new Error('URL du webhook de contact non configurée');
@@ -620,28 +537,22 @@ async function sendContactToDiscord(contactData) {
         throw error;
     }
 }
-
 function selectSubscriptionPlan(planName, planPrice) {
     const productSelect = document.getElementById('productType');
     const quantityInput = document.getElementById('quantity');
-    
     const planMapping = {
         'Abonnement Découverte': 'subscription-discovery',
         'Abonnement Expérimenté': 'subscription-experienced', 
         'Abonnement Professionnel': 'subscription-professional'
     };
-    
     const planValue = planMapping[planName];
     if (planValue && productSelect) {
         productSelect.value = planValue;
-        
         if (quantityInput) {
             quantityInput.value = 1;
             quantityInput.disabled = true;
         }
-        
         updateOrderSummary();
-        
         const orderSection = document.getElementById('order');
         if (orderSection) {
             orderSection.scrollIntoView({ 
@@ -649,11 +560,9 @@ function selectSubscriptionPlan(planName, planPrice) {
                 block: 'start'
             });
         }
-        
         showNotification(`${planName} sélectionné ! Complétez vos informations ci-dessous.`, 'success');
     }
 }
-
 function showNotification(message, type = 'info') {
     const existingNotification = document.querySelector('.notification');
     if (existingNotification) {
@@ -745,7 +654,6 @@ function showNotification(message, type = 'info') {
         }
     }, CONFIG.animation.notificationDuration);
 }
-
 function getNotificationIcon(type) {
     switch (type) {
         case 'success':
@@ -757,14 +665,12 @@ function getNotificationIcon(type) {
             return 'fa-info-circle';
     }
 }
-
 function preloadImages() {
     const images = document.querySelectorAll('img[data-src]');
     images.forEach(img => {
         img.src = img.getAttribute('data-src');
     });
 }
-
 function initSmoothScroll() {
     const links = document.querySelectorAll('a[href^="#"]');
     links.forEach(link => {
@@ -778,7 +684,6 @@ function initSmoothScroll() {
         });
     });
 }
-
 const lightboxData = {
     'water-quality': {
         title: 'Qualité de l\'eau',
@@ -823,7 +728,6 @@ const lightboxData = {
             </div>
         `
     },
-    
     'certifications': {
         title: 'Nos Certifications',
         icon: 'fas fa-certificate',
@@ -857,7 +761,6 @@ const lightboxData = {
             </div>
         `
     },
-    
     'terms': {
         title: 'Conditions Générales',
         icon: 'fas fa-file-contract',
@@ -904,13 +807,11 @@ const lightboxData = {
         `
     }
 };
-
 function handleLightboxKeyDown(event) {
     if (event.key === 'Escape') {
         closeLightbox();
     }
 }
-
 function openLightbox(section) {
     const lightbox = document.getElementById('lightbox');
     const lightboxBody = document.getElementById('lightbox-body');
@@ -929,12 +830,10 @@ function openLightbox(section) {
         lightbox.focus();
     }
 }
-
 function closeLightbox() {
     const lightbox = document.getElementById('lightbox');
     lightbox.style.display = 'none';
 }
-
 window.addEventListener('click', function(event) {
     const lightbox = document.getElementById('lightbox');
     if (event.target === lightbox) {
