@@ -1,11 +1,16 @@
 const CONFIG = {
     webhooks: {
-        orders: 'https://discord.com/api/webhooks/1386728687306543197/_Gf8oIDSWStPfjUEJhqalpJA59YKkSikgtI26TFxLZ0H2lPen0A1wCTsgx_njAlXDhrK',
-        contact: 'https://discord.com/api/webhooks/1386728687306543197/_Gf8oIDSWStPfjUEJhqalpJA59YKkSikgtI26TFxLZ0H2lPen0A1wCTsgx_njAlXDhrK'
+        orders: 'https://discord.com/api/webhooks/1386797118060236800/knlkM8S2GfEh4v6pV8uCrozo-cQQRPfPxCfYHihIftu2IX_wQpbdb9OKjR6xJ7Ed7kz9',
+        contact: 'https://discord.com/api/webhooks/1386799778180104293/pqpA4e07vfx-jJJ2iuoMQ9cV9KflO87KwevJOvNo_KecppDDYXZ8tWWpVz7_FOBTat7k'
     },
     animation: {
         counterDuration: 2000,
         notificationDuration: 5000
+    },
+    submission: {
+        isProcessing: false,
+        lastOrderTime: 0,
+        debounceDelay: 2000
     }
 };
 
@@ -19,15 +24,21 @@ document.addEventListener('DOMContentLoaded', function() {
     preloadImages();
     console.log('Site EveryWater chargé avec succès!');
 });
+
+// Navigation et header
 function initNavigation() {
     const navbar = document.querySelector('.header');
     const hamburger = document.querySelector('.hamburger');
     const navMenu = document.querySelector('.nav-menu');
+
+    // Menu hamburger
     if (hamburger && navMenu) {
         hamburger.addEventListener('click', function() {
             navMenu.classList.toggle('active');
             hamburger.classList.toggle('active');
         });
+
+        // Fermer le menu mobile au clic sur un lien
         document.querySelectorAll('.nav-link, .nav-menu a').forEach(link => {
             link.addEventListener('click', function() {
                 navMenu.classList.remove('active');
@@ -35,6 +46,8 @@ function initNavigation() {
             });
         });
     }
+
+    // Header au scroll
     if (navbar) {
         window.addEventListener('scroll', function() {
             if (window.scrollY > 100) {
@@ -51,6 +64,7 @@ function initScrollAnimations() {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
     };
+
     const observer = new IntersectionObserver(function(entries) {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -58,6 +72,7 @@ function initScrollAnimations() {
             }
         });
     }, observerOptions);
+
     document.querySelectorAll('.service-card, .feature, .contact-card, .info-card, .subscription-card').forEach(el => {
         el.classList.add('scroll-animate');
         observer.observe(el);
@@ -98,15 +113,36 @@ function animateCounter(element) {
         }
     }, 16);
 }
+
 function initOrderForm() {
     const orderForm = document.getElementById('orderForm');
     if (!orderForm) return;
+
+    // Vérifier s'il y a déjà un event listener
+    if (orderForm.hasAttribute('data-listener-attached')) {
+        return;
+    }
+    orderForm.setAttribute('data-listener-attached', 'true');
+
     const deliveryDateInput = document.getElementById('deliveryDate');
     if (deliveryDateInput) {
         const today = new Date();
         today.setDate(today.getDate() + 1);
         deliveryDateInput.min = today.toISOString().split('T')[0];
     }
+    
+    const productSelect = document.getElementById('productType');
+    const quantityInput = document.getElementById('quantity');
+    
+    if (productSelect) {
+        productSelect.addEventListener('change', updateOrderSummary);
+    }
+    if (quantityInput) {
+        quantityInput.addEventListener('input', updateOrderSummary);
+    }
+    
+    // UN SEUL event listener pour le formulaire
+    orderForm.addEventListener('submit', sendOrder, { once: false });
     updateOrderSummary();
 }
 
@@ -116,12 +152,16 @@ function updateOrderSummary() {
     const subtotalSpan = document.getElementById('subtotal');
     const deliveryFeeSpan = document.getElementById('deliveryFee');
     const totalPriceSpan = document.getElementById('totalPrice');
+    
     if (!productSelect || !quantityInput) return;
+    
     const selectedOption = productSelect.options[productSelect.selectedIndex];
     const price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
     const quantity = parseInt(quantityInput.value) || 0;
     const isSubscription = selectedOption.value.includes('subscription');
+    
     let subtotal, deliveryFee, total;
+    
     if (isSubscription) {
         subtotal = price;
         deliveryFee = 0;
@@ -134,7 +174,7 @@ function updateOrderSummary() {
         total = subtotal + deliveryFee;
         quantityInput.disabled = false;
     }
-
+    
     if (subtotalSpan) {
         subtotalSpan.textContent = subtotal.toFixed(2) + '$' + (isSubscription ? '/mois' : '');
     }
@@ -152,42 +192,89 @@ function updateOrderSummary() {
 
 async function sendOrder(event) {
     event.preventDefault();
-    const form = event.target;
-    const formData = new FormData(form);
-    if (!validateOrderForm(form)) {
-        showNotification('Veuillez remplir tous les champs obligatoires.', 'error');
+    
+    // PROTECTION ANTI-DUPLICATION
+    const currentTime = Date.now();
+    
+    // Vérifier si une soumission est déjà en cours
+    if (CONFIG.submission.isProcessing) {
+        console.log('⚠️ Soumission déjà en cours, annulation...');
+        showNotification('Une commande est déjà en cours de traitement, veuillez patienter.', 'info');
         return;
     }
-    const orderData = {
-        customerName: formData.get('customerName'),
-        customerPhone: formData.get('customerPhone'),
-        customerAddress: formData.get('customerAddress'),
-        productType: formData.get('productType'),
-        quantity: formData.get('quantity'),
-        deliveryDate: formData.get('deliveryDate'),
-        specialInstructions: formData.get('specialInstructions'),
-        timestamp: new Date().toLocaleString('fr-FR')
-    };
+    
+    // Vérifier le délai entre les soumissions
+    if (currentTime - CONFIG.submission.lastOrderTime < CONFIG.submission.debounceDelay) {
+        console.log('⚠️ Soumission trop rapide, annulation...');
+        showNotification('Veuillez attendre avant de soumettre une nouvelle commande.', 'info');
+        return;
+    }
+    
+    // Marquer comme en cours de traitement
+    CONFIG.submission.isProcessing = true;
+    CONFIG.submission.lastOrderTime = currentTime;
+    
+    const form = event.target;
+    const formData = new FormData(form);
+
+    // Désactiver le bouton de soumission
+    const submitButton = form.querySelector('button[type="submit"]');
+    const originalButtonText = submitButton ? submitButton.textContent : '';
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Envoi en cours...';
+    }
+
     try {
+        if (!validateOrderForm(form)) {
+            showNotification('Veuillez remplir tous les champs obligatoires.', 'error');
+            return;
+        }
+        
+        const orderData = {
+            customerName: formData.get('customerName'),
+            customerPhone: formData.get('customerPhone'),
+            customerAddress: formData.get('customerAddress'),
+            productType: formData.get('productType'),
+            quantity: formData.get('quantity'),
+            deliveryDate: formData.get('deliveryDate'),
+            specialInstructions: formData.get('specialInstructions'),
+            timestamp: new Date().toLocaleString('fr-FR')
+        };
+
         await sendOrderToDiscord(orderData);
         showNotification('Commande envoyée avec succès! Nous vous contacterons bientôt.', 'success');
         form.reset();
         updateOrderSummary();
+        
     } catch (error) {
         console.error('Erreur lors de l\'envoi de la commande:', error);
         showNotification('Erreur lors de l\'envoi de la commande. Veuillez réessayer.', 'error');
+    } finally {
+        // Remettre le bouton dans son état normal
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = originalButtonText;
+        }
+        
+        // Permettre une nouvelle soumission après un délai
+        setTimeout(() => {
+            CONFIG.submission.isProcessing = false;
+        }, 1000); // 1 seconde minimum entre les tentatives
     }
 }
 
 function validateOrderForm(form) {
     let isValid = true;
     const requiredFields = form.querySelectorAll('[required]');
+
     requiredFields.forEach(field => {
         field.classList.remove('is-invalid');
         const existingError = field.parentNode.querySelector('.error-message');
         if (existingError) {
             existingError.remove();
         }
+
         if (!field.value.trim()) {
             isValid = false;
             field.classList.add('is-invalid');
@@ -198,33 +285,42 @@ function validateOrderForm(form) {
         } else if (field.type === 'tel' && !/^\+?[0-9\s.-]{7,25}$/.test(field.value.trim())) {
             isValid = false;
             field.classList.add('is-invalid');
-            
             const errorDiv = document.createElement('div');
             errorDiv.classList.add('error-message');
             errorDiv.textContent = 'Veuillez entrer un numéro de téléphone valide.';
             field.parentNode.appendChild(errorDiv);
         }
     });
-
     return isValid;
 }
 
 async function sendOrderToDiscord(orderData) {
+    if (!orderData || !orderData.productType) {
+        throw new Error('Données de commande manquantes');
+    }
+    
     const productSelect = document.getElementById('productType');
+    if (!productSelect) {
+        throw new Error('Sélecteur de produit introuvable');
+    }
+    
     const selectedOption = productSelect.options[productSelect.selectedIndex];
     const productName = selectedOption.text;
     const price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
     const isSubscription = selectedOption.value.includes('subscription');
+    
     let subtotal, deliveryFee, total;
     if (isSubscription) {
         subtotal = price;
         deliveryFee = 0;
         total = subtotal;
     } else {
-        subtotal = price * parseInt(orderData.quantity);
+        const quantity = parseInt(orderData.quantity) || 1;
+        subtotal = price * quantity;
         deliveryFee = subtotal >= 50 ? 0 : 5;
         total = subtotal + deliveryFee;
     }
+    
     let embedColor;
     if (isSubscription) {
         embedColor = 0x6f42c1;
@@ -235,7 +331,9 @@ async function sendOrderToDiscord(orderData) {
     } else {
         embedColor = 0xffa500;
     }
+    
     const orderNumber = `EW-${Date.now().toString().slice(-6)}`;
+    
     const embed = {
         title: isSubscription ? "📋 NOUVEL ABONNEMENT - Every Water" : "🛒 NOUVELLE COMMANDE - Every Water",
         description: `**Numéro:** \`${orderNumber}\`\n${isSubscription ? '🔄 **Abonnement mensuel récurrent**' : total >= 50 ? '🎉 **Commande éligible à la livraison gratuite !**' : '📦 Commande en cours de traitement...'}`,
@@ -270,13 +368,13 @@ async function sendOrderToDiscord(orderData) {
                 value: isSubscription ?
                     `**Début souhaité:** ${orderData.deliveryDate ? new Date(orderData.deliveryDate).toLocaleDateString('fr-FR') : 'À définir'}\n**Prochaine livraison:** Mensuelle` :
                     orderData.deliveryDate ? 
-                    `**Date souhaitée:** ${new Date(orderData.deliveryDate).toLocaleDateString('fr-FR', { 
-                        weekday: 'long', 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                    })}` : 
-                    '**Date:** À définir avec le client',
+                        `**Date souhaitée:** ${new Date(orderData.deliveryDate).toLocaleDateString('fr-FR', { 
+                            weekday: 'long', 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                        })}` : 
+                        '**Date:** À définir avec le client',
                 inline: true
             },
             {
@@ -297,11 +395,12 @@ async function sendOrderToDiscord(orderData) {
                 "https://cdn-icons-png.flaticon.com/512/3081/3081559.png"
         },
         footer: {
-            text: `${isSubscription ? 'Abonnement' : 'Commande'} reçu(e) le ${orderData.timestamp} • Every Water`,
+            text: `${isSubscription ? 'Abonnement' : 'Commande'} reçu(e) le ${orderData.timestamp} • Every Water - ID: ${orderNumber}`,
             icon_url: "https://cdn-icons-png.flaticon.com/512/1828/1828884.png"
         },
         timestamp: new Date().toISOString()
     };
+
     const messageContent = {
         content: isSubscription ?
             `🔄 **NOUVEL ABONNEMENT EVERY WATER** 🔄\n\n` +
@@ -316,7 +415,14 @@ async function sendOrderToDiscord(orderData) {
             `${total >= 50 ? '✅ Livraison gratuite appliquée' : '⚠️ Frais de livraison: 5$'}`,
         embeds: [embed]
     };
+
     try {
+        if (!CONFIG.webhooks.orders) {
+            throw new Error('URL du webhook de commandes non configurée');
+        }
+        
+        console.log(`📤 Envoi de la commande ${orderNumber} vers Discord...`);
+        
         const response = await fetch(CONFIG.webhooks.orders, {
             method: 'POST',
             headers: { 
@@ -325,14 +431,23 @@ async function sendOrderToDiscord(orderData) {
             },
             body: JSON.stringify(messageContent)
         });
+        
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Erreur Discord:', response.status, errorText);
+            console.error('❌ Erreur Discord:', response.status, errorText);
+            if (response.status === 404) {
+                throw new Error('Le webhook Discord n\'existe plus ou a été supprimé.');
+            } else if (response.status === 401) {
+                throw new Error('Token d\'authentification Discord invalide.');
+            } else if (response.status === 429) {
+                throw new Error('Limite de taux Discord atteinte. Veuillez réessayer plus tard.');
+            }
             throw new Error(`Erreur Discord: ${response.status} - ${errorText}`);
         }
+        
         console.log(`✅ ${isSubscription ? 'Abonnement' : 'Commande'} ${orderNumber} envoyé(e) avec succès sur Discord`);
         return { success: true, orderNumber };
-
+        
     } catch (error) {
         console.error('❌ Erreur lors de l\'envoi vers Discord:', error);
         throw error;
@@ -342,13 +457,18 @@ async function sendOrderToDiscord(orderData) {
 function initContactForm() {
     const contactForm = document.getElementById('contactForm');
     if (!contactForm) return;
-
+    
+    // Vérifier s'il y a déjà un event listener
+    if (contactForm.hasAttribute('data-listener-attached')) {
+        return;
+    }
+    contactForm.setAttribute('data-listener-attached', 'true');
+    
     contactForm.addEventListener('submit', handleContactSubmit);
 }
 
 async function handleContactSubmit(e) {
     e.preventDefault();
-    
     const form = e.target;
     const formData = new FormData(form);
     
@@ -359,12 +479,12 @@ async function handleContactSubmit(e) {
         message: formData.get('contactMessage'),
         timestamp: new Date().toLocaleString('fr-FR')
     };
-
+    
     if (!validateContactForm(contactData)) {
         showNotification('Veuillez corriger les erreurs dans le formulaire.', 'error');
         return;
     }
-
+    
     try {
         await sendContactToDiscord(contactData);
         showNotification('Message envoyé avec succès! Nous vous répondrons dans les plus brefs délais.', 'success');
@@ -377,15 +497,17 @@ async function handleContactSubmit(e) {
 
 function validateContactForm(data) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
     if (!data.name || !data.name.trim()) return false;
     if (!data.email || !emailRegex.test(data.email)) return false;
     if (!data.message || !data.message.trim()) return false;
-    
     return true;
 }
 
 async function sendContactToDiscord(contactData) {
+    if (!contactData || !contactData.subject) {
+        throw new Error('Données de contact manquantes');
+    }
+
     const subjectLabels = {
         'information': '📋 Demande d\'information',
         'quote': '💰 Demande de devis',
@@ -469,8 +591,12 @@ async function sendContactToDiscord(contactData) {
                 `📞 **Rappel:** Ce client souhaite être recontacté directement par téléphone ou mail.`,
         embeds: [embed]
     };
-
+    
     try {
+        if (!CONFIG.webhooks.contact) {
+            throw new Error('URL du webhook de contact non configurée');
+        }
+        
         const response = await fetch(CONFIG.webhooks.contact, {
             method: 'POST',
             headers: { 
@@ -479,13 +605,13 @@ async function sendContactToDiscord(contactData) {
             },
             body: JSON.stringify(messageContent)
         });
-
+        
         if (!response.ok) {
             const errorText = await response.text();
             console.error('Erreur Discord Contact:', response.status, errorText);
             throw new Error(`Erreur Discord: ${response.status} - ${errorText}`);
         }
-
+        
         console.log(`✅ Message de contact envoyé avec succès sur Discord`);
         return { success: true };
 
@@ -498,19 +624,24 @@ async function sendContactToDiscord(contactData) {
 function selectSubscriptionPlan(planName, planPrice) {
     const productSelect = document.getElementById('productType');
     const quantityInput = document.getElementById('quantity');
+    
     const planMapping = {
         'Abonnement Découverte': 'subscription-discovery',
         'Abonnement Expérimenté': 'subscription-experienced', 
         'Abonnement Professionnel': 'subscription-professional'
     };
+    
     const planValue = planMapping[planName];
     if (planValue && productSelect) {
         productSelect.value = planValue;
+        
         if (quantityInput) {
             quantityInput.value = 1;
             quantityInput.disabled = true;
         }
+        
         updateOrderSummary();
+        
         const orderSection = document.getElementById('order');
         if (orderSection) {
             orderSection.scrollIntoView({ 
@@ -518,6 +649,7 @@ function selectSubscriptionPlan(planName, planPrice) {
                 block: 'start'
             });
         }
+        
         showNotification(`${planName} sélectionné ! Complétez vos informations ci-dessous.`, 'success');
     }
 }
@@ -575,7 +707,8 @@ function showNotification(message, type = 'info') {
                 align-items: center;
                 gap: 0.5rem;
             }
-            .notification-content i:first-child { font-size: 1.5rem;
+            .notification-content i:first-child { 
+                font-size: 1.5rem;
             }
             .notification-close {
                 background: none;
@@ -586,18 +719,30 @@ function showNotification(message, type = 'info') {
             .notification-close i {
                 font-size: 1.2rem;
             }
+            .error-message {
+                color: #dc3545;
+                font-size: 0.875rem;
+                margin-top: 0.25rem;
+            }
+            .is-invalid {
+                border-color: #dc3545 !important;
+            }
         `;
         document.head.appendChild(style);
     }
     document.body.appendChild(notification);
-    notification.style.transform = 'translateX(0)';
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 10);
     notification.querySelector('.notification-close').addEventListener('click', () => {
         notification.style.transform = 'translateX(100%)';
         setTimeout(() => notification.remove(), 300);
     });
     setTimeout(() => {
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => notification.remove(), 300);
+        if (notification && notification.parentNode) {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => notification.remove(), 300);
+        }
     }, CONFIG.animation.notificationDuration);
 }
 
