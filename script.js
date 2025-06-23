@@ -136,17 +136,17 @@ function updateOrderSummary() {
     }
 
     if (subtotalSpan) {
-        subtotalSpan.textContent = subtotal.toFixed(2) + '€' + (isSubscription ? '/mois' : '');
+        subtotalSpan.textContent = subtotal.toFixed(2) + '$' + (isSubscription ? '/mois' : '');
     }
     if (deliveryFeeSpan) {
         if (isSubscription) {
             deliveryFeeSpan.textContent = 'Inclus';
         } else {
-            deliveryFeeSpan.textContent = deliveryFee === 0 ? 'Gratuit' : deliveryFee.toFixed(2) + '€';
+            deliveryFeeSpan.textContent = deliveryFee === 0 ? 'Gratuit' : deliveryFee.toFixed(2) + '$';
         }
     }
     if (totalPriceSpan) {
-        totalPriceSpan.textContent = total.toFixed(2) + '€' + (isSubscription ? '/mois' : '');
+        totalPriceSpan.textContent = total.toFixed(2) + '$' + (isSubscription ? '/mois' : '');
     }
 }
 
@@ -254,15 +254,15 @@ async function sendOrderToDiscord(orderData) {
             {
                 name: isSubscription ? "📋 DÉTAILS ABONNEMENT" : "🛍️ DÉTAILS PRODUIT",
                 value: isSubscription ? 
-                    `🔄 **${productName}**\n💰 **Prix mensuel:** ${price.toFixed(2)}€\n📅 **Facturation:** Mensuelle` :
-                    `🛍️ **${productName}**\n📦 **Quantité:** ${orderData.quantity}\n💰 **Prix unitaire:** ${price.toFixed(2)}€`,
+                    `🔄 **${productName}**\n💰 **Prix mensuel:** ${price.toFixed(2)}$\n📅 **Facturation:** Mensuelle` :
+                    `🛍️ **${productName}**\n📦 **Quantité:** ${orderData.quantity}\n💰 **Prix unitaire:** ${price.toFixed(2)}$`,
                 inline: false
             },
             {
                 name: "💳 RÉCAPITULATIF FINANCIER",
                 value: isSubscription ?
-                    `**Montant mensuel:** ${total.toFixed(2)}€\n**Livraison:** Incluse\n**TOTAL MENSUEL:** **${total.toFixed(2)}€**` :
-                    `**Sous-total:** ${subtotal.toFixed(2)}€\n**Livraison:** ${deliveryFee === 0 ? '🆓 Gratuite' : `${deliveryFee.toFixed(2)}€`}\n**TOTAL:** **${total.toFixed(2)}€**`,
+                    `**Montant mensuel:** ${total.toFixed(2)}$\n**Livraison:** Incluse\n**TOTAL MENSUEL:** **${total.toFixed(2)}$**` :
+                    `**Sous-total:** ${subtotal.toFixed(2)}$\n**Livraison:** ${deliveryFee === 0 ? '🆓 Gratuite' : `${deliveryFee.toFixed(2)}$`}\n**TOTAL:** **${total.toFixed(2)}$**`,
                 inline: true
             },
             {
@@ -305,15 +305,15 @@ async function sendOrderToDiscord(orderData) {
     const messageContent = {
         content: isSubscription ?
             `🔄 **NOUVEL ABONNEMENT EVERY WATER** 🔄\n\n` +
-            `💰 **Montant mensuel:** ${total.toFixed(2)}€\n` +
+            `💰 **Montant mensuel:** ${total.toFixed(2)}$\n` +
             `📞 **Action requise:** Contacter le client pour finaliser l'abonnement\n` +
             `⏰ **Délai de traitement:** 24h maximum\n\n` +
             `✅ Installation et maintenance incluses` :
             `🚨 **NOUVELLE COMMANDE EVERY WATER** 🚨\n\n` +
-            `💰 **Montant:** ${total.toFixed(2)}€ ${total >= 100 ? '🔥 **GROSSE COMMANDE !**' : ''}\n` +
+            `💰 **Montant:** ${total.toFixed(2)}$ ${total >= 100 ? '🔥 **GROSSE COMMANDE !**' : ''}\n` +
             `📞 **Action requise:** Contacter le client dans les plus brefs délais\n` +
             `⏰ **Délai de traitement:** 24h maximum\n\n` +
-            `${total >= 50 ? '✅ Livraison gratuite appliquée' : '⚠️ Frais de livraison: 5€'}`,
+            `${total >= 50 ? '✅ Livraison gratuite appliquée' : '⚠️ Frais de livraison: 5$'}`,
         embeds: [embed]
     };
     try {
@@ -729,7 +729,7 @@ const lightboxData = {
             
             <div class="terms-article">
                 <h4>Article 3 - Livraison</h4>
-                <p>Les livraisons sont effectuées du lundi au samedi, entre 8h et 18h. Les frais de livraison sont gratuits pour les commandes supérieures à 50€.</p>
+                <p>Les livraisons sont effectuées du lundi au samedi, entre 8h et 18h. Les frais de livraison sont gratuits pour les commandes supérieures à 50$.</p>
             </div>
             
             <div class="terms-article">
