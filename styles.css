@@ -1,6 +1,3 @@
-/* ===================================
-   RESET ET VARIABLES CSS
-   =================================== */
 * {
     margin: 0;
     padding: 0;
@@ -8,39 +5,25 @@
 }
 
 :root {
-    /* Couleurs principales */
     --primary-color: #0066cc;
     --secondary-color: #00a8e6;
     --accent-color: #00ccff;
-    
-    /* Couleurs de texte */
     --text-dark: #2c3e50;
     --text-light: #7f8c8d;
-    
-    /* Couleurs de fond */
     --white: #ffffff;
     --light-gray: #f8f9fa;
     --medium-gray: #e9ecef;
     --dark-gray: #6c757d;
-    
-    /* Couleurs d'état */
     --success-color: #28a745;
     --warning-color: #ffc107;
     --danger-color: #dc3545;
-    
-    /* Dégradés */
     --gradient-primary: linear-gradient(135deg, #0066cc 0%, #00a8e6 100%);
     --gradient-secondary: linear-gradient(135deg, #00a8e6 0%, #00ccff 100%);
-    
-    /* Ombres */
     --shadow-light: 0 2px 10px rgba(0, 102, 204, 0.1);
     --shadow-medium: 0 5px 25px rgba(0, 102, 204, 0.15);
     --shadow-heavy: 0 10px 40px rgba(0, 102, 204, 0.2);
 }
 
-/* ===================================
-   STYLES DE BASE
-   =================================== */
 html {
     scroll-behavior: smooth;
 }
@@ -50,21 +33,19 @@ body {
     line-height: 1.6;
     color: var(--text-dark);
     background-color: var(--white);
+    overflow-x: hidden; 
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 clamp(15px, 4vw, 20px);
 }
 
 section {
-    padding: 5rem 0;
+    padding: clamp(3rem, 8vw, 5rem) 0;
 }
 
-/* ===================================
-   NAVIGATION
-   =================================== */
 .navbar {
     position: fixed;
     top: 0;
@@ -85,7 +66,7 @@ section {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 20px;
+    padding: 1rem clamp(15px, 4vw, 20px);
     max-width: 1200px;
     margin: 0 auto;
 }
@@ -93,7 +74,7 @@ section {
 .nav-logo {
     display: flex;
     align-items: center;
-    font-size: 1.5rem;
+    font-size: clamp(1.2rem, 3vw, 1.5rem);
     font-weight: 700;
     color: var(--primary-color);
     text-decoration: none;
@@ -101,13 +82,13 @@ section {
 
 .nav-logo i {
     margin-right: 0.5rem;
-    font-size: 1.8rem;
+    font-size: clamp(1.5rem, 4vw, 1.8rem);
 }
 
 .nav-menu {
     display: flex;
     list-style: none;
-    gap: 2rem;
+    gap: clamp(1rem, 3vw, 2rem);
 }
 
 .nav-link {
@@ -116,6 +97,7 @@ section {
     font-weight: 500;
     transition: color 0.3s ease;
     position: relative;
+    font-size: clamp(0.9rem, 2vw, 1rem);
 }
 
 .nav-link:hover {
@@ -151,9 +133,6 @@ section {
     transition: 0.3s;
 }
 
-/* ===================================
-   HERO SECTION
-   =================================== */
 .hero {
     min-height: 100vh;
     display: flex;
@@ -162,6 +141,7 @@ section {
     background: var(--gradient-primary);
     color: var(--white);
     overflow: hidden;
+    padding-top: 80px;
 }
 
 .hero-background {
@@ -178,9 +158,10 @@ section {
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 200px;
+    height: clamp(100px, 20vw, 200px);
     background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" fill="%23ffffff"></path></svg>') repeat-x;
     animation: wave 10s ease-in-out infinite;
+    background-size: 1200px 100%;
 }
 
 .hero-content {
@@ -188,10 +169,10 @@ section {
     z-index: 2;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 clamp(15px, 4vw, 20px);
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 4rem;
+    gap: clamp(2rem, 5vw, 4rem);
     align-items: center;
 }
 
@@ -210,7 +191,7 @@ section {
 }
 
 .hero-subtitle {
-    font-size: 1.2rem;
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
     margin-bottom: 2rem;
     opacity: 0.9;
     line-height: 1.6;
@@ -220,20 +201,21 @@ section {
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
+    justify-content: flex-start;
 }
 
 .hero-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 1rem 2rem;
+    padding: clamp(0.8rem, 2vw, 1rem) clamp(1.5rem, 4vw, 2rem);
     border: none;
-    border-radius: 50px;
+    border-radius: 10px;
     font-weight: 600;
     text-decoration: none;
     transition: all 0.3s ease;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: clamp(0.9rem, 2vw, 1rem);
 }
 
 .hero-btn-primary {
@@ -264,31 +246,28 @@ section {
 
 .stat-number {
     display: block;
-    font-size: 2.5rem;
+    font-size: clamp(2rem, 5vw, 2.5rem);
     font-weight: 700;
     color: var(--accent-color);
 }
 
 .stat-label {
-    font-size: 0.9rem;
+    font-size: clamp(0.8rem, 2vw, 0.9rem);
     opacity: 0.8;
 }
 
-/* ===================================
-   BOUTONS GÉNÉRIQUES
-   =================================== */
 .btn {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 1rem 2rem;
+    padding: clamp(0.8rem, 2vw, 1rem) clamp(1.5rem, 4vw, 2rem);
     border: none;
-    border-radius: 50px;
+    border-radius: 15px;
     font-weight: 600;
     text-decoration: none;
     transition: all 0.3s ease;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: clamp(0.9rem, 2vw, 1rem);
 }
 
 .btn-primary {
@@ -318,12 +297,9 @@ section {
     justify-content: center;
 }
 
-/* ===================================
-   SECTIONS COMMUNES
-   =================================== */
 .section-header {
     text-align: center;
-    margin-bottom: 4rem;
+    margin-bottom: clamp(2rem, 5vw, 4rem);
 }
 
 .section-title {
@@ -334,15 +310,12 @@ section {
 }
 
 .section-subtitle {
-    font-size: 1.2rem;
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
     color: var(--text-light);
     max-width: 600px;
     margin: 0 auto;
 }
 
-/* ===================================
-   SECTION À PROPOS
-   =================================== */
 .about {
     background: var(--light-gray);
 }
@@ -350,13 +323,12 @@ section {
 .about-content {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 4rem;
+    gap: clamp(2rem, 5vw, 4rem);
     align-items: center;
 }
 
 .about-text h3 {
-    font-size: 1.8rem;
-    color: var(--text-dark);
+    font-size: clamp(1.5rem, 3vw, 1.8rem);
     margin-bottom: 1.5rem;
 }
 
@@ -364,6 +336,7 @@ section {
     margin-bottom: 1.5rem;
     color: var(--text-light);
     line-height: 1.7;
+    font-size: clamp(0.9rem, 2vw, 1rem);
 }
 
 .about-features {
@@ -384,18 +357,19 @@ section {
 }
 
 .feature i {
-    font-size: 2rem;
+    font-size: clamp(1.5rem, 3vw, 2rem);
     color: var(--primary-color);
 }
 
 .feature h4 {
     margin-bottom: 0.5rem;
     color: var(--text-dark);
+    font-size: clamp(1rem, 2.2vw, 1.1rem);
 }
 
 .feature p {
     margin: 0;
-    font-size: 0.9rem;
+    font-size: clamp(0.8rem, 1.8vw, 0.9rem);
     color: var(--text-light);
 }
 
@@ -406,7 +380,7 @@ section {
 
 .placeholder-image {
     width: 100%;
-    height: 400px;
+    height: clamp(250px, 50vw, 400px);
     background: var(--gradient-primary);
     border-radius: 15px;
     display: flex;
@@ -419,33 +393,31 @@ section {
 }
 
 .placeholder-image i {
-    font-size: 4rem;
+    font-size: clamp(3rem, 8vw, 4rem);
     margin-bottom: 1rem;
     opacity: 0.8;
 }
 
 .placeholder-image p {
-    font-size: 1.2rem;
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
     font-weight: 600;
     margin-bottom: 0.5rem;
 }
 
 .placeholder-image small {
     opacity: 0.8;
+    font-size: clamp(0.7rem, 1.5vw, 0.8rem);
 }
 
-/* ===================================
-   SECTION SERVICES
-   =================================== */
 .services-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(clamp(250px, 80vw, 300px), 1fr));
+    gap: clamp(1.5rem, 4vw, 2rem);
 }
 
 .service-card {
     background: var(--white);
-    padding: 2.5rem 2rem;
+    padding: clamp(2rem, 5vw, 2.5rem) clamp(1.5rem, 4vw, 2rem);
     border-radius: 15px;
     box-shadow: var(--shadow-light);
     text-align: center;
@@ -459,23 +431,23 @@ section {
 }
 
 .service-icon {
-    width: 80px;
-    height: 80px;
+    width: clamp(60px, 12vw, 80px);
+    height: clamp(60px, 12vw, 80px); 
     margin: 0 auto 1.5rem;
     background: var(--gradient-primary);
-    border-radius: 50%;
+    border-radius: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .service-icon i {
-    font-size: 2rem;
+    font-size: clamp(1.5rem, 3vw, 2rem);
     color: var(--white);
 }
 
 .service-card h3 {
-    font-size: 1.5rem;
+    font-size: clamp(1.3rem, 2.8vw, 1.5rem);
     margin-bottom: 1rem;
     color: var(--text-dark);
 }
@@ -484,6 +456,7 @@ section {
     color: var(--text-light);
     margin-bottom: 1.5rem;
     line-height: 1.6;
+    font-size: clamp(0.9rem, 2vw, 1rem);
 }
 
 .service-card ul {
@@ -496,6 +469,7 @@ section {
     color: var(--text-light);
     position: relative;
     padding-left: 1.5rem;
+    font-size: clamp(0.85rem, 1.9vw, 0.95rem);
 }
 
 .service-card li::before {
@@ -506,26 +480,23 @@ section {
     font-weight: bold;
 }
 
-/* ===================================
-   SECTION ABONNEMENTS
-   =================================== */
 .subscription-section {
-    padding: 5rem 0;
+    padding: clamp(3rem, 8vw, 5rem) 0;
     background: linear-gradient(135deg, #f8fdff 0%, #e3f2fd 100%);
 }
 
 .subscription-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(clamp(280px, 85vw, 320px), 1fr));
+    gap: clamp(1.5rem, 4vw, 2rem);
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 2rem;
+    padding: 0 clamp(1rem, 3vw, 2rem);
 }
 
 .subscription-card {
     background: white;
-    border-radius: 20px;
+    border-radius: 15px;
     box-shadow: 0 10px 40px rgba(0, 123, 191, 0.1);
     overflow: hidden;
     transition: all 0.3s ease;
@@ -553,7 +524,6 @@ section {
 
 .subscription-card.premium {
     border-color: #006bb3;
-    transform: scale(1.05);
 }
 
 .subscription-card.professional {
@@ -567,7 +537,7 @@ section {
     background: linear-gradient(135deg, #006bb3 0%, #4dd0e1 100%);
     color: white;
     padding: 8px 40px;
-    font-size: 0.9rem;
+    font-size: clamp(0.8rem, 1.8vw, 0.9rem);
     font-weight: bold;
     transform: rotate(45deg);
     z-index: 10;
@@ -576,19 +546,19 @@ section {
 .card-header {
     background: linear-gradient(135deg, #006bb3 0%, #4dd0e1 100%);
     color: white;
-    padding: 2.5rem 2rem;
+    padding: clamp(2rem, 5vw, 2.5rem) clamp(1.5rem, 4vw, 2rem);
     text-align: center;
     position: relative;
 }
 
 .card-header i {
-    font-size: 3rem;
+    font-size: clamp(2.5rem, 6vw, 3rem);
     margin-bottom: 1rem;
     opacity: 0.9;
 }
 
 .card-header h3 {
-    font-size: 1.5rem;
+    font-size: clamp(1.3rem, 2.8vw, 1.5rem);
     margin-bottom: 1.5rem;
     font-weight: 600;
 }
@@ -601,22 +571,22 @@ section {
 }
 
 .currency {
-    font-size: 1.2rem;
+    font-size: clamp(1rem, 2.2vw, 1.2rem);
     font-weight: 500;
 }
 
 .amount {
-    font-size: 3rem;
+    font-size: clamp(2.5rem, 6vw, 3rem); 
     font-weight: bold;
 }
 
 .period {
-    font-size: 1rem;
+    font-size: clamp(0.9rem, 2vw, 1rem);
     opacity: 0.8;
 }
 
 .card-body {
-    padding: 2.5rem 2rem;
+    padding: clamp(2rem, 5vw, 2.5rem) clamp(1.5rem, 4vw, 2rem);
 }
 
 .features-list {
@@ -629,13 +599,13 @@ section {
     align-items: center;
     margin-bottom: 1rem;
     color: #555;
-    font-size: 1rem;
+    font-size: clamp(0.9rem, 2vw, 1rem);
 }
 
 .features-list i {
     color: #4dd0e1;
     margin-right: 1rem;
-    font-size: 1.1rem;
+    font-size: clamp(1rem, 2.2vw, 1.1rem);
     width: 20px;
 }
 
@@ -649,6 +619,7 @@ section {
 .pricing-note small {
     color: #006bb3;
     font-style: italic;
+    font-size: clamp(0.75rem, 1.8vw, 0.85rem);
 }
 
 .subscription-btn {
@@ -656,9 +627,9 @@ section {
     background: linear-gradient(135deg, #006bb3 0%, #4dd0e1 100%);
     color: white;
     border: none;
-    padding: 1rem 2rem;
-    border-radius: 50px;
-    font-size: 1.1rem;
+    padding: clamp(0.9rem, 2vw, 1rem) clamp(1.5rem, 4vw, 2rem);
+    border-radius: 10px;
+    font-size: clamp(1rem, 2.2vw, 1.1rem); 
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -686,9 +657,6 @@ section {
     box-shadow: 0 10px 30px rgba(0, 123, 191, 0.3);
 }
 
-/* ===================================
-   SECTION COMMANDE
-   =================================== */
 .order {
     background: #f8fdff;
 }
@@ -696,13 +664,13 @@ section {
 .order-content {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 4rem;
+    gap: clamp(2rem, 5vw, 4rem);
     align-items: start;
 }
 
 .order-form-container {
     background: white;
-    padding: 2.5rem;
+    padding: clamp(2rem, 5vw, 2.5rem);
     border-radius: 15px;
     box-shadow: 0 10px 40px rgba(0, 123, 191, 0.1);
 }
@@ -722,16 +690,17 @@ section {
     margin-bottom: 0.5rem;
     font-weight: 600;
     color: #006bb3;
+    font-size: clamp(0.9rem, 2vw, 1rem);
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
     width: 100%;
-    padding: 1rem;
+    padding: clamp(0.8rem, 2vw, 1rem);
     border: 2px solid #e0f7ff;
     border-radius: 8px;
-    font-size: 1rem;
+    font-size: clamp(0.9rem, 2vw, 1rem);
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
     font-family: inherit;
     color: #333;
@@ -747,7 +716,7 @@ section {
 
 .form-group textarea {
     resize: vertical;
-    min-height: 100px;
+    min-height: clamp(80px, 15vw, 100px);
 }
 
 .order-summary {
@@ -761,7 +730,7 @@ section {
 .order-summary h3 {
     margin-bottom: 1rem;
     color: #006bb3;
-    font-size: 1.3rem;
+    font-size: clamp(1.1rem, 2.5vw, 1.3rem);
 }
 
 .summary-line {
@@ -770,6 +739,7 @@ section {
     margin-bottom: 0.5rem;
     padding: 0.5rem 0;
     color: #555;
+    font-size: clamp(0.9rem, 2vw, 1rem);
 }
 
 .summary-line.total {
@@ -777,7 +747,7 @@ section {
     margin-top: 1rem;
     padding-top: 1rem;
     font-weight: 700;
-    font-size: 1.2rem;
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
     color: #006bb3;
 }
 
@@ -800,11 +770,11 @@ section {
     gap: 0.75rem;
     margin-bottom: 1rem;
     color: #006bb3;
-    font-size: 1.2rem;
+    font-size: clamp(1rem, 2.2vw, 1.2rem);
 }
 
 .info-card h3 i {
-    font-size: 1.5rem;
+    font-size: clamp(1.2rem, 2.8vw, 1.5rem);
     color: #4dd0e1;
 }
 
@@ -812,27 +782,24 @@ section {
     color: #555;
     margin-bottom: 0.5rem;
     line-height: 1.6;
-    font-size: 0.95rem;
+    font-size: clamp(0.85rem, 1.9vw, 0.95rem);
 }
 
-/* ===================================
-   SECTION CONTACT
-   =================================== */
 .contact-content {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 4rem;
+    gap: clamp(2rem, 5vw, 4rem);
 }
 
 .contact-info {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(clamp(180px, 40vw, 250px), 1fr));
     gap: 1.5rem;
 }
 
 .contact-card {
     background: var(--white);
-    padding: 2rem;
+    padding: clamp(1.5rem, 4vw, 2rem);
     border-radius: 15px;
     box-shadow: var(--shadow-light);
     text-align: center;
@@ -844,63 +811,63 @@ section {
 }
 
 .contact-icon {
-    width: 60px;
-    height: 60px;
+    width: clamp(50px, 10vw, 60px);
+    height: clamp(50px, 10vw, 60px);
     margin: 0 auto 1rem;
     background: var(--gradient-primary);
-    border-radius: 50%;
+    border-radius: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .contact-icon i {
-    font-size: 1.5rem;
+    font-size: clamp(1.2rem, 2.8vw, 1.5rem);
     color: var(--white);
 }
 
 .contact-card h3 {
     margin-bottom: 1rem;
     color: var(--text-dark);
+    font-size: clamp(1.1rem, 2.5vw, 1.3rem);
 }
 
 .contact-card p {
     color: var(--text-light);
     line-height: 1.5;
+    font-size: clamp(0.85rem, 1.9vw, 0.95rem);
 }
 
 .contact-form-container {
     background: var(--white);
-    padding: 2.5rem;
+    padding: clamp(2rem, 5vw, 2.5rem);
     border-radius: 15px;
     box-shadow: var(--shadow-medium);
 }
 
-/* ===================================
-   FOOTER
-   =================================== */
 .footer {
     background: var(--text-dark);
     color: var(--white);
-    padding: 3rem 0 1rem;
+    padding: clamp(2rem, 6vw, 3rem) 0 clamp(0.8rem, 2vw, 1rem);
 }
 
 .footer-content {
     display: grid;
     grid-template-columns: 2fr 1fr 1fr 1fr;
-    gap: 2rem;
+    gap: clamp(1.5rem, 4vw, 2rem);
     margin-bottom: 2rem;
 }
 
 .footer-section h3 {
     margin-bottom: 1rem;
     color: var(--accent-color);
+    font-size: clamp(1.2rem, 2.5vw, 1.4rem);
 }
 
 .footer-logo {
     display: flex;
     align-items: center;
-    font-size: 1.5rem;
+    font-size: clamp(1.3rem, 2.8vw, 1.5rem);
     font-weight: 700;
     margin-bottom: 1rem;
 }
@@ -914,6 +881,7 @@ section {
     line-height: 1.6;
     margin-bottom: 1.5rem;
     opacity: 0.8;
+    font-size: clamp(0.85rem, 1.9vw, 0.95rem);
 }
 
 .footer-section ul {
@@ -929,6 +897,7 @@ section {
     text-decoration: none;
     opacity: 0.8;
     transition: opacity 0.3s ease;
+    font-size: clamp(0.8rem, 1.8vw, 0.9rem);
 }
 
 .footer-section ul li a:hover {
@@ -947,16 +916,17 @@ section {
 }
 
 .social-links a {
-    width: 40px;
-    height: 40px;
+    width: clamp(35px, 7vw, 40px);
+    height: clamp(35px, 7vw, 40px);
     background: var(--primary-color);
-    border-radius: 50%;
+    border-radius: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--white);
     text-decoration: none;
     transition: all 0.3s ease;
+    font-size: clamp(1rem, 2vw, 1.1rem);
 }
 
 .social-links a:hover {
@@ -969,11 +939,9 @@ section {
     padding-top: 2rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     opacity: 0.7;
+    font-size: clamp(0.75rem, 1.6vw, 0.85rem);
 }
 
-/* ===================================
-   ANIMATIONS
-   =================================== */
 @keyframes fadeInUp {
     to {
         opacity: 1;
@@ -1023,9 +991,6 @@ section {
     transform: translateY(0);
 }
 
-/* ===================================
-   LIGHTBOX STYLES
-   =================================== */
 .lightbox {
     position: fixed;
     top: 0;
@@ -1038,7 +1003,7 @@ section {
     display: none;
     align-items: center;
     justify-content: center;
-    padding: 2rem;
+    padding: clamp(1rem, 4vw, 2rem);
     animation: lightboxFadeIn 0.3s ease-out;
 }
 
@@ -1057,14 +1022,14 @@ section {
 .lightbox-header {
     background: var(--gradient-primary);
     color: var(--white);
-    padding: 2rem;
+    padding: clamp(1.5rem, 4vw, 2rem);
     text-align: center;
     position: relative;
 }
 
 .lightbox-header h2 {
     margin: 0;
-    font-size: 1.8rem;
+    font-size: clamp(1.5rem, 3vw, 1.8rem);
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -1073,7 +1038,7 @@ section {
 }
 
 .lightbox-header h2 i {
-    font-size: 2rem;
+    font-size: clamp(1.8rem, 4vw, 2rem);
     opacity: 0.9;
 }
 
@@ -1084,14 +1049,14 @@ section {
     background: rgba(255, 255, 255, 0.2);
     border: none;
     color: var(--white);
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    width: clamp(35px, 7vw, 40px);
+    height: clamp(35px, 7vw, 40px);
+    border-radius: 15px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: clamp(1rem, 2.2vw, 1.2rem);
     transition: all 0.3s ease;
     backdrop-filter: blur(10px);
 }
@@ -1102,15 +1067,14 @@ section {
 }
 
 .lightbox-body {
-    padding: 2.5rem;
+    padding: clamp(2rem, 5vw, 2.5rem);
     max-height: 70vh;
     overflow-y: auto;
 }
 
-/* Styles pour le contenu de la lightbox */
 .lightbox-body h3 {
     color: var(--primary-color);
-    font-size: 1.5rem;
+    font-size: clamp(1.3rem, 2.8vw, 1.5rem);
     margin: 2rem 0 1rem 0;
     display: flex;
     align-items: center;
@@ -1119,13 +1083,14 @@ section {
 
 .lightbox-body h3 i {
     color: var(--accent-color);
-    font-size: 1.3rem;
+    font-size: clamp(1.1rem, 2.5vw, 1.3rem);
 }
 
 .lightbox-body p {
     color: var(--text-light);
     line-height: 1.7;
     margin-bottom: 1.5rem;
+    font-size: clamp(0.9rem, 2vw, 1rem);
 }
 
 .lightbox-body ul {
@@ -1140,6 +1105,7 @@ section {
     padding-left: 2rem;
     border-bottom: 1px solid var(--light-gray);
     transition: all 0.3s ease;
+    font-size: clamp(0.85rem, 1.9vw, 0.95rem);
 }
 
 .lightbox-body ul li:last-child {
@@ -1156,7 +1122,7 @@ section {
     width: 20px;
     height: 20px;
     background: rgba(40, 167, 69, 0.1);
-    border-radius: 50%;
+    border-radius: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1169,10 +1135,9 @@ section {
     border-radius: 8px;
 }
 
-/* Styles pour les cartes dans la lightbox */
 .lightbox-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(clamp(200px, 50vw, 250px), 1fr));
     gap: 1.5rem;
     margin: 2rem 0;
 }
@@ -1197,6 +1162,7 @@ section {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    font-size: clamp(1rem, 2.2vw, 1.1rem);
 }
 
 .lightbox-card h4 i {
@@ -1205,10 +1171,9 @@ section {
 
 .lightbox-card p {
     margin: 0;
-    font-size: 0.95rem;
+    font-size: clamp(0.85rem, 1.9vw, 0.95rem);
 }
 
-/* Styles pour les boutons dans la lightbox */
 .lightbox-actions {
     display: flex;
     gap: 1rem;
@@ -1222,14 +1187,14 @@ section {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 1rem 2rem;
+    padding: clamp(0.8rem, 2vw, 1rem) clamp(1.5rem, 4vw, 2rem);
     border: none;
-    border-radius: 50px;
+    border-radius: 15px;
     font-weight: 600;
     text-decoration: none;
     transition: all 0.3s ease;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: clamp(0.9rem, 2vw, 1rem);
 }
 
 .lightbox-btn-primary {
@@ -1253,7 +1218,6 @@ section {
     color: var(--white);
 }
 
-/* Styles pour les tableaux dans la lightbox */
 .lightbox-table {
     width: 100%;
     border-collapse: collapse;
@@ -1261,6 +1225,7 @@ section {
     border-radius: 10px;
     overflow: hidden;
     box-shadow: var(--shadow-light);
+    font-size: clamp(0.85rem, 1.9vw, 0.95rem);
 }
 
 .lightbox-table th {
@@ -1285,7 +1250,6 @@ section {
     border-bottom: none;
 }
 
-/* Styles pour les alertes dans la lightbox */
 .lightbox-alert {
     padding: 1rem 1.5rem;
     border-radius: 10px;
@@ -1293,10 +1257,11 @@ section {
     display: flex;
     align-items: center;
     gap: 1rem;
+    font-size: clamp(0.9rem, 2vw, 1rem);
 }
 
 .lightbox-alert i {
-    font-size: 1.5rem;
+    font-size: clamp(1.2rem, 2.8vw, 1.5rem);
 }
 
 .lightbox-alert.info {
@@ -1317,7 +1282,6 @@ section {
     color: #856404;
 }
 
-/* Scrollbar personnalisée pour la lightbox */
 .lightbox-body::-webkit-scrollbar {
     width: 6px;
 }
@@ -1356,7 +1320,122 @@ section {
     }
 }
 
+@media (max-width: 1024px) {
+    .hero-content {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+    .hero-buttons {
+        justify-content: center;
+    }
+    .hero-stats {
+        flex-direction: row;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .about-content,
+    .order-content,
+    .contact-content {
+        grid-template-columns: 1fr;
+    }
+    .contact-info {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+    .footer-content {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+    .footer-section {
+        text-align: center;
+    }
+    .footer-logo, .social-links {
+        justify-content: center;
+    }
+}
+
 @media (max-width: 768px) {
+    .nav-menu {
+        position: fixed;
+        left: -100%;
+        top: 70px;
+        flex-direction: column;
+        background-color: var(--white);
+        width: 100%;
+        text-align: center;
+        transition: 0.3s;
+        box-shadow: var(--shadow-medium);
+        padding: 2rem 0;
+        height: calc(100vh - 70px);
+        overflow-y: auto;
+    }
+
+    .nav-menu.active {
+        left: 0;
+    }
+
+    .hamburger {
+        display: flex;
+    }
+
+    .navbar .nav-container {
+        padding: 0.8rem clamp(15px, 4vw, 20px);
+    }
+
+    .hero {
+        padding-top: 70px;
+    }
+    .hero-content {
+        gap: 2rem;
+    }
+    .hero-stats {
+        flex-direction: column;
+    }
+
+    section {
+        padding: clamp(2rem, 6vw, 3rem) 0;
+    }
+    .section-header {
+        margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
+    }
+
+    .about-content,
+    .services-grid,
+    .subscription-grid,
+    .order-content,
+    .contact-content {
+        grid-template-columns: 1fr;
+        gap: clamp(1.5rem, 4vw, 2rem);
+    }
+
+    .subscription-card.premium {
+        transform: none;
+    }
+    
+    .card-header {
+        padding: clamp(1.5rem, 4vw, 2rem) clamp(1rem, 3vw, 1.5rem);
+    }
+    
+    .card-body {
+        padding: clamp(1.5rem, 4vw, 2rem) clamp(1rem, 3vw, 1.5rem);
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .contact-info {
+        grid-template-columns: 1fr;
+    }
+
+    .footer-content {
+        grid-template-columns: 1fr;
+    }
+    .footer-section {
+        text-align: center;
+    }
+    .footer-logo, .social-links {
+        justify-content: center;
+    }
+
     .lightbox {
         padding: 1rem;
     }
@@ -1406,6 +1485,37 @@ section {
 }
 
 @media (max-width: 480px) {
+    .container {
+        padding: 0 15px;
+    }
+
+    section {
+        padding: 2rem 0;
+    }
+    .hero-title {
+        font-size: clamp(2rem, 8vw, 2.5rem);
+    }
+    .hero-subtitle {
+        font-size: clamp(0.9rem, 3vw, 1rem);
+    }
+    .hero-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .stat-number {
+        font-size: clamp(1.8rem, 7vw, 2rem);
+    }
+    .stat-label {
+        font-size: clamp(0.7rem, 2.5vw, 0.8rem);
+    }
+
+    .section-title {
+        font-size: clamp(1.8rem, 7vw, 2rem);
+    }
+    .section-subtitle {
+        font-size: clamp(0.9rem, 3vw, 1rem);
+    }
+
     .lightbox {
         padding: 0.5rem;
     }
@@ -1425,116 +1535,105 @@ section {
     }
 }
 
-::-webkit-scrollbar {
-    width: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: var(--light-gray);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--primary-color);
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--secondary-color);
-}
-
-@media (max-width: 768px) {
-    /* Navigation mobile */
-    .nav-menu {
-        position: fixed;
-        left: -100%;
-        top: 70px;
-        flex-direction: column;
-        background-color: var(--white);
-        width: 100%;
-        text-align: center;
-        transition: 0.3s;
-        box-shadow: var(--shadow-medium);
-        padding: 2rem 0;
+@media (width: 1008.5px) and (height: 711.89px) {
+    body {
+        font-size: 16px;
     }
-
-    .nav-menu.active {
-        left: 0;
-    }
-
-    .hamburger {
-        display: flex;
-    }
-
-    /* Hero responsive */
-    .hero-content {
-        grid-template-columns: 1fr;
-        text-align: center;
-        gap: 2rem;
-    }
-
-    .hero-stats {
-        flex-direction: row;
-        justify-content: center;
-    }
-
-    .hero-buttons {
-        justify-content: center;
-    }
-
-    /* Sections responsive */
-    .about-content,
-    .contact-content {
-        grid-template-columns: 1fr;
-        gap: 2rem;
-    }
-
-    .services-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .order-content {
-        grid-template-columns: 1fr;
-        gap: 2rem;
-    }
-
-    .contact-info {
-        grid-template-columns: 1fr;
-    }
-
-    .footer-content {
-        grid-template-columns: 1fr;
-        text-align: center;
-    }
-
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-
-    /* Abonnements responsive */
-    .subscription-grid {
-        grid-template-columns: 1fr;
-        padding: 0 1rem;
-    }
-    
-    .subscription-card.premium {
-        transform: none;
-    }
-    
-    .card-header {
-        padding: 2rem 1.5rem;
-    }
-    
-    .card-body {
-        padding: 2rem 1.5rem;
-    }
-}
-
-@media (max-width: 480px) {
     .container {
-        padding: 0 15px;
+        max-width: 960px;
+        padding: 0 20px;
     }
-
     section {
-        padding: 2rem 0;
+        padding: 4rem 0;
+    }
+    .hero-content {
+        grid-template-columns: 1.5fr 1fr;
+        gap: 3rem;
+    }
+    .hero-title {
+        font-size: 3.5rem;
+    }
+    .hero-subtitle {
+        font-size: 1.1rem;
+    }
+    .hero-stats {
+        flex-direction: column;
+    }
+    .about-content,
+    .order-content,
+    .contact-content {
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+    }
+    .services-grid,
+    .subscription-grid {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    .contact-info {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .footer-content {
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+    }
+}
+
+@media (max-height: 750px) {
+    .hero {
+        min-height: 80vh;
+        padding-top: 60px;
+    }
+    section {
+        padding: 3rem 0;
+    }
+    .lightbox-content {
+        max-height: 85vh;
+    }
+    .lightbox-body {
+        max-height: 65vh;
+    }
+}
+
+@media (min-width: 1201px) {
+    .container {
+        padding: 0 20px;
+    }
+    section {
+        padding: 5rem 0;
+    }
+    .hero-title {
+        font-size: 4rem;
+    }
+    .hero-subtitle {
+        font-size: 1.2rem;
+    }
+    .stat-number {
+        font-size: 2.5rem;
+    }
+    .stat-label {
+        font-size: 0.9rem;
+    }
+    .section-title {
+        font-size: 3rem;
+    }
+    .section-subtitle {
+        font-size: 1.2rem;
+    }
+    .contact-form-container {
+        width: 500px;
+    }
+    .services-grid,
+    .subscription-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .order-content,
+    .contact-content {
+        grid-template-columns: 2fr 1fr;
+    }
+    .contact-info {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .footer-content {
+        grid-template-columns: 2fr 1fr 1fr 1fr;
     }
 }

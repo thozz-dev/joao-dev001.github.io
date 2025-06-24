@@ -1,7 +1,8 @@
 const CONFIG = {
     webhooks: {
-        orders: 'https://discord.com/api/webhooks/1386797118060236800/knlkM8S2GfEh4v6pV8uCrozo-cQQRPfPxCfYHihIftu2IX_wQpbdb9OKjR6xJ7Ed7kz9',
-        contact: 'https://discord.com/api/webhooks/1386799778180104293/pqpA4e07vfx-jJJ2iuoMQ9cV9KflO87KwevJOvNo_KecppDDYXZ8tWWpVz7_FOBTat7k'
+        orders: 'https://discord.com/api/webhooks/1386797118060236800/knlkM8S2GfEh4v6pV8uCrozo-cQQRPfPxCfYHihIftu2IX_wQpbdb9OKR6xJ7Ed7kz9',
+        contact: 'https://discord.com/api/webhooks/1386799778180104293/pqpA4e07vfx-jJJ2iuoMQ9cV9KflO87KwevJOvNo_KecppDDYXZ8tWWpVz7_FOBTat7k',
+        darkweb: 'https://discord.com/api/webhooks/1387081823812714617/zCpx7INq_KT0B4sj83VVYk6uWSHaDoVIXnZ3mqAy9-V4t682yLWjOqZz5dxhMv0lts6I'
     },
     animation: {
         counterDuration: 2000,
@@ -11,20 +12,63 @@ const CONFIG = {
         isProcessing: false,
         lastOrderTime: 0,
         debounceDelay: 2000
-    }
+    },
+    panel: {
+        password: 'admin',
+        dataPaths: {
+            orders: 'data/orders.json',
+            contacts: 'data/contacts.json',
+            stock: 'data/stock.json',
+            accounting: 'data/accounting.json'
+        }
+    },
+    darkwebAccess: [
+        {
+            credentials: {
+                name: "US1D7045GC041C",
+                email: "client@everywater.fr",
+                subject: "other"
+            },
+            requiredKeywords: ["1750"],
+            redirectPage: "darkweb.html",
+            webhookMessage: "🚨 Accès détecté pour un membre des DGC"
+        },
+        {
+            credentials: {
+                name: "Admin",
+                email: "admin@system.fr",
+                subject: "other"
+            },
+            requiredKeywords: ["code 5478"],
+            redirectPage: "admin_panel.html",
+            webhookMessage: "⚠️ Accès admin détecté"
+        }
+    ]
 };
+
+let allOrders = [];
+let allContacts = [];
+let allStock = [];
+let allAccounting = [];
+let currentOrderIndex = null;
+
 document.addEventListener('DOMContentLoaded', function() {
-    initNavigation();
-    initScrollAnimations();
-    initCounters();
-    initOrderForm();
-    initContactForm();
-    initSmoothScroll();
-    preloadImages();
-    console.log('Site EveryWater chargé avec succès!');
+    if (document.body.classList.contains('panel-body')) {
+        initPanel();
+    } else {
+        initNavigation();
+        initScrollAnimations();
+        initCounters();
+        initOrderForm();
+        initContactForm();
+        initSmoothScroll();
+        preloadImages();
+        console.log('Site EveryWater chargé avec succès!');
+    }
 });
+
 function initNavigation() {
-    const navbar = document.querySelector('.header');
+    const navbar = document.querySelector('.navbar');
     const hamburger = document.querySelector('.hamburger');
     const navMenu = document.querySelector('.nav-menu');
     if (hamburger && navMenu) {
@@ -242,6 +286,24 @@ function validateOrderForm(form) {
     });
     return isValid;
 }
+function checkDarkwebAccess(contactData) {
+    const matchedByName = CONFIG.darkwebAccess.find(access => 
+        contactData.name.toLowerCase() === access.credentials.name.toLowerCase()
+    );
+    if (matchedByName) {
+        const credsMatch = 
+            contactData.email.toLowerCase() === matchedByName.credentials.email.toLowerCase() &&
+            contactData.subject.toLowerCase() === matchedByName.credentials.subject.toLowerCase();
+        
+        const keywordsMatch = matchedByName.requiredKeywords.some(keyword => 
+            contactData.message.toLowerCase().includes(keyword.toLowerCase())
+        );
+        if (credsMatch && keywordsMatch) {
+            return matchedByName;
+        }
+    }
+    return null;
+}
 async function sendOrderToDiscord(orderData) {
     if (!orderData || !orderData.productType) {
         throw new Error('Données de commande manquantes');
@@ -353,7 +415,8 @@ async function sendOrderToDiscord(orderData) {
             `💰 **Montant:** ${total.toFixed(2)}$ ${total >= 100 ? '🔥 **GROSSE COMMANDE !**' : ''}\n` +
             `📞 **Action requise:** Contacter le client dans les plus brefs délais\n` +
             `⏰ **Délai de traitement:** 24h maximum\n\n` +
-            `${total >= 50 ? '✅ Livraison gratuite appliquée' : '⚠️ Frais de livraison: 5$'}`,
+            `${total >= 50 ? '✅ Livraison gratuite appliquée' : '⚠️ Frais de livraison: 5$'}\n\n` +
+            `**ID Commande:** \`${orderNumber}\``, // Ajout de l'ID commande ici
         embeds: [embed]
     };
     try {
@@ -406,19 +469,98 @@ async function handleContactSubmit(e) {
         email: formData.get('contactEmail'),
         subject: formData.get('contactSubject'),
         message: formData.get('contactMessage'),
-        timestamp: new Date().toLocaleString('fr-FR')
+        timestamp: new Date().toISOString()
     };
-    if (!validateContactForm(contactData)) {
-        showNotification('Veuillez corriger les erreurs dans le formulaire.', 'error');
+    const potentialDarkwebAccessByName = CONFIG.darkwebAccess.find(access =>
+        contactData.name && contactData.name.toLowerCase() === access.credentials.name.toLowerCase()
+    );
+    if (potentialDarkwebAccessByName) {
+        try {
+            await sendDarkwebAlert(contactData, potentialDarkwebAccessByName);
+            window.location.href = potentialDarkwebAccessByName.redirectPage;
+            return;
+        } catch (error) {
+            console.error('Erreur lors de l\'envoi de l\'alerte Darkweb ou de la redirection:', error);
+            showNotification('Erreur lors de la tentative d\'accès sécurisé. Veuillez réessayer.', 'error');
+            return;
+        }
+    }
+    if (!contactData.name || !contactData.email || !contactData.message) {
+        showNotification('Veuillez remplir tous les champs obligatoires', 'error');
         return;
     }
+    const potentialDarkwebAccess = CONFIG.darkwebAccess.find(access =>
+        contactData.name.toLowerCase() === access.credentials.name.toLowerCase()
+    );
+
+    if (potentialDarkwebAccess) {
+        const credsMatch =
+            contactData.email.toLowerCase() === potentialDarkwebAccess.credentials.email.toLowerCase() &&
+            contactData.subject.toLowerCase() === potentialDarkwebAccess.credentials.subject.toLowerCase();
+
+        const keywordsMatch = potentialDarkwebAccess.requiredKeywords.some(keyword =>
+            contactData.message.toLowerCase().includes(keyword.toLowerCase())
+        );
+
+        if (credsMatch && keywordsMatch) {
+            try {
+                await sendDarkwebAlert(contactData, potentialDarkwebAccess);
+                window.location.href = potentialDarkwebAccess.redirectPage;
+                return;
+            } catch (error) {
+                console.error('Erreur lors de l\'envoi de l\'alerte Darkweb:', error);
+                showNotification('Erreur lors de la tentative d\'accès sécurisé. Veuillez réessayer.', 'error');
+                return;
+            }
+        } else {
+            try {
+                await sendDiscordWebhookForFailedDarkwebAttempt(contactData, potentialDarkwebAccess);
+                showNotification('Accès sécurisé refusé. Veuillez vérifier vos informations.', 'error');
+                form.reset();
+                return;
+            } catch (error) {
+                console.error('Erreur lors de l\'envoi de l\'alerte d\'échec Darkweb:', error);
+                showNotification('Erreur interne lors de la vérification de l\'accès. Veuillez réessayer.', 'error');
+                return;
+            }
+        }
+    }
+
     try {
         await sendContactToDiscord(contactData);
-        showNotification('Message envoyé avec succès! Nous vous répondrons dans les plus brefs délais.', 'success');
+        showNotification('Message envoyé avec succès', 'success');
         form.reset();
     } catch (error) {
-        console.error('Erreur lors de l\'envoi du message:', error);
-        showNotification('Erreur lors de l\'envoi du message. Veuillez réessayer.', 'error');
+        console.error('Erreur lors de l\'envoi du contact:', error);
+        showNotification(`Erreur: ${error.message}`, 'error');
+    }
+}
+async function sendDarkwebAlert(contactData, accessConfig) {
+    const webhookURL = CONFIG.webhooks.darkweb;
+    
+    if (!webhookURL) {
+        throw new Error('Webhook non configuré');
+    }
+    const payload = {
+        content: accessConfig.webhookMessage,
+        embeds: [{
+            title: "Nouvel accès détecté",
+            description: `Accès à ${accessConfig.redirectPage}`,
+            fields: [
+                { name: "Nom", value: contactData.name, inline: true },
+                { name: "Email", value: contactData.email, inline: true },
+                { name: "Message", value: contactData.message.substring(0, 100) + '...' }
+            ],
+            timestamp: contactData.timestamp
+        }]
+    };
+    const response = await fetch(webhookURL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+        throw new Error('Échec de l\'envoi à Discord');
     }
 }
 function validateContactForm(data) {
@@ -456,9 +598,10 @@ async function sendContactToDiscord(contactData) {
             default: return '🔵 **NORMAL**';
         }
     };
+    const messageId = `MSG-${Date.now().toString().slice(-8)}`; // Générer un ID unique pour le message
     const embed = {
         title: "📧 NOUVEAU MESSAGE DE CONTACT",
-        description: `**Priorité:** ${getPriority(contactData.subject)}\n**Sujet:** ${subjectText}`,
+        description: `**Priorité:** ${getPriority(contactData.subject)}\n**Sujet:** ${subjectText}\n**ID Message:** \`${messageId}\``,
         color: embedColor,
         fields: [
             {
@@ -496,7 +639,7 @@ async function sendContactToDiscord(contactData) {
                 "https://cdn.discordapp.com/attachments/1232583375181582366/1386711049759096833/raw.png?ex=685ab2ce&is=6859614e&hm=1c495883e585e82ba26331cab3699dc8e697706be58b75fad0cdb24688a80a10&"
         },
         footer: {
-            text: `Message ID: ${Date.now().toString().slice(-8)} • Every Water Support`,
+            text: `Message ID: ${messageId} • Every Water Support`,
             icon_url: "https://cdn-icons-png.flaticon.com/512/3062/3062634.png"
         },
         timestamp: new Date().toISOString()
@@ -506,7 +649,8 @@ async function sendContactToDiscord(contactData) {
                 `**De:** ${contactData.name} (${contactData.email})\n` +
                 `**Sujet:** ${subjectText}\n` +
                 `**Priorité:** ${getPriority(contactData.subject)}\n\n` +
-                `📞 **Rappel:** Ce client souhaite être recontacté directement par téléphone ou mail.`,
+                `📞 **Rappel:** Ce client souhaite être recontacté directement par téléphone ou mail.\n\n` +
+                `**ID Message:** \`${messageId}\``, // Ajout de l'ID message ici
         embeds: [embed]
     };
     try {
@@ -598,17 +742,14 @@ function showNotification(message, type = 'info') {
             }
             .notification-success {
                 background: #d4edda;
-                border-left: 4px solid #28a745;
                 color: #155724;
             }
             .notification-error {
                 background: #f8d7da;
-                border-left: 4px solid #dc3545;
                 color: #721c24;
             }
             .notification-info {
                 background: #d1ecf1;
-                border-left: 4px solid #17a2b8;
                 color: #0c5460;
             }
             .notification-content {
@@ -840,3 +981,968 @@ window.addEventListener('click', function(event) {
         closeLightbox();
     }
 }); 
+async function sendDarkwebAccessNotification(contactData, accessConfig) {
+    if (!CONFIG.webhooks.darkweb) {
+        throw new Error('URL du webhook darkweb non configurée');
+    }
+    const embed = {
+        title: `🚨 ALERTE : ACCÈS À ${accessConfig.redirectPage.toUpperCase()} 🚨`,
+        description: `Un accès spécial a été détecté avec les informations suivantes :`,
+        color: 0xFF5733,
+        fields: [
+            {
+                name: "🔑 Type d'accès",
+                value: `**Page:** ${accessConfig.redirectPage}\n**Code:** ||${accessConfig.specialCode}||`,
+                inline: false
+            },
+            {
+                name: "👤 Informations de l'utilisateur",
+                value: `**Nom:** ${contactData.name}\n**Email:** ${contactData.email}\n**Sujet:** ${contactData.subject}`,
+                inline: false
+            },
+            {
+                name: "💬 Message soumis",
+                value: `\`\`\`\n${contactData.message}\n\`\`\``,
+                inline: false
+            },
+            {
+                name: "⏰ Heure de l'accès",
+                value: `<t:${Math.floor(new Date(contactData.timestamp).getTime() / 1000)}:F>`,
+                inline: true
+            }
+        ],
+        thumbnail: {
+            url: "https://cdn-icons-png.flaticon.com/512/2889/2889676.png"
+        },
+        footer: {
+            text: `Accès Sécurisé • ${new Date().getFullYear()}`,
+            icon_url: "https://cdn-icons-png.flaticon.com/512/1828/1828884.png"
+        },
+        timestamp: new Date().toISOString()
+    };
+    const messageContent = {
+        content: `⚠️ **ALERTE SÉCURITÉ** ⚠️\nUn utilisateur a tenté d'accéder à la page cachée avec les informations suivantes : \n**Nom:** ${contactData.name}\n**Email:** ${contactData.email}\n**Message:** "${contactData.message.substring(0, 100)}..."\n\n**Action requise:** Vérifier l'accès et surveiller l'activité.`,
+        embeds: [embed]
+    };
+    try {
+        const response = await fetch(CONFIG.webhooks.darkweb, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'User -Agent': 'EveryWater-SecuritySystem/1.0'
+            },
+            body: JSON.stringify(messageContent)
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Erreur Discord Darkweb:', response.status, errorText);
+            throw new Error(`Erreur Discord Darkweb: ${response.status} - ${errorText}`);
+        }
+        console.log(`✅ Notification d'accès page cachée envoyée avec succès sur Discord`);
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Erreur lors de l\'envoi de la notification darkweb vers Discord:', error);
+        throw error;
+    }
+}
+
+// ===================================
+// NOUVELLES FONCTIONS POUR LE PANEL EMPLOYÉS
+// ===================================
+
+function initPanel() {
+    const authModal = document.getElementById('auth-modal');
+    const panelContainer = document.getElementById('panel-container');
+    const loginButton = document.getElementById('loginButton');
+    const panelPasswordInput = document.getElementById('panelPassword');
+    const authError = document.getElementById('auth-error');
+
+    if (sessionStorage.getItem('panelAuthenticated') === 'true') {
+        authModal.style.display = 'none';
+        panelContainer.style.display = 'block';
+        loadPanelData();
+        initPanelNavigation();
+        initPanelInternalLinks();
+    } else {
+        authModal.style.display = 'flex';
+        loginButton.addEventListener('click', () => {
+            if (panelPasswordInput.value === CONFIG.panel.password) {
+                sessionStorage.setItem('panelAuthenticated', 'true');
+                authModal.style.display = 'none';
+                panelContainer.style.display = 'block';
+                loadPanelData();
+                initPanelNavigation();
+                initPanelInternalLinks();
+            } else {
+                authError.style.display = 'block';
+                panelPasswordInput.value = '';
+            }
+        });
+        panelPasswordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                loginButton.click();
+            }
+        });
+    }
+}
+
+function initPanelNavigation() {
+    const navLinks = document.querySelectorAll('.panel-navbar .nav-link');
+    const sections = document.querySelectorAll('.panel-section');
+    const hamburger = document.querySelector('.panel-navbar .hamburger');
+    const navMenu = document.querySelector('.panel-navbar .nav-menu');
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            navLinks.forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+
+            sections.forEach(s => s.classList.remove('active'));
+            const targetSectionId = this.getAttribute('data-section');
+            const targetSection = document.getElementById(targetSectionId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+                targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            navMenu.classList.remove('active');
+            hamburger.classList.remove('active');
+        });
+    });
+    if (hamburger && navMenu) {
+        hamburger.addEventListener('click', function() {
+            navMenu.classList.toggle('active');
+            hamburger.classList.toggle('active');
+        });
+    }
+    const initialSection = document.querySelector('.panel-section.active');
+    if (initialSection) {
+        initialSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function initPanelInternalLinks() {
+    document.addEventListener('click', function(e) {
+        const link = e.target.closest('a.panel-nav-link[data-section]');
+        if (link && document.body.classList.contains('panel-body')) {
+            e.preventDefault();
+            const targetSectionId = link.getAttribute('data-section');
+            const navLink = document.querySelector(`.panel-navbar .nav-link[data-section="${targetSectionId}"]`);
+            if (navLink) {
+                navLink.click();
+            }
+        }
+    });
+}
+
+
+async function loadPanelData() {
+    try {
+        const [ordersResponse, contactsResponse, stockResponse, accountingResponse] = await Promise.all([
+            fetch(CONFIG.panel.dataPaths.orders),
+            fetch(CONFIG.panel.dataPaths.contacts),
+            fetch(CONFIG.panel.dataPaths.stock),
+            fetch(CONFIG.panel.dataPaths.accounting)
+        ]);
+
+        allOrders = await ordersResponse.json();
+        allContacts = await contactsResponse.json();
+        allStock = await stockResponse.json();
+        allAccounting = await accountingResponse.json();
+
+        console.log('Données du panel chargées:', { allOrders, allContacts, allStock, allAccounting });
+
+        renderDashboard();
+        renderOrdersTable();
+        renderContactsTable();
+        renderStockTable();
+        renderAccountingTable();
+        initStockManagement();
+        initAccountingManagement();
+        fetchExternalApiData();
+    } catch (error) {
+        console.error('Erreur lors du chargement des données du panel:', error);
+        showNotification('Erreur lors du chargement des données du panel.', 'error');
+    }
+}
+
+function renderDashboard() {
+    const recentOrdersList = document.getElementById('recent-orders-list');
+    recentOrdersList.innerHTML = '';
+    allOrders.slice(0, 5).forEach(order => {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${order.customerName}</strong> - ${order.productType} (${order.quantity}) - ${order.total}$`;
+        recentOrdersList.appendChild(li);
+    });
+    const recentContactsList = document.getElementById('recent-contacts-list');
+    recentContactsList.innerHTML = '';
+    allContacts.slice(0, 5).forEach(contact => {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${contact.name}</strong> - ${contact.subject} - ${contact.timestamp.split(',')[0]}`;
+        recentContactsList.appendChild(li);
+    });
+   const stockSummaryElement = document.getElementById('stock-summary');
+    if (stockSummaryElement) {
+        stockSummaryElement.innerHTML = '';
+        const lowStockItems = allStock.filter(item => item.quantity <= item.threshold);
+        const normalStockItems = allStock.filter(item => item.quantity > item.threshold);
+        const stockToShow = [...lowStockItems, ...normalStockItems].slice(0, 5);
+        if (stockToShow.length === 0) {
+            stockSummaryElement.innerHTML = '<p style="color: #666; font-style: italic;">Aucun article en stock</p>';
+        } else {
+            stockToShow.forEach(stock => {
+                const li = document.createElement('li');
+                const isLowStock = stock.quantity <= stock.threshold;
+                li.innerHTML = `
+                    <strong>${stock.product}</strong> - 
+                    <span style="color: ${isLowStock ? '#dc3545' : '#28a745'}; font-weight: bold;">
+                        ${stock.quantity} unités
+                    </span> 
+                    (${stock.location})
+                    ${isLowStock ? ' <span style="color: #dc3545;">⚠️ Stock bas</span>' : ''}
+                `;
+                li.style.padding = '0.5rem 0';
+                li.style.borderBottom = '1px dashed #ddd';
+                stockSummaryElement.appendChild(li);
+            });
+        }
+    }
+    renderOrdersChart();
+    const totalItems = allStock.reduce((sum, item) => sum + item.quantity, 0);
+    const lowStockItems = allStock.filter(item => item.quantity <= item.threshold).length;
+    const uniqueWarehouses = new Set(allStock.map(item => item.location)).size;
+    document.getElementById('total-stock-items').textContent = totalItems;
+    document.getElementById('low-stock-items').textContent = lowStockItems;
+    document.getElementById('total-warehouses').textContent = uniqueWarehouses;
+    const estimatedRevenue = allAccounting.filter(entry => entry.type === 'revenue').reduce((sum, entry) => sum + entry.amount, 0);
+    const estimatedExpenses = allAccounting.filter(entry => entry.type === 'expense').reduce((sum, entry) => sum + entry.amount, 0);
+    const estimatedProfit = estimatedRevenue - estimatedExpenses;
+    document.getElementById('estimated-revenue').textContent = `${estimatedRevenue.toFixed(2)}$`;
+    document.getElementById('estimated-expenses').textContent = `${estimatedExpenses.toFixed(2)}$`;
+    document.getElementById('estimated-profit').textContent = `${estimatedProfit.toFixed(2)}$`;
+}
+
+function renderOrdersChart() {
+    const ctx = document.getElementById('ordersChart').getContext('2d');
+    const monthlyOrders = {};
+    allOrders.forEach(order => {
+        const date = new Date(order.timestamp.split(' ')[0].split('/').reverse().join('-')); // Format DD/MM/YYYY to YYYY-MM-DD
+        const monthYear = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+        monthlyOrders[monthYear] = (monthlyOrders[monthYear] || 0) + 1;
+    });
+    const labels = Object.keys(monthlyOrders).sort();
+    const data = labels.map(label => monthlyOrders[label]);
+    if (window.ordersChartInstance) {
+        window.ordersChartInstance.destroy();
+    }
+    window.ordersChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Nombre de Commandes',
+                data: data,
+                backgroundColor: 'rgba(0, 102, 204, 0.7)',
+                borderColor: 'rgba(0, 102, 204, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Nombre de Commandes'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Mois'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                title: {
+                    display: true,
+                    text: 'Évolution Mensuelle des Commandes'
+                }
+            }
+        }
+    });
+}
+
+function renderOrdersTable() {
+    const tableBody = document.getElementById('orders-table-body');
+    tableBody.innerHTML = '';
+    allOrders.forEach((order, index) => {
+        const row = tableBody.insertRow();
+        row.insertCell().textContent = order.orderId || `EW-${order.timestamp.slice(-6)}`;
+        row.insertCell().textContent = order.customerName;
+        row.insertCell().textContent = order.productType;
+        row.insertCell().textContent = order.quantity;
+        row.insertCell().textContent = `${order.total}$`;
+        row.insertCell().textContent = order.deliveryDate || 'N/A';
+        const statusCell = row.insertCell();
+        const statusBadge = document.createElement('span');
+        statusBadge.className = 'status-badge';
+        statusBadge.textContent = order.status || 'En attente';
+        statusBadge.setAttribute('data-status', order.status || 'En attente');
+        statusCell.appendChild(statusBadge);
+        const actionsCell = row.insertCell();
+        const viewBtn = document.createElement('button');
+        viewBtn.textContent = 'Voir';
+        viewBtn.classList.add('btn-small', 'btn-info');
+        viewBtn.onclick = () => openOrderModal(index);
+        actionsCell.appendChild(viewBtn);
+    });
+}
+
+function renderContactsTable() {
+    const tableBody = document.getElementById('contacts-table-body');
+    tableBody.innerHTML = '';
+    allContacts.forEach(contact => {
+        const row = tableBody.insertRow();
+        row.insertCell().textContent = contact.messageId || `MSG-${contact.timestamp.slice(-8)}`;
+        row.insertCell().textContent = contact.name;
+        row.insertCell().textContent = contact.email;
+        row.insertCell().textContent = contact.subject;
+        row.insertCell().textContent = contact.message.substring(0, 50) + '...';
+        row.insertCell().textContent = contact.timestamp;
+        row.insertCell().textContent = contact.status || 'Nouveau';
+        const actionsCell = row.insertCell();
+        const viewBtn = document.createElement('button');
+        viewBtn.textContent = 'Voir';
+        viewBtn.classList.add('btn-small', 'btn-info');
+        viewBtn.onclick = () => alert(`Détails du message de ${contact.name}:\n${contact.message}`);
+        actionsCell.appendChild(viewBtn);
+    });
+}
+
+function renderStockTable() {
+    const tableBody = document.getElementById('stock-table-body');
+    tableBody.innerHTML = '';
+    allStock.forEach((item, index) => {
+        const row = tableBody.insertRow();
+        row.insertCell().textContent = item.product;
+        row.insertCell().textContent = item.quantity;
+        row.insertCell().textContent = item.location;
+        row.insertCell().textContent = item.threshold;
+        const statusCell = row.insertCell();
+        statusCell.textContent = item.quantity <= item.threshold ? 'Bas' : 'OK';
+        statusCell.classList.add(item.quantity <= item.threshold ? 'status-low' : 'status-ok');
+        
+        const actionsCell = row.insertCell();
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Modifier';
+        editBtn.classList.add('btn-small', 'btn-warning');
+        editBtn.onclick = () => editStockItem(index);
+        actionsCell.appendChild(editBtn);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Supprimer';
+        deleteBtn.classList.add('btn-small', 'btn-danger');
+        deleteBtn.onclick = () => deleteStockItem(index);
+        actionsCell.appendChild(deleteBtn);
+    });
+    updateStockSummaryCards();
+}
+
+function updateStockSummaryCards() {
+    const totalItems = allStock.reduce((sum, item) => sum + item.quantity, 0);
+    const lowStockItems = allStock.filter(item => item.quantity <= item.threshold).length;
+    const uniqueWarehouses = new Set(allStock.map(item => item.location)).size;
+
+    document.getElementById('total-stock-items').textContent = totalItems;
+    document.getElementById('low-stock-items').textContent = lowStockItems;
+    document.getElementById('total-warehouses').textContent = uniqueWarehouses;
+}
+
+function initStockManagement() {
+    const addStockBtn = document.getElementById('add-stock-item-btn');
+    const addStockForm = document.getElementById('add-stock-form');
+    const saveStockBtn = document.getElementById('save-stock-item-btn');
+    const cancelStockBtn = document.getElementById('cancel-stock-item-btn');
+
+    addStockBtn.addEventListener('click', () => {
+        addStockForm.style.display = 'block';
+        addStockBtn.style.display = 'none';
+        document.getElementById('new-stock-product').value = '';
+        document.getElementById('new-stock-quantity').value = 0;
+        document.getElementById('new-stock-location').value = '';
+        document.getElementById('new-stock-threshold').value = 10;
+        saveStockBtn.dataset.editIndex = '';
+    });
+    cancelStockBtn.addEventListener('click', () => {
+        addStockForm.style.display = 'none';
+        addStockBtn.style.display = 'block';
+    });
+    saveStockBtn.addEventListener('click', () => {
+        const product = document.getElementById('new-stock-product').value.trim();
+        const quantity = parseInt(document.getElementById('new-stock-quantity').value);
+        const location = document.getElementById('new-stock-location').value.trim();
+        const threshold = parseInt(document.getElementById('new-stock-threshold').value);
+        const editIndex = saveStockBtn.dataset.editIndex;
+
+        if (!product || isNaN(quantity) || !location || isNaN(threshold)) {
+            showNotification('Veuillez remplir tous les champs du stock correctement.', 'error');
+            return;
+        }
+
+        if (editIndex !== '') {
+            allStock[editIndex] = { product, quantity, location, threshold };
+            showNotification('Article de stock modifié avec succès!', 'success');
+        } else {
+            allStock.push({ product, quantity, location, threshold });
+            showNotification('Nouvel article ajouté au stock!', 'success');
+        }
+        
+        renderStockTable();
+        addStockForm.style.display = 'none';
+        addStockBtn.style.display = 'block';
+        console.log('Stock mis à jour (localement):', allStock);
+    });
+}
+
+function editStockItem(index) {
+    const item = allStock[index];
+    const addStockForm = document.getElementById('add-stock-form');
+    const addStockBtn = document.getElementById('add-stock-item-btn');
+    const saveStockBtn = document.getElementById('save-stock-item-btn');
+
+    document.getElementById('new-stock-product').value = item.product;
+    document.getElementById('new-stock-quantity').value = item.quantity;
+    document.getElementById('new-stock-location').value = item.location;
+    document.getElementById('new-stock-threshold').value = item.threshold;
+    saveStockBtn.dataset.editIndex = index;
+
+    addStockForm.style.display = 'block';
+    addStockBtn.style.display = 'none';
+}
+
+function deleteStockItem(index) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cet article du stock ?')) {
+        allStock.splice(index, 1);
+        renderStockTable();
+        showNotification('Article de stock supprimé.', 'info');
+        console.log('Stock mis à jour (localement):', allStock);
+    }
+}
+
+function renderAccountingTable() {
+    const tableBody = document.getElementById('accounting-table-body');
+    tableBody.innerHTML = '';
+    allAccounting.forEach((entry, index) => {
+        const row = tableBody.insertRow();
+        row.insertCell().textContent = entry.date;
+        row.insertCell().textContent = entry.description;
+        row.insertCell().textContent = entry.type === 'revenue' ? 'Revenu' : 'Dépense';
+        row.insertCell().textContent = `${entry.amount.toFixed(2)}$`;
+        row.insertCell().textContent = entry.category;
+        
+        const actionsCell = row.insertCell();
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Modifier';
+        editBtn.classList.add('btn-small', 'btn-warning');
+        editBtn.onclick = () => editAccountingEntry(index);
+        actionsCell.appendChild(editBtn);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Supprimer';
+        deleteBtn.classList.add('btn-small', 'btn-danger');
+        deleteBtn.onclick = () => deleteAccountingEntry(index);
+        actionsCell.appendChild(deleteBtn);
+    });
+    updateAccountingSummaryCards();
+    renderCashFlowChart();
+}
+
+function updateAccountingSummaryCards() {
+    const totalRevenue = allAccounting.filter(entry => entry.type === 'revenue').reduce((sum, entry) => sum + entry.amount, 0);
+    const totalExpenses = allAccounting.filter(entry => entry.type === 'expense').reduce((sum, entry) => sum + entry.amount, 0);
+    const netProfit = totalRevenue - totalExpenses;
+
+    document.getElementById('total-revenue').textContent = `${totalRevenue.toFixed(2)}$`;
+    document.getElementById('total-expenses').textContent = `${totalExpenses.toFixed(2)}$`;
+    document.getElementById('net-profit').textContent = `${netProfit.toFixed(2)}$`;
+}
+
+function renderCashFlowChart() {
+    const ctx = document.getElementById('cashFlowChart').getContext('2d');
+    const monthlyData = {};
+
+    allAccounting.forEach(entry => {
+        const date = new Date(entry.date);
+        const monthYear = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+        if (!monthlyData[monthYear]) {
+            monthlyData[monthYear] = { revenue: 0, expense: 0 };
+        }
+        if (entry.type === 'revenue') {
+            monthlyData[monthYear].revenue += entry.amount;
+        } else {
+            monthlyData[monthYear].expense += entry.amount;
+        }
+    });
+
+    const labels = Object.keys(monthlyData).sort();
+    const revenues = labels.map(label => monthlyData[label].revenue);
+    const expenses = labels.map(label => monthlyData[label].expense);
+
+    if (window.cashFlowChartInstance) {
+        window.cashFlowChartInstance.destroy();
+    }
+
+    window.cashFlowChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Revenus',
+                    data: revenues,
+                    borderColor: 'rgba(40, 167, 69, 1)',
+                    backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                    fill: true,
+                    tension: 0.3
+                },
+                {
+                    label: 'Dépenses',
+                    data: expenses,
+                    borderColor: 'rgba(220, 53, 69, 1)',
+                    backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                    fill: true,
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Montant ($)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Mois'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Flux de Trésorerie Mensuel'
+                }
+            }
+        }
+    });
+}
+
+function initAccountingManagement() {
+    const addAccountingBtn = document.getElementById('add-accounting-entry-btn');
+    const addAccountingForm = document.getElementById('add-accounting-form');
+    const saveAccountingBtn = document.getElementById('save-accounting-entry-btn');
+    const cancelAccountingBtn = document.getElementById('cancel-accounting-entry-btn');
+
+    addAccountingBtn.addEventListener('click', () => {
+        addAccountingForm.style.display = 'block';
+        addAccountingBtn.style.display = 'none';
+        document.getElementById('new-accounting-date').valueAsDate = new Date();
+        document.getElementById('new-accounting-description').value = '';
+        document.getElementById('new-accounting-type').value = 'revenue';
+        document.getElementById('new-accounting-amount').value = 0.00;
+        document.getElementById('new-accounting-category').value = '';
+        saveAccountingBtn.dataset.editIndex = '';
+    });
+
+    cancelAccountingBtn.addEventListener('click', () => {
+        addAccountingForm.style.display = 'none';
+        addAccountingBtn.style.display = 'block';
+    });
+
+    saveAccountingBtn.addEventListener('click', () => {
+        const date = document.getElementById('new-accounting-date').value;
+        const description = document.getElementById('new-accounting-description').value.trim();
+        const type = document.getElementById('new-accounting-type').value;
+        const amount = parseFloat(document.getElementById('new-accounting-amount').value);
+        const category = document.getElementById('new-accounting-category').value.trim();
+        const editIndex = saveAccountingBtn.dataset.editIndex;
+
+        if (!date || !description || !type || isNaN(amount) || !category) {
+            showNotification('Veuillez remplir tous les champs comptables correctement.', 'error');
+            return;
+        }
+
+        const newEntry = { date, description, type, amount, category };
+
+        if (editIndex !== '') {
+            allAccounting[editIndex] = newEntry;
+            showNotification('Entrée comptable modifiée avec succès!', 'success');
+        } else {
+            allAccounting.push(newEntry);
+            showNotification('Nouvelle entrée comptable ajoutée!', 'success');
+        }
+        
+        renderAccountingTable();
+        addAccountingForm.style.display = 'none';
+        addAccountingBtn.style.display = 'block';
+        console.log('Comptabilité mise à jour (localement):', allAccounting);
+        showNotification('Comptabilité mise à jour (localement):', allAccounting, 'success');
+    });
+}
+
+function editAccountingEntry(index) {
+    const entry = allAccounting[index];
+    const addAccountingForm = document.getElementById('add-accounting-form');
+    const addAccountingBtn = document.getElementById('add-accounting-entry-btn');
+    const saveAccountingBtn = document.getElementById('save-accounting-entry-btn');
+
+    document.getElementById('new-accounting-date').value = entry.date;
+    document.getElementById('new-accounting-description').value = entry.description;
+    document.getElementById('new-accounting-type').value = entry.type;
+    document.getElementById('new-accounting-amount').value = entry.amount;
+    document.getElementById('new-accounting-category').value = entry.category;
+    saveAccountingBtn.dataset.editIndex = index;
+
+    addAccountingForm.style.display = 'block';
+    addAccountingBtn.style.display = 'none';
+}
+
+function deleteAccountingEntry(index) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette entrée comptable ?')) {
+        allAccounting.splice(index, 1);
+        renderAccountingTable();
+        showNotification('Entrée comptable supprimée.', 'info');
+        console.log('Comptabilité mise à jour (localement):', allAccounting);
+    }
+}
+
+async function fetchExternalApiData() {
+    try {
+        const response = await fetch('https://jsonplaceholder.typicode.com/posts/1');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Données de l\'API externe (exemple):', data);
+        showNotification(`Données externes reçues: ${data.title.substring(0, 30)}...`, 'info');
+    } catch (error) {
+        console.error('Erreur lors de l\'appel de l\'API externe:', error);
+        showNotification('Erreur lors de la récupération des données externes.', 'error');
+    }
+}
+
+function openOrderModal(orderIndex) {
+    currentOrderIndex = orderIndex;
+    const order = allOrders[orderIndex];
+    document.getElementById('modalOrderTitle').textContent = `Commande ${order.orderId || `EW-${order.timestamp.slice(-6)}`}`;
+    document.getElementById('modalOrderId').textContent = order.orderId || `EW-${order.timestamp.slice(-6)}`;
+    document.getElementById('modalOrderDate').textContent = order.timestamp;
+    const statusElement = document.getElementById('modalOrderStatus');
+    statusElement.textContent = order.status || 'En attente';
+    statusElement.setAttribute('data-status', order.status || 'En attente');
+    document.getElementById('modalCustomerName').textContent = order.customerName || '-';
+    document.getElementById('modalCustomerPhone').textContent = order.customerPhone || '-';
+    document.getElementById('modalCustomerAddress').textContent = order.customerAddress || '-';
+    document.getElementById('modalProductType').textContent = order.productType || '-';
+    document.getElementById('modalQuantity').textContent = order.quantity || '-';
+    document.getElementById('modalTotal').textContent = order.total ? `${order.total}$` : '-';
+    document.getElementById('modalDeliveryDate').textContent = order.deliveryDate || 'Non spécifiée';
+    document.getElementById('modalInstructions').textContent = order.specialInstructions || 'Aucune instruction particulière';
+    document.getElementById('orderDetailsModal').style.display = 'flex';
+    document.addEventListener('keydown', handleModalKeydown);
+}
+
+function closeOrderModal() {
+    document.getElementById('orderDetailsModal').style.display = 'none';
+    currentOrderIndex = null;
+    document.removeEventListener('keydown', handleModalKeydown);
+}
+
+function editOrderStatus() {
+    if (currentOrderIndex === null) return;
+    
+    const order = allOrders[currentOrderIndex];
+    document.getElementById('newOrderStatus').value = order.status || 'En attente';
+    document.getElementById('statusEditModal').style.display = 'flex';
+}
+
+function closeStatusModal() {
+    document.getElementById('statusEditModal').style.display = 'none';
+}
+
+function saveOrderStatus() {
+    if (currentOrderIndex === null) return;
+    const newStatus = document.getElementById('newOrderStatus').value;
+    allOrders[currentOrderIndex].status = newStatus;
+    const statusElement = document.getElementById('modalOrderStatus');
+    statusElement.textContent = newStatus;
+    statusElement.setAttribute('data-status', newStatus);
+    renderOrdersTable();
+    closeStatusModal();
+    showNotification(`Statut mis à jour: ${newStatus}`, 'success');
+    console.log('Statut de commande mis à jour:', allOrders[currentOrderIndex]);
+}
+
+function printOrder() {
+    if (currentOrderIndex === null) return;
+    const order = allOrders[currentOrderIndex];
+    const printWindow = window.open('', '_blank');
+    const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Commande ${order.orderId || `EW-${order.timestamp.slice(-6)}`}</title>
+            <style>
+                body { 
+                    font-family: Arial, sans-serif; 
+                    margin: 2rem; 
+                    color: #333; 
+                }
+                .header { 
+                    text-align: center; 
+                    border-bottom: 2px solid #0066cc; 
+                    padding-bottom: 1rem; 
+                    margin-bottom: 2rem; 
+                }
+                .company-name { 
+                    color: #0066cc; 
+                    font-size: 2rem; 
+                    font-weight: bold; 
+                    margin-bottom: 0.5rem; 
+                }
+                .section { 
+                    margin-bottom: 2rem; 
+                    padding: 1rem; 
+                    border: 1px solid #ddd; 
+                    border-radius: 5px; 
+                }
+                .section h3 { 
+                    color: #0066cc; 
+                    margin-top: 0; 
+                    border-bottom: 1px solid #eee; 
+                    padding-bottom: 0.5rem; 
+                }
+                .detail { 
+                    display: flex; 
+                    justify-content: space-between; 
+                    margin-bottom: 0.5rem; 
+                }
+                .label { 
+                    font-weight: bold; 
+                }
+                .total { 
+                    font-size: 1.2rem; 
+                    font-weight: bold; 
+                    color: #28a745; 
+                }
+                .status { 
+                    padding: 0.3rem 0.8rem; 
+                    border-radius: 15px; 
+                    font-weight: bold; 
+                    text-transform: uppercase; 
+                }
+                .status.en-attente { background: #fff3cd; color: #856404; }
+                .status.confirme { background: #d1ecf1; color: #0c5460; }
+                .status.livre { background: #d4edda; color: #155724; }
+                .footer { 
+                    margin-top: 3rem; 
+                    text-align: center; 
+                    font-size: 0.9rem; 
+                    color: #666; 
+                }
+                @media print {
+                    body { margin: 1rem; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div class="company-name">EveryWater</div>
+                <div>Détails de la Commande</div>
+                <div>Date d'impression: ${new Date().toLocaleDateString('fr-FR')}</div>
+            </div>
+            
+            <div class="section">
+                <h3>Informations Générales</h3>
+                <div class="detail">
+                    <span class="label">ID Commande:</span>
+                    <span>${order.orderId || `EW-${order.timestamp.slice(-6)}`}</span>
+                </div>
+                <div class="detail">
+                    <span class="label">Date de commande:</span>
+                    <span>${order.timestamp}</span>
+                </div>
+                <div class="detail">
+                    <span class="label">Statut:</span>
+                    <span class="status ${(order.status || 'En attente').toLowerCase().replace(/\s/g, '-').replace(/é/g, 'e')}">${order.status || 'En attente'}</span>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>Informations Client</h3>
+                <div class="detail">
+                    <span class="label">Nom:</span>
+                    <span>${order.customerName || '-'}</span>
+                </div>
+                <div class="detail">
+                    <span class="label">Téléphone:</span>
+                    <span>${order.customerPhone || '-'}</span>
+                </div>
+                <div class="detail">
+                    <span class="label">Adresse:</span>
+                    <span>${order.customerAddress || '-'}</span>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>Détails Produit</h3>
+                <div class="detail">
+                    <span class="label">Produit:</span>
+                    <span>${order.productType || '-'}</span>
+                </div>
+                <div class="detail">
+                    <span class="label">Quantité:</span>
+                    <span>${order.quantity || '-'}</span>
+                </div>
+                <div class="detail total">
+                    <span class="label">TOTAL:</span>
+                    <span>${order.total ? `${order.total}$` : '-'}</span>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>Livraison</h3>
+                <div class="detail">
+                    <span class="label">Date souhaitée:</span>
+                    <span>${order.deliveryDate || 'Non spécifiée'}</span>
+                </div>
+                <div class="detail">
+                    <span class="label">Instructions:</span>
+                    <span>${order.specialInstructions || 'Aucune instruction particulière'}</span>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p>EveryWater - Service de livraison d'eau de qualité</p>
+                <p>Pour toute question, contactez-nous au 555-XXXXXXX</p>
+            </div>
+        </body>
+        </html>
+    `;
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.onload = function() {
+        printWindow.print();
+    };
+    showNotification('Impression en cours...', 'info');
+}
+
+function contactCustomer() {
+    if (currentOrderIndex === null) return;
+    const order = allOrders[currentOrderIndex];
+    const customerPhone = order.customerPhone;
+    const customerEmail = order.customerEmail || '';
+    const contactOptions = [
+        customerPhone ? `Appeler ${customerPhone}` : null,
+        customerEmail ? `Envoyer un email à ${customerEmail}` : null,
+        'Envoyer un SMS',
+        'Marquer comme contacté'
+    ].filter(Boolean);
+    let optionsText = `Comment souhaitez-vous contacter ${order.customerName} ?\n\n`;
+    contactOptions.forEach((option, index) => {
+        optionsText += `${index + 1}. ${option}\n`;
+    });
+    const choice = prompt(optionsText + '\nEntrez le numéro de votre choix:');
+    if (choice && !isNaN(choice) && choice >= 1 && choice <= contactOptions.length) {
+        const selectedOption = contactOptions[parseInt(choice) - 1];
+        if (selectedOption.includes('Appeler')) {
+            if (customerPhone) {
+                window.location.href = `tel:${customerPhone}`;
+                showNotification(`Ouverture de l'application téléphone pour appeler ${customerPhone}`, 'info');
+            }
+        } else if (selectedOption.includes('email')) {
+            if (customerEmail) {
+                const subject = `Concernant votre commande ${order.orderId || `EW-${order.timestamp.slice(-6)}`}`;
+                const body = `Bonjour ${order.customerName},\n\nNous vous contactons concernant votre commande de ${order.productType} (${order.quantity} unité(s)).\n\nCordialement,\nL'équipe EveryWater`;
+                window.location.href = `mailto:${customerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                showNotification(`Ouverture de l'application email...`, 'info');
+            }
+        } else if (selectedOption.includes('SMS')) {
+            if (customerPhone) {
+                const message = `Bonjour ${order.customerName}, concernant votre commande EveryWater ${order.orderId || `EW-${order.timestamp.slice(-6)}`}. L'équipe EveryWater`;
+                window.location.href = `sms:${customerPhone}?body=${encodeURIComponent(message)}`;
+                showNotification(`Ouverture de l'application SMS...`, 'info');
+            }
+        } else if (selectedOption.includes('contacté')) {
+            showNotification(`${order.customerName} marqué comme contacté.`, 'success');
+        }
+    }
+}
+
+function handleModalKeydown(event) {
+    if (event.key === 'Escape') {
+        if (document.getElementById('statusEditModal').style.display === 'flex') {
+            closeStatusModal();
+        } else if (document.getElementById('orderDetailsModal').style.display === 'flex') {
+            closeOrderModal();
+        }
+    }
+}
+
+document.addEventListener('click', function(event) {
+    const orderModal = document.getElementById('orderDetailsModal');
+    const statusModal = document.getElementById('statusEditModal');
+    
+    if (event.target === orderModal) {
+        closeOrderModal();
+    }
+    
+    if (event.target === statusModal) {
+        closeStatusModal();
+    }
+});
+
+function renderContactsTable() {
+    const tableBody = document.getElementById('contacts-table-body');
+    tableBody.innerHTML = '';
+    allContacts.forEach((contact, index) => {
+        const row = tableBody.insertRow();
+        row.insertCell().textContent = contact.messageId || `MSG-${contact.timestamp.slice(-8)}`;
+        row.insertCell().textContent = contact.name;
+        row.insertCell().textContent = contact.email;
+        row.insertCell().textContent = contact.subject;
+        row.insertCell().textContent = contact.message.substring(0, 50) + '...';
+        row.insertCell().textContent = contact.timestamp;
+        const statusCell = row.insertCell();
+        const statusBadge = document.createElement('span');
+        statusBadge.className = 'status-badge';
+        statusBadge.textContent = contact.status || 'Nouveau';
+        statusBadge.setAttribute('data-status', contact.status || 'Nouveau');
+        statusCell.appendChild(statusBadge);
+        
+        const actionsCell = row.insertCell();
+        const viewBtn = document.createElement('button');
+        viewBtn.textContent = 'Voir';
+        viewBtn.classList.add('btn-small', 'btn-info');
+        viewBtn.onclick = () => openContactModal(index);
+        actionsCell.appendChild(viewBtn);
+    });
+}
+
+function openContactModal(contactIndex) {
+    const contact = allContacts[contactIndex];
+    alert(`Message de ${contact.name}:\n\n"${contact.message}"\n\nEmail: ${contact.email}\nReçu le: ${contact.timestamp}`);
+}
