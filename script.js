@@ -1,6 +1,6 @@
 const CONFIG = {
     webhooks: {
-        orders: 'https://discord.com/api/webhooks/1386797118060236800/knlkM8S2GfEh4v6pV8uCrozo-cQQRPfPxCfYHihIftu2IX_wQpbdb9OKR6xJ7Ed7kz9',
+        orders: 'https://discord.com/api/webhooks/1386797118060236800/knlkM8S2GfEh4v6pV8uCrozo-cQQRPfPxCfYHihIftu2IX_wQpbdb9OKjR6xJ7Ed7kz9',
         contact: 'https://discord.com/api/webhooks/1386799778180104293/pqpA4e07vfx-jJJ2iuoMQ9cV9KflO87KwevJOvNo_KecppDDYXZ8tWWpVz7_FOBTat7k',
         darkweb: 'https://discord.com/api/webhooks/1387081823812714617/zCpx7INq_KT0B4sj83VVYk6uWSHaDoVIXnZ3mqAy9-V4t682yLWjOqZz5dxhMv0lts6I'
     },
