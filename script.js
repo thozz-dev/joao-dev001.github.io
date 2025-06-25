@@ -346,138 +346,33 @@ function checkDarkwebAccess(contactData) {
     return null;
 }
 async function sendOrderToDiscord(orderData) {
-    if (!orderData || !orderData.productType) {
-        throw new Error('Données de commande manquantes');
-    }
-    const productSelect = document.getElementById('productType');
-    if (!productSelect) {
-        throw new Error('Sélecteur de produit introuvable');
-    }
-    const selectedOption = productSelect.options[productSelect.selectedIndex];
-    const productName = selectedOption.text;
-    const price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
-    const isSubscription = selectedOption.value.includes('subscription');
-    let subtotal, deliveryFee, total;
-    if (isSubscription) {
-        subtotal = price;
-        deliveryFee = 0;
-        total = subtotal;
-    } else {
-        const quantity = parseInt(orderData.quantity) || 1;
-        subtotal = price * quantity;
-        deliveryFee = subtotal >= 50 ? 0 : 5;
-        total = subtotal + deliveryFee;
-    }
-    let embedColor;
-    if (isSubscription) {
-        embedColor = 0x6f42c1;
-    } else if (total >= 100) {
-        embedColor = 0x00ff00;
-    } else if (total >= 50) {
-        embedColor = 0x4dd0e1;
-    } else {
-        embedColor = 0xffa500;
-    }
-    const orderNumber = `EW-${Date.now().toString().slice(-6)}`;
-    const embed = {
-        title: isSubscription ? "📋 NOUVEL ABONNEMENT - Every Water" : "🛒 NOUVELLE COMMANDE - Every Water",
-        description: `**Numéro:** \`${orderNumber}\`\n${isSubscription ? '🔄 **Abonnement mensuel récurrent**' : total >= 50 ? '🎉 **Commande éligible à la livraison gratuite !**' : '📦 Commande en cours de traitement...'}`,
-        color: embedColor,
-        fields: [
-            {
-                name: "👤 INFORMATIONS CLIENT",
-                value: `**Nom:** ${orderData.customerName}\n**Téléphone:** ${orderData.customerPhone}`,
-                inline: true
-            },
-            {
-                name: "📍 ADRESSE",
-                value: `\`\`\`\n${orderData.customerAddress}\n\`\`\``,
-                inline: true
-            },
-            {
-                name: isSubscription ? "📋 DÉTAILS ABONNEMENT" : "🛍️ DÉTAILS PRODUIT",
-                value: isSubscription ? 
-                    `🔄 **${productName}**\n💰 **Prix mensuel:** ${price.toFixed(2)}$\n📅 **Facturation:** Mensuelle` :
-                    `🛍️ **${productName}**\n📦 **Quantité:** ${orderData.quantity}\n💰 **Prix unitaire:** ${price.toFixed(2)}$`,
-                inline: false
-            },
-            {
-                name: "💳 RÉCAPITULATIF FINANCIER",
-                value: isSubscription ?
-                    `**Montant mensuel:** ${total.toFixed(2)}$\n**Livraison:** Incluse\n**TOTAL MENSUEL:** **${total.toFixed(2)}$**` :
-                    `**Sous-total:** ${subtotal.toFixed(2)}$\n**Livraison:** ${deliveryFee === 0 ? '🆓 Gratuite' : `${deliveryFee.toFixed(2)}$`}\n**TOTAL:** **${total.toFixed(2)}$**`,
-                inline: true
-            },
-            {
-                name: "📅 PLANNING",
-                value: isSubscription ?
-                    `**Début souhaité:** ${orderData.deliveryDate ? new Date(orderData.deliveryDate).toLocaleDateString('fr-FR') : 'À définir'}\n**Prochaine livraison:** Mensuelle` :
-                    orderData.deliveryDate ? 
-                        `**Date souhaitée:** ${new Date(orderData.deliveryDate).toLocaleDateString('fr-FR', { 
-                            weekday: 'long', 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
-                        })}` : 
-                        '**Date:** À définir avec le client',
-                inline: true
-            },
-            {
-                name: "📝 INSTRUCTIONS SPÉCIALES",
-                value: orderData.specialInstructions ? 
-                    `\`\`\`\n${orderData.specialInstructions}\n\`\`\`` : 
-                    '*Aucune instruction particulière*',
-                inline: false
-            }
-        ],
-        author: {
-            name: "Every Water - Système de Commandes",
-            icon_url: "https://cdn.discordapp.com/attachments/1232583375181582366/1386711049759096833/raw.png?ex=685ab2ce&is=6859614e&hm=1c495883e585e82ba26331cab3699dc8e697706be58b75fad0cdb24688a80a10&"
-        },
-        thumbnail: {
-            url: isSubscription ? 
-                "https://cdn-icons-png.flaticon.com/512/2917/2917995.png" :
-                "https://cdn-icons-png.flaticon.com/512/3081/3081559.png"
-        },
-        footer: {
-            text: `${isSubscription ? 'Abonnement' : 'Commande'} reçu(e) le ${orderData.timestamp} • Every Water - ID: ${orderNumber}`,
-            icon_url: "https://cdn-icons-png.flaticon.com/512/1828/1828884.png"
-        },
-        timestamp: new Date().toISOString()
-    };
-    const messageContent = {
-        content: isSubscription ?
-            `🔄 **NOUVEL ABONNEMENT EVERY WATER** 🔄\n\n` +
-            `💰 **Montant mensuel:** ${total.toFixed(2)}$\n` +
-            `📞 **Action requise:** Contacter le client pour finaliser l'abonnement\n` +
-            `⏰ **Délai de traitement:** 24h maximum\n\n` +
-            `✅ Installation et maintenance incluses` :
-            `🚨 **NOUVELLE COMMANDE EVERY WATER** 🚨\n\n` +
-            `💰 **Montant:** ${total.toFixed(2)}$ ${total >= 100 ? '🔥 **GROSSE COMMANDE !**' : ''}\n` +
-            `📞 **Action requise:** Contacter le client dans les plus brefs délais\n` +
-            `⏰ **Délai de traitement:** 24h maximum\n\n` +
-            `${total >= 50 ? '✅ Livraison gratuite appliquée' : '⚠️ Frais de livraison: 5$'}\n\n` +
-            `**ID Commande:** \`${orderNumber}\``, // Ajout de l'ID commande ici
-        embeds: [embed]
-    };
     try {
-        const response = await fetch('/.netlify/functions/send-contact', {
+        const dataToSend = {
+            orderNumber: orderData.orderNumber,
+            customerName: orderData.customerName,
+            customerEmail: orderData.customerEmail,
+            productType: orderData.productType,
+            quantity: orderData.quantity,
+            totalPrice: orderData.totalPrice,
+            timestamp: new Date().toISOString()
+        };
+        console.log('Envoi de la commande vers Netlify function...', dataToSend);
+        const response = await fetch('/.netlify/functions/send-order', {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json'
+            headers: {
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify(messageContent)
+            body: JSON.stringify(dataToSend)
         });
-
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(`Erreur lors de l'envoi via la fonction serverless: ${errorData.message || response.statusText}`);
+            throw new Error(`Erreur lors de l'envoi via la fonction serverless: ${errorData.error || response.statusText}`);
         }
-
-        console.log(`✅ Message de contact envoyé avec succès via la fonction serverless`);
-        return { success: true };
+        const result = await response.json();
+        console.log('✅ Commande envoyée avec succès:', result);
+        return { success: true, orderNumber: orderData.orderNumber };
     } catch (error) {
-        console.error('❌ Erreur lors de l\'envoi du contact:', error);
+        console.error('❌ Erreur lors de l\'envoi de la commande:', error);
         throw error;
     }
 }
@@ -579,28 +474,62 @@ async function sendDarkwebAlert(contactData, accessConfig) {
             accessConfig: {
                 redirectPage: accessConfig.redirectPage || 'Page sécurisée',
                 requiredKeywords: accessConfig.requiredKeywords || [],
-                webhookMessage: accessConfig.webhookMessage || '🚨 Tentative d\'accès non autorisée détectée!'
+                webhookMessage: accessConfig.webhookMessage || 'Tentative d\'accès non autorisée'
             }
         };
         const response = await fetch('/.netlify/functions/send-darkweb', {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json'
+            headers: {
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify(dataToSend)
         });
-
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(`Erreur lors de l'envoi de l'alerte darkweb: ${errorData.error || response.statusText}`);
+            throw new Error(`Erreur darkweb: ${errorData.error || response.statusText}`);
         }
-
         const result = await response.json();
-        console.log('✅ Alerte darkweb (tentative échouée) envoyée avec succès');
+        console.log('✅ Alerte darkweb envoyée:', result);
         return { success: true };
-
     } catch (error) {
-        console.error('❌ Erreur lors de l\'envoi de l\'alerte darkweb:', error);
+        console.error('❌ Erreur alerte darkweb:', error);
+        throw error;
+    }
+}
+
+async function sendDarkwebAccessNotification(contactData, accessConfig) {
+    try {
+        const dataToSend = {
+            type: 'successful_access',
+            contactData: {
+                name: contactData.name,
+                email: contactData.email,
+                subject: contactData.subject,
+                message: contactData.message,
+                timestamp: contactData.timestamp || new Date().toISOString()
+            },
+            accessConfig: {
+                redirectPage: accessConfig.redirectPage || 'Page sécurisée',
+                requiredKeywords: accessConfig.requiredKeywords || [],
+                webhookMessage: accessConfig.webhookMessage || 'Accès autorisé accordé'
+            }
+        };
+        const response = await fetch('/.netlify/functions/send-darkweb', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dataToSend)
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Erreur darkweb: ${errorData.error || response.statusText}`);
+        }
+        const result = await response.json();
+        console.log('✅ Notification darkweb envoyée:', result);
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Erreur notification darkweb:', error);
         throw error;
     }
 }
@@ -612,52 +541,37 @@ function validateContactForm(data) {
     return true;
 }
 async function sendContactToDiscord(contactData) {
-    if (!contactData || !contactData.subject) {
-        throw new Error('Données de contact manquantes');
-    }
-    const subjectLabels = {
-        'information': '📋 Demande d\'information',
-        'quote': '💰 Demande de devis',
-        'complaint': '⚠️ Réclamation',
-        'partnership': '🤝 Partenariat',
-        'other': '❓ Autre demande'
-    };
-    const subjectText = subjectLabels[contactData.subject] || contactData.subject;
-    const messageId = `MSG-${Date.now().toString().slice(-8)}`;
-    const dataToSend = {
-        nom: contactData.name,
-        email: contactData.email,
-        telephone: contactData.phone || null,
-        sujet: subjectText,
-        message: contactData.message,
-        subjectType: contactData.subject,
-        timestamp: contactData.timestamp,
-        messageId: messageId
-    };
     try {
+        const dataToSend = {
+            nom: contactData.name,
+            email: contactData.email,
+            telephone: contactData.phone || null,
+            sujet: contactData.subject,
+            message: contactData.message,
+            subjectType: contactData.subject,
+            timestamp: contactData.timestamp || new Date().toISOString(),
+            messageId: `MSG-${Date.now().toString().slice(-8)}`
+        };
+        console.log('Envoi du contact vers Netlify function...', dataToSend);
         const response = await fetch('/.netlify/functions/send-contact', {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json'
+            headers: {
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify(dataToSend)
         });
-
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(`Erreur lors de l'envoi via la fonction serverless: ${errorData.error || response.statusText}`);
         }
-
         const result = await response.json();
-        console.log(`✅ Message de contact envoyé avec succès via la fonction serverless`);
-        return { success: true, messageId: messageId };
-
+        console.log('✅ Contact envoyé avec succès:', result);
+        return { success: true };
     } catch (error) {
         console.error('❌ Erreur lors de l\'envoi du contact:', error);
         throw error;
     }
 }
-
 function selectSubscriptionPlan(planName, planPrice) {
     const productSelect = document.getElementById('productType');
     const quantityInput = document.getElementById('quantity');

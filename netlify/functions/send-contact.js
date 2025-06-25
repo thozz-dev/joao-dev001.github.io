@@ -22,7 +22,6 @@ exports.handler = async (event, context) => {
     }
     const DISCORD_CONTACT_WEBHOOK = process.env.DISCORD_CONTACT_WEBHOOK;
     if (!DISCORD_CONTACT_WEBHOOK) {
-        console.error('DISCORD_CONTACT_WEBHOOK environment variable not set.');
         return {
             statusCode: 500,
             headers: {
@@ -34,14 +33,17 @@ exports.handler = async (event, context) => {
     }
     try {
         const data = JSON.parse(event.body);
-        if (!data.nom || !data.email || !data.message || !data.sujet) {
+        if (!data.nom || !data.email || !data.message) {
             return {
                 statusCode: 400,
                 headers: {
                     'Access-Control-Allow-Origin': '*',
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ error: 'Données manquantes: nom, email, sujet et message sont requis.' })
+                body: JSON.stringify({ 
+                    error: 'Données manquantes: nom, email et message sont requis.',
+                    received: Object.keys(data)
+                })
             };
         }
         const subjectColors = {
@@ -80,26 +82,8 @@ exports.handler = async (event, context) => {
                     name: "💬 MESSAGE COMPLET",
                     value: `\`\`\`\n${data.message.length > 1000 ? data.message.substring(0, 997) + "..." : data.message}\n\`\`\``,
                     inline: false
-                },
-                {
-                    name: "🎯 ACTIONS A FAIRE",
-                    value: data.subjectType === 'complaint' ? 
-                        '⚡ **Réponse immédiate requise**\n📞 Appeler le client en priorité' :
-                        data.subjectType === 'quote' ?
-                        '💼 **Préparer un devis personnalisé**\n📧 Répondre sous 24h' :
-                        '📧 **Répondre par email**\n📞 Ou contacter par téléphone si nécessaire',
-                    inline: false
                 }
             ],
-            author: {
-                name: "Every Water - Centre de Contact",
-                icon_url: "https://cdn.discordapp.com/attachments/1232583375181582366/1386711049759096833/raw.png?ex=685ab2ce&is=6859614e&hm=1c495883e585e82ba26331cab3699dc8e697706be58b75fad0cdb24688a80a10&"
-            },
-            thumbnail: {
-                url: data.subjectType === 'complaint' ? 
-                    "https://cdn-icons-png.flaticon.com/512/1828/1828843.png" :
-                    "https://cdn.discordapp.com/attachments/1232583375181582366/1386711049759096833/raw.png?ex=685ab2ce&is=6859614e&hm=1c495883e585e82ba26331cab3699dc8e697706be58b75fad0cdb24688a80a10&"
-            },
             footer: {
                 text: `Message ID: ${messageId} • Every Water Support`,
                 icon_url: "https://cdn-icons-png.flaticon.com/512/3062/3062634.png"
@@ -107,19 +91,13 @@ exports.handler = async (event, context) => {
             timestamp: new Date().toISOString()
         };
         const discordPayload = {
-            content: `📨 **NOUVEAU MESSAGE DE CONTACT** 📨\n\n` +
-                    `**De:** ${data.nom} (${data.email})\n` +
-                    `**Sujet:** ${data.sujet}\n` +
-                    `**Priorité:** ${getPriority(data.subjectType)}\n\n` +
-                    `📞 **Rappel:** Ce client souhaite être recontacté directement par téléphone ou mail.\n\n` +
-                    `**ID Message:** \`${messageId}\``,
+            content: `📨 **NOUVEAU MESSAGE DE CONTACT** 📨\n**De:** ${data.nom} (${data.email})\n**Sujet:** ${data.sujet}`,
             embeds: [embed]
         };
         const response = await fetch(DISCORD_CONTACT_WEBHOOK, {
             method: 'POST',
             headers: { 
-                'Content-Type': 'application/json',
-                'User-Agent': 'EveryWater-ContactFunction/1.0'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(discordPayload)
         });
@@ -135,7 +113,6 @@ exports.handler = async (event, context) => {
                 body: JSON.stringify({ error: `Discord API Error: ${errorText}` }) 
             };
         }
-        console.log('✅ Message de contact envoyé avec succès à Discord');
         return {
             statusCode: 200,
             headers: {
@@ -157,7 +134,7 @@ exports.handler = async (event, context) => {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ 
-                error: `Erreur lors de l'envoi du message de contact: ${error.message}` 
+                error: `Erreur: ${error.message}` 
             }) 
         };
     }
