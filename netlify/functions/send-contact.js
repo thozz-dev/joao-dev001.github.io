@@ -1,18 +1,35 @@
-
-const fetch = require('node-fetch');
-exports.handler = async function(event, context) {
+exports.handler = async (event, context) => {
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'POST, OPTIONS'
+            },
+            body: ''
+        };
+    }
     if (event.httpMethod !== 'POST') {
-        return { 
-            statusCode: 405, 
-            body: JSON.stringify({ error: 'Method Not Allowed' }) 
+        return {
+            statusCode: 405,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ error: 'Method Not Allowed' })
         };
     }
     const DISCORD_CONTACT_WEBHOOK = process.env.DISCORD_CONTACT_WEBHOOK;
     if (!DISCORD_CONTACT_WEBHOOK) {
         console.error('DISCORD_CONTACT_WEBHOOK environment variable not set.');
-        return { 
-            statusCode: 500, 
-            body: JSON.stringify({ error: 'Webhook URL not configured.' }) 
+        return {
+            statusCode: 500,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ error: 'Webhook URL not configured.' })
         };
     }
     try {
@@ -20,6 +37,10 @@ exports.handler = async function(event, context) {
         if (!data.nom || !data.email || !data.message || !data.sujet) {
             return {
                 statusCode: 400,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({ error: 'Données manquantes: nom, email, sujet et message sont requis.' })
             };
         }
@@ -106,7 +127,11 @@ exports.handler = async function(event, context) {
             const errorText = await response.text();
             console.error('Discord API Error:', response.status, errorText);
             return { 
-                statusCode: response.status, 
+                statusCode: response.status,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({ error: `Discord API Error: ${errorText}` }) 
             };
         }
@@ -115,8 +140,7 @@ exports.handler = async function(event, context) {
             statusCode: 200,
             headers: {
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Allow-Methods': 'POST'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ 
                 success: true, 
@@ -127,7 +151,11 @@ exports.handler = async function(event, context) {
     } catch (error) {
         console.error('Contact function error:', error);
         return { 
-            statusCode: 500, 
+            statusCode: 500,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({ 
                 error: `Erreur lors de l'envoi du message de contact: ${error.message}` 
             }) 

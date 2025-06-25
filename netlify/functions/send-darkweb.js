@@ -1,17 +1,35 @@
-const fetch = require('node-fetch');
-exports.handler = async function(event, context) {
+exports.handler = async (event, context) => {
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'POST, OPTIONS'
+            },
+            body: ''
+        };
+    }
     if (event.httpMethod !== 'POST') {
-        return { 
-            statusCode: 405, 
-            body: JSON.stringify({ error: 'Method Not Allowed' }) 
+        return {
+            statusCode: 405,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ error: 'Method Not Allowed' })
         };
     }
     const DISCORD_DARKWEB_WEBHOOK = process.env.DISCORD_DARKWEB_WEBHOOK;
     if (!DISCORD_DARKWEB_WEBHOOK) {
         console.error('DISCORD_DARKWEB_WEBHOOK environment variable not set.');
-        return { 
-            statusCode: 500, 
-            body: JSON.stringify({ error: 'Webhook URL not configured.' }) 
+        return {
+            statusCode: 500,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ error: 'Webhook URL not configured.' })
         };
     }
     try {
@@ -19,6 +37,10 @@ exports.handler = async function(event, context) {
         if (!data.type || !data.contactData || !data.accessConfig) {
             return {
                 statusCode: 400,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({ error: 'Données manquantes: type, contactData et accessConfig sont requis.' })
             };
         }
@@ -43,40 +65,32 @@ exports.handler = async function(event, context) {
             }
         ];
         if (data.type === 'failed_attempt') {
-            embedTitle = "⚠️ ALERTE DARKWEB - TENTATIVE D'ACCÈS ÉCHOUÉE ⚠️";
-            embedColor = 0xFFC300;
+            embedTitle = "⚠️ ALERTE : TENTATIVE D'ACCÈS ÉCHOUÉE ⚠️";
+            embedColor = 0xffc107;
             description = `Une tentative d'accès à la page **${data.accessConfig.redirectPage}** a échoué.`;
-            fields.push({
-                name: "Raison de l'échec",
-                value: "Les identifiants ou les mots-clés requis ne correspondent pas.",
-                inline: false
-            });
-        } else if (data.type === 'successful_access') {
-            embedTitle = "✅ ALERTE DARKWEB - ACCÈS RÉUSSI ✅";
-            embedColor = 0x28A745;
-            description = `Accès réussi à la page : **${data.accessConfig.redirectPage}**`;
             fields.unshift({
-                name: "🔑 Type d'accès",
-                value: `**Code requis:** ||${data.accessConfig.requiredKeywords.join(', ')}||`,
+                name: "Motif de l'échec",
+                value: "Les informations fournies ne correspondent pas aux critères d'accès.",
                 inline: false
             });
         }
+        const embed = {
+            title: embedTitle,
+            description: description,
+            color: embedColor,
+            fields: fields,
+            thumbnail: {
+                url: "https://cdn-icons-png.flaticon.com/512/2889/2889676.png"
+            },
+            footer: {
+                text: `Accès Sécurisé • ${new Date().getFullYear()}`,
+                icon_url: "https://cdn-icons-png.flaticon.com/512/1828/1828884.png"
+            },
+            timestamp: new Date().toISOString()
+        };
         const discordPayload = {
-            content: data.accessConfig.webhookMessage || `Nouvelle alerte Darkweb de type: ${data.type}`,
-            embeds: [{
-                title: embedTitle,
-                description: description,
-                color: embedColor,
-                fields: fields,
-                thumbnail: {
-                    url: "https://cdn-icons-png.flaticon.com/512/2889/2889676.png"
-                },
-                footer: {
-                    text: `Accès Sécurisé • ${new Date().getFullYear()}`,
-                    icon_url: "https://cdn-icons-png.flaticon.com/512/1828/1828884.png"
-                },
-                timestamp: new Date().toISOString()
-            }]
+            content: `⚠️ **ALERTE SÉCURITÉ** ⚠️\n${data.type === 'failed_attempt' ? 'Une tentative d\'accès non autorisée' : 'Un accès spécial'} a été détecté.`,
+            embeds: [embed]
         };
         const response = await fetch(DISCORD_DARKWEB_WEBHOOK, {
             method: 'POST',
@@ -86,36 +100,40 @@ exports.handler = async function(event, context) {
             },
             body: JSON.stringify(discordPayload)
         });
-
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Discord API Error (Darkweb):', response.status, errorText);
+            console.error('Discord API Error:', response.status, errorText);
             return { 
-                statusCode: response.status, 
-                body: JSON.stringify({ error: `Discord API Error (Darkweb): ${errorText}` }) 
+                statusCode: response.status,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ error: `Discord API Error: ${errorText}` }) 
             };
         }
-
-        console.log(`✅ Alerte Darkweb de type '${data.type}' envoyée avec succès à Discord`);
+        console.log(`✅ Notification darkweb (${data.type}) envoyée avec succès à Discord`);
         return {
             statusCode: 200,
             headers: {
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Allow-Methods': 'POST'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ 
                 success: true, 
-                message: `Alerte Darkweb de type '${data.type}' envoyée avec succès!` 
+                message: `Notification darkweb (${data.type}) envoyée avec succès!` 
             })
         };
-
     } catch (error) {
         console.error('Darkweb function error:', error);
         return { 
-            statusCode: 500, 
+            statusCode: 500,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({ 
-                error: `Erreur lors de l'envoi de l'alerte Darkweb: ${error.message}` 
+                error: `Erreur lors de l'envoi de la notification darkweb: ${error.message}` 
             }) 
         };
     }
