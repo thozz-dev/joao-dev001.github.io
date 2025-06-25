@@ -1,8 +1,8 @@
 const CONFIG = {
     webhooks: {
-        orders: 'https://discord.com/api/webhooks/1386797118060236800/knlkM8S2GfEh4v6pV8uCrozo-cQQRPfPxCfYHihIftu2IX_wQpbdb9OKjR6xJ7Ed7kz9',
-        contact: 'https://discord.com/api/webhooks/1386799778180104293/pqpA4e07vfx-jJJ2iuoMQ9cV9KflO87KwevJOvNo_KecppDDYXZ8tWWpVz7_FOBTat7k',
-        darkweb: 'https://discord.com/api/webhooks/1387081823812714617/zCpx7INq_KT0B4sj83VVYk6uWSHaDoVIXnZ3mqAy9-V4t682yLWjOqZz5dxhMv0lts6I'
+        orders: '',
+        contact: '',
+        darkweb: ''
     },
     animation: {
         counterDuration: 2000,
@@ -155,13 +155,47 @@ function initOrderForm() {
     }
     const productSelect = document.getElementById('productType');
     const quantityInput = document.getElementById('quantity');
+    const showLTDOnlyCheckbox = document.getElementById('showLTDOnly');
     if (productSelect) {
         productSelect.addEventListener('change', updateOrderSummary);
     }
     if (quantityInput) {
         quantityInput.addEventListener('input', updateOrderSummary);
     }
+    if (showLTDOnlyCheckbox) {
+        showLTDOnlyCheckbox.addEventListener('change', filterProductOptions);
+        filterProductOptions();
+    }
     orderForm.addEventListener('submit', sendOrder, { once: false });
+    updateOrderSummary();
+}
+function filterProductOptions() {
+    const productSelect = document.getElementById('productType');
+    const showLTDOnlyCheckbox = document.getElementById('showLTDOnly');
+    if (!productSelect || !showLTDOnlyCheckbox) return;
+    const showLTD = showLTDOnlyCheckbox.checked;
+    let firstVisibleOptionValue = '';
+    const defaultOption = productSelect.querySelector('option[value=""]');
+    if (defaultOption) {
+        defaultOption.style.display = 'block';
+    }
+    Array.from(productSelect.options).forEach(option => {
+        if (option.value === "") return;
+        const isLTD = option.value.includes('ltd');
+        if (showLTD) {
+            option.style.display = isLTD ? 'block' : 'none';
+        } else {
+            option.style.display = isLTD ? 'none' : 'block';
+        }
+        if (option.style.display === 'block' && !firstVisibleOptionValue) {
+            firstVisibleOptionValue = option.value;
+        }
+    });
+    if (productSelect.selectedOptions.length > 0 && productSelect.selectedOptions[0].style.display === 'none') {
+        productSelect.value = firstVisibleOptionValue || '';
+    } else if (productSelect.selectedOptions.length === 0 && firstVisibleOptionValue) {
+        productSelect.value = firstVisibleOptionValue;
+    }
     updateOrderSummary();
 }
 function updateOrderSummary() {
@@ -172,6 +206,13 @@ function updateOrderSummary() {
     const totalPriceSpan = document.getElementById('totalPrice');
     if (!productSelect || !quantityInput) return;
     const selectedOption = productSelect.options[productSelect.selectedIndex];
+    if (!selectedOption || selectedOption.value === "" || selectedOption.style.display === 'none') {
+        if (subtotalSpan) subtotalSpan.textContent = '0.00$';
+        if (deliveryFeeSpan) deliveryFeeSpan.textContent = '5.00$';
+        if (totalPriceSpan) totalPriceSpan.textContent = '5.00$';
+        quantityInput.disabled = false;
+        return;
+    }
     const price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
     const quantity = parseInt(quantityInput.value) || 0;
     const isSubscription = selectedOption.value.includes('subscription');
@@ -420,34 +461,23 @@ async function sendOrderToDiscord(orderData) {
         embeds: [embed]
     };
     try {
-        if (!CONFIG.webhooks.orders) {
-            throw new Error('URL du webhook de commandes non configurée');
-        }
-        console.log(`📤 Envoi de la commande ${orderNumber} vers Discord...`);
-        const response = await fetch(CONFIG.webhooks.orders, {
+        const response = await fetch('/.netlify/functions/send-contact', {
             method: 'POST',
             headers: { 
-                'Content-Type': 'application/json',
-                'User-Agent': 'EveryWater-OrderSystem/1.0'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(messageContent)
         });
+
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Erreur Discord:', response.status, errorText);
-            if (response.status === 404) {
-                throw new Error('Le webhook Discord n\'existe plus ou a été supprimé.');
-            } else if (response.status === 401) {
-                throw new Error('Token d\'authentification Discord invalide.');
-            } else if (response.status === 429) {
-                throw new Error('Limite de taux Discord atteinte. Veuillez réessayer plus tard.');
-            }
-            throw new Error(`Erreur Discord: ${response.status} - ${errorText}`);
+            const errorData = await response.json();
+            throw new Error(`Erreur lors de l'envoi via la fonction serverless: ${errorData.message || response.statusText}`);
         }
-        console.log(`✅ ${isSubscription ? 'Abonnement' : 'Commande'} ${orderNumber} envoyé(e) avec succès sur Discord`);
-        return { success: true, orderNumber };
+
+        console.log(`✅ Message de contact envoyé avec succès via la fonction serverless`);
+        return { success: true };
     } catch (error) {
-        console.error('❌ Erreur lors de l\'envoi vers Discord:', error);
+        console.error('❌ Erreur lors de l\'envoi du contact:', error);
         throw error;
     }
 }
@@ -536,31 +566,42 @@ async function handleContactSubmit(e) {
     }
 }
 async function sendDarkwebAlert(contactData, accessConfig) {
-    const webhookURL = CONFIG.webhooks.darkweb;
-    
-    if (!webhookURL) {
-        throw new Error('Webhook non configuré');
-    }
-    const payload = {
-        content: accessConfig.webhookMessage,
-        embeds: [{
-            title: "Nouvel accès détecté",
-            description: `Accès à ${accessConfig.redirectPage}`,
-            fields: [
-                { name: "Nom", value: contactData.name, inline: true },
-                { name: "Email", value: contactData.email, inline: true },
-                { name: "Message", value: contactData.message.substring(0, 100) + '...' }
-            ],
-            timestamp: contactData.timestamp
-        }]
-    };
-    const response = await fetch(webhookURL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    });
-    if (!response.ok) {
-        throw new Error('Échec de l\'envoi à Discord');
+    try {
+        const dataToSend = {
+            type: 'failed_attempt',
+            contactData: {
+                name: contactData.name,
+                email: contactData.email,
+                subject: contactData.subject,
+                message: contactData.message,
+                timestamp: contactData.timestamp || new Date().toISOString()
+            },
+            accessConfig: {
+                redirectPage: accessConfig.redirectPage || 'Page sécurisée',
+                requiredKeywords: accessConfig.requiredKeywords || [],
+                webhookMessage: accessConfig.webhookMessage || '🚨 Tentative d\'accès non autorisée détectée!'
+            }
+        };
+        const response = await fetch('/.netlify/functions/send-darkweb', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dataToSend)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Erreur lors de l'envoi de l'alerte darkweb: ${errorData.error || response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log('✅ Alerte darkweb (tentative échouée) envoyée avec succès');
+        return { success: true };
+
+    } catch (error) {
+        console.error('❌ Erreur lors de l\'envoi de l\'alerte darkweb:', error);
+        throw error;
     }
 }
 function validateContactForm(data) {
@@ -582,105 +623,41 @@ async function sendContactToDiscord(contactData) {
         'other': '❓ Autre demande'
     };
     const subjectText = subjectLabels[contactData.subject] || contactData.subject;
-    const subjectColors = {
-        'information': 0x17a2b8,
-        'quote': 0x28a745,
-        'complaint': 0xdc3545,
-        'partnership': 0x6f42c1,
-        'other': 0x6c757d
-    };
-    const embedColor = subjectColors[contactData.subject] || 0x006bb3;
-    const getPriority = (subject) => {
-        switch(subject) {
-            case 'complaint': return '🔴 **URGENT**';
-            case 'partnership': return '🟡 **IMPORTANT**';
-            case 'quote': return '🟢 **BUSINESS**';
-            default: return '🔵 **NORMAL**';
-        }
-    };
-    const messageId = `MSG-${Date.now().toString().slice(-8)}`; // Générer un ID unique pour le message
-    const embed = {
-        title: "📧 NOUVEAU MESSAGE DE CONTACT",
-        description: `**Priorité:** ${getPriority(contactData.subject)}\n**Sujet:** ${subjectText}\n**ID Message:** \`${messageId}\``,
-        color: embedColor,
-        fields: [
-            {
-                name: "👤 INFORMATIONS CLIENT",
-                value: `**Nom:** ${contactData.name}\n**Email:** ${contactData.email}`,
-                inline: true
-            },
-            {
-                name: "📊 DÉTAILS DE LA DEMANDE",
-                value: `**Type:** ${subjectText}\n**Reçu le:** ${contactData.timestamp}`,
-                inline: true
-            },
-            {
-                name: "💬 MESSAGE COMPLET",
-                value: `\`\`\`\n${contactData.message}\n\`\`\``,
-                inline: false
-            },
-            {
-                name: "🎯 ACTIONS A FAIRE",
-                value: contactData.subject === 'complaint' ? 
-                    '⚡ **Réponse immédiate requise**\n📞 Appeler le client en priorité' :
-                    contactData.subject === 'quote' ?
-                    '💼 **Préparer un devis personnalisé**\n📧 Répondre sous 24h' :
-                    '📧 **Répondre par email**\n📞 Ou contacter par téléphone si nécessaire',
-                inline: false
-            }
-        ],
-        author: {
-            name: "Every Water - Centre de Contact",
-            icon_url: "https://cdn.discordapp.com/attachments/1232583375181582366/1386711049759096833/raw.png?ex=685ab2ce&is=6859614e&hm=1c495883e585e82ba26331cab3699dc8e697706be58b75fad0cdb24688a80a10&"
-        },
-        thumbnail: {
-            url: contactData.subject === 'complaint' ? 
-                "https://cdn-icons-png.flaticon.com/512/1828/1828843.png" :
-                "https://cdn.discordapp.com/attachments/1232583375181582366/1386711049759096833/raw.png?ex=685ab2ce&is=6859614e&hm=1c495883e585e82ba26331cab3699dc8e697706be58b75fad0cdb24688a80a10&"
-        },
-        footer: {
-            text: `Message ID: ${messageId} • Every Water Support`,
-            icon_url: "https://cdn-icons-png.flaticon.com/512/3062/3062634.png"
-        },
-        timestamp: new Date().toISOString()
-    };
-    const messageContent = {
-        content: `📨 **NOUVEAU MESSAGE DE CONTACT** 📨\n\n` +
-                `**De:** ${contactData.name} (${contactData.email})\n` +
-                `**Sujet:** ${subjectText}\n` +
-                `**Priorité:** ${getPriority(contactData.subject)}\n\n` +
-                `📞 **Rappel:** Ce client souhaite être recontacté directement par téléphone ou mail.\n\n` +
-                `**ID Message:** \`${messageId}\``, // Ajout de l'ID message ici
-        embeds: [embed]
+    const messageId = `MSG-${Date.now().toString().slice(-8)}`;
+    const dataToSend = {
+        nom: contactData.name,
+        email: contactData.email,
+        telephone: contactData.phone || null,
+        sujet: subjectText,
+        message: contactData.message,
+        subjectType: contactData.subject,
+        timestamp: contactData.timestamp,
+        messageId: messageId
     };
     try {
-        if (!CONFIG.webhooks.contact) {
-            throw new Error('URL du webhook de contact non configurée');
-        }
-        
-        const response = await fetch(CONFIG.webhooks.contact, {
+        const response = await fetch('/.netlify/functions/send-contact', {
             method: 'POST',
             headers: { 
-                'Content-Type': 'application/json',
-                'User-Agent': 'EveryWater-ContactSystem/1.0'
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify(messageContent)
+            body: JSON.stringify(dataToSend)
         });
-        
+
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Erreur Discord Contact:', response.status, errorText);
-            throw new Error(`Erreur Discord: ${response.status} - ${errorText}`);
+            const errorData = await response.json();
+            throw new Error(`Erreur lors de l'envoi via la fonction serverless: ${errorData.error || response.statusText}`);
         }
-        
-        console.log(`✅ Message de contact envoyé avec succès sur Discord`);
-        return { success: true };
+
+        const result = await response.json();
+        console.log(`✅ Message de contact envoyé avec succès via la fonction serverless`);
+        return { success: true, messageId: messageId };
 
     } catch (error) {
-        console.error('❌ Erreur lors de l\'envoi du contact vers Discord:', error);
+        console.error('❌ Erreur lors de l\'envoi du contact:', error);
         throw error;
     }
 }
+
 function selectSubscriptionPlan(planName, planPrice) {
     const productSelect = document.getElementById('productType');
     const quantityInput = document.getElementById('quantity');
@@ -982,66 +959,38 @@ window.addEventListener('click', function(event) {
     }
 }); 
 async function sendDarkwebAccessNotification(contactData, accessConfig) {
-    if (!CONFIG.webhooks.darkweb) {
-        throw new Error('URL du webhook darkweb non configurée');
-    }
-    const embed = {
-        title: `🚨 ALERTE : ACCÈS À ${accessConfig.redirectPage.toUpperCase()} 🚨`,
-        description: `Un accès spécial a été détecté avec les informations suivantes :`,
-        color: 0xFF5733,
-        fields: [
-            {
-                name: "🔑 Type d'accès",
-                value: `**Page:** ${accessConfig.redirectPage}\n**Code:** ||${accessConfig.specialCode}||`,
-                inline: false
-            },
-            {
-                name: "👤 Informations de l'utilisateur",
-                value: `**Nom:** ${contactData.name}\n**Email:** ${contactData.email}\n**Sujet:** ${contactData.subject}`,
-                inline: false
-            },
-            {
-                name: "💬 Message soumis",
-                value: `\`\`\`\n${contactData.message}\n\`\`\``,
-                inline: false
-            },
-            {
-                name: "⏰ Heure de l'accès",
-                value: `<t:${Math.floor(new Date(contactData.timestamp).getTime() / 1000)}:F>`,
-                inline: true
-            }
-        ],
-        thumbnail: {
-            url: "https://cdn-icons-png.flaticon.com/512/2889/2889676.png"
-        },
-        footer: {
-            text: `Accès Sécurisé • ${new Date().getFullYear()}`,
-            icon_url: "https://cdn-icons-png.flaticon.com/512/1828/1828884.png"
-        },
-        timestamp: new Date().toISOString()
-    };
-    const messageContent = {
-        content: `⚠️ **ALERTE SÉCURITÉ** ⚠️\nUn utilisateur a tenté d'accéder à la page cachée avec les informations suivantes : \n**Nom:** ${contactData.name}\n**Email:** ${contactData.email}\n**Message:** "${contactData.message.substring(0, 100)}..."\n\n**Action requise:** Vérifier l'accès et surveiller l'activité.`,
-        embeds: [embed]
-    };
     try {
-        const response = await fetch(CONFIG.webhooks.darkweb, {
+        const dataToSend = {
+            type: 'successful_access',
+            contactData: {
+                name: contactData.name,
+                email: contactData.email,
+                subject: contactData.subject,
+                message: contactData.message,
+                timestamp: contactData.timestamp || new Date().toISOString()
+            },
+            accessConfig: {
+                redirectPage: accessConfig.redirectPage || 'Page sécurisée',
+                requiredKeywords: accessConfig.requiredKeywords || [],
+                webhookMessage: accessConfig.webhookMessage || '✅ Accès autorisé accordé!'
+            }
+        };
+        const response = await fetch('/.netlify/functions/send-darkweb', {
             method: 'POST',
             headers: { 
-                'Content-Type': 'application/json',
-                'User -Agent': 'EveryWater-SecuritySystem/1.0'
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify(messageContent)
+            body: JSON.stringify(dataToSend)
         });
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Erreur Discord Darkweb:', response.status, errorText);
-            throw new Error(`Erreur Discord Darkweb: ${response.status} - ${errorText}`);
+            const errorData = await response.json();
+            throw new Error(`Erreur lors de l'envoi de la notification d'accès: ${errorData.error || response.statusText}`);
         }
-        console.log(`✅ Notification d'accès page cachée envoyée avec succès sur Discord`);
+        const result = await response.json();
+        console.log('✅ Notification d\'accès darkweb envoyée avec succès');
         return { success: true };
     } catch (error) {
-        console.error('❌ Erreur lors de l\'envoi de la notification darkweb vers Discord:', error);
+        console.error('❌ Erreur lors de l\'envoi de la notification d\'accès:', error);
         throw error;
     }
 }

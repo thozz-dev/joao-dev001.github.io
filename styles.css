@@ -719,6 +719,19 @@ section {
     min-height: clamp(80px, 15vw, 100px);
 }
 
+.checkbox-group {
+    margin: 1rem 0;
+}
+
+.checkbox-group input[type="checkbox"] {
+    margin-right: 0.5rem;
+}
+
+.checkbox-group label {
+    font-size: 0.9rem;
+    color: #555;
+}
+
 .order-summary {
     background: #f0f9ff;
     padding: 1.5rem;

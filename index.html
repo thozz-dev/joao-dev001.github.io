@@ -274,11 +274,17 @@
                         <label for="customerAddress">Adresse de livraison *</label>
                         <input type="text" id="customerAddress" name="customerAddress" required>
                     </div>
+                    <div class="form-group checkbox-group">
+                        <label for="showLTDOnly">Afficher uniquement les offres LTD</label>
+                        <input type="checkbox" id="showLTDOnly" name="showLTDOnly">
+                    </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label for="productType">Type de produit *</label>
                             <select id="productType" name="productType" required onchange="updateOrderSummary()">
                                 <option value="">Sélectionnez un produit</option>
+                                <option value="bottle-ltd" data-price="30">Bouteille (LTD)- 30$</option>
+                                <option value="bottle-ltd-gazeuse" data-price="40">Bouteille Gazeuse (LTD) - 40$</option>
                                 <option value="bottle-1L" data-price="50">Bouteille 1L - 50$</option>
                                 <option value="bottle-gazeuse-1L" data-price="60">Bouteille Gazeuse 1L - 60$</option>
                                 <option value="pack-bottles-10L" data-price="490">Pack 10L - 490$</option>
