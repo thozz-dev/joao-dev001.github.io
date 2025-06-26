@@ -1,0 +1,2373 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Access Portal - El Cartel</title>
+    <style>
+        /* Styles généraux */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #00ff00;
+            overflow: hidden; 
+            height: 100vh;
+        }
+
+        .security-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.8s ease-out;
+        }
+
+        .security-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .terminal-window {
+            width: 90vw;
+            max-width: 800px;
+            height: 45vh;
+            max-height: 1000px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.2);
+        }
+
+        .terminal-header {
+            background: linear-gradient(90deg, #001100, #003300);
+            padding: 1rem;
+            border-bottom: 1px solid #00ff00;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .terminal-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .terminal-button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff5f56;
+        }
+
+        .terminal-button:nth-child(2) { background: #ffbd2e; }
+        .terminal-button:nth-child(3) { background: #27ca3f; }
+
+        .terminal-title {
+            color: #00ff00;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .terminal-content {
+            padding: 1rem;
+            height: calc(100% - 60px);
+            overflow-y: auto;
+            position: relative;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .terminal-content::-webkit-scrollbar {
+            display: none;
+        }
+
+        .terminal-line {
+            margin: 0.4rem 0;
+            opacity: 0;
+            animation: typeIn 0.03s ease-in-out forwards;
+        }
+
+        .terminal-line.error {
+            color: #ff3333;
+        }
+
+        .terminal-line.warning {
+            color: #ffaa00;
+        }
+
+        .terminal-line.success {
+            color: #00ff00;
+        }
+
+        .terminal-line.info {
+            color: #0099ff;
+        }
+
+        .cursor {
+            display: inline-block;
+            background: #00ff00;
+            width: 2px;
+            height: 1em;
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes typeIn {
+            to { opacity: 1; }
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 18px;
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #00aa00);
+            width: 0%;
+            transition: width 0.2s ease;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .matrix-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.05;
+        }
+
+        .matrix-char {
+            position: absolute;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            animation: matrixFall 2s linear infinite;
+        }
+
+        @keyframes matrixFall {
+            0% {
+                transform: translateY(-100vh);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+
+        .glitch {
+            position: relative;
+            display: inline-block;
+        }
+
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .glitch::before {
+            animation: glitch1 0.15s infinite;
+            color: #ff0000;
+            z-index: -1;
+        }
+
+        .glitch::after {
+            animation: glitch2 0.15s infinite;
+            color: #0000ff;
+            z-index: -2;
+        }
+
+        @keyframes glitch1 {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-1px, 1px); }
+            40% { transform: translate(-1px, -1px); }
+            60% { transform: translate(1px, 1px); }
+            80% { transform: translate(1px, -1px); }
+        }
+
+        @keyframes glitch2 {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(1px, -1px); }
+            40% { transform: translate(1px, 1px); }
+            60% { transform: translate(-1px, -1px); }
+            80% { transform: translate(-1px, 1px); }
+        }
+
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff00, transparent);
+            animation: scan 1.5s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { top: 0; opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        @media (max-width: 768px) {
+            .terminal-window {
+                width: 95vw;
+                height: 60vh;
+            }
+
+            .terminal-title {
+                font-size: 0.8rem;
+            }
+
+            .terminal-content {
+                padding: 0.5rem;
+                height: calc(100% - 50px);
+            }
+
+            .terminal-line {
+                margin: 0.3rem 0;
+                font-size: 0.9rem;
+            }
+
+            .progress-bar {
+                height: 15px;
+            }
+        }
+
+        .main-content {
+            opacity: 0;
+            transition: opacity 0.8s ease-in;
+            background: #0a0a0a;
+            min-height: 100vh;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .main-content.visible {
+            opacity: 1;
+        }
+
+        .background-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(34, 139, 34, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(220, 20, 60, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 60px 0 40px;
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 1px solid rgba(34, 139, 34, 0.2);
+            margin-bottom: 40px;
+            border-left: 1px solid rgba(34, 139, 34, 0.2);
+            border-right: 1px solid rgba(34, 139, 34, 0.2);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .header .btn {
+            display: inline-block;
+            align-items: center;
+            padding: 10px 20px;
+            background: #228B22;
+            color: white;
+            text-decoration: none;
+            border-radius: 0;
+            font-weight: 700;
+            font-size: 1.0rem;
+            text-align: center;
+            margin-top: 20px;
+            max-width: 250px;
+            max-height: 50px;
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #1a6b1a;
+        }
+
+        .header .btn:hover {
+            background: #32CD32;
+            box-shadow: 0 0 10px rgba(34, 139, 34, 0.6);
+        }
+
+        .logo {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 30px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid #dc143c;
+            box-shadow: 0 0 20px rgba(220, 20, 60, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(220, 20, 60, 0.4);
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .title {
+            font-size: 2.8rem;
+            font-weight: 300;
+            background: linear-gradient(135deg, #228B22, #ffffff, #dc143c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 1.1rem;
+            font-weight: 300;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+        }
+
+        .flag-divider {
+            width: 200px;
+            height: 3px;
+            background: linear-gradient(to right, #228B22 33%, white 33%, white 66%, #dc143c 66%);
+            margin: 0 auto;
+            border-radius: 0;
+        }
+
+        .page {
+            display: none;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 50px;
+            border-radius: 0;
+            border: 1px solid rgba(34, 139, 34, 0.2);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .auth-title {
+            text-align: center;
+            color: #ffffff;
+            font-size: 1.8rem;
+            font-weight: 300;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(34, 139, 34, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            color: #b0b0b0;
+            margin-bottom: 10px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(34, 139, 34, 0.3);
+            border-radius: 0;
+            color: #ffffff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: #228B22;
+            box-shadow: 0 0 15px rgba(34, 139, 34, 0.3);
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .form-group input::placeholder {
+            color: #666;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: #228B22;
+            border: 1px solid #1a6b1a;
+            border-radius: 0;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            background: #32CD32;
+            box-shadow: 0 3px 15px rgba(34, 139, 34, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-danger {
+            background: #dc143c;
+            border: 1px solid #a31030;
+        }
+
+        .btn-danger:hover {
+            background: #ff4757;
+            box-shadow: 0 3px 15px rgba(220, 20, 60, 0.5);
+        }
+
+        .forum-container {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 0; /* Sharp */
+            padding: 40px;
+            border: 1px solid rgba(34, 139, 34, 0.2);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .forum-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .forum-title {
+            font-size: 2.5rem;
+            font-weight: 300;
+            color: #ffffff;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .forum-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .forum-category {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(34, 139, 34, 0.2);
+            border-radius: 0;
+            padding: 30px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .forum-category:hover {
+            border-color: #228B22;
+            box-shadow: 0 5px 20px rgba(34, 139, 34, 0.3);
+            transform: translateY(-3px);
+        }
+
+        .forum-category-title {
+            color: #ffffff;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            letter-spacing: 1px;
+        }
+
+        .shop-section {
+            grid-column: 1 / -1;
+            margin-top: 30px;
+        }
+
+        .shop-section .shop-title {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        .product-card {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(34, 139, 34, 0.2);
+            border-radius: 0; /* Sharp */
+            padding: 30px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(34, 139, 34, 0.08), transparent);
+            transition: left 0.4s ease;
+        }
+
+        .product-card:hover::before {
+            left: 100%;
+        }
+
+        .product-card:hover {
+            border-color: #228B22;
+            box-shadow: 0 5px 20px rgba(34, 139, 34, 0.3);
+            transform: translateY(-3px);
+        }
+
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .product-title {
+            color: #ffffff;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .product-category {
+            color: #888;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .product-price {
+            color: #dc143c;
+            font-size: 1.8rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .product-description {
+            color: #b0b0b0;
+            margin-bottom: 25px;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .product-actions .btn {
+            flex: 1;
+            margin: 0;
+            padding: 12px;
+            font-size: 0.9rem;
+            border-radius: 0;
+        }
+
+        .cart-widget {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(220, 20, 60, 0.3);
+            border-radius: 0;
+            padding: 20px;
+            z-index: 1000;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+        }
+
+        .cart-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .cart-header:hover {
+            transform: scale(1.05);
+        }
+
+        .cart-icon {
+            color: #dc143c;
+            font-size: 1.4rem;
+            margin-right: 10px;
+        }
+
+        .cart-count {
+            background: #dc143c; /* Solid red */
+            color: white;
+            border-radius: 5px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        /* Notifications & Loading */
+        .notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid #228B22;
+            border-radius: 0; /* Sharp */
+            padding: 40px;
+            text-align: center;
+            z-index: 2000;
+            display: none;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+            max-width: 500px;
+        }
+
+        .notification.show {
+            display: block;
+            animation: modalAppear 0.5s ease;
+        }
+
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .notification h3 {
+            color: #228B22;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+
+        .notification p {
+            color: #b0b0b0;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .error-message {
+            background: rgba(220, 20, 60, 0.1);
+            border: 1px solid rgba(220, 20, 60, 0.3);
+            color: #ff6b7a;
+            padding: 15px;
+            border-radius: 0; /* Sharp */
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #228B22;
+            margin-top: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #228B22;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .modal {
+            display: flex;
+            position: fixed;
+            z-index: 2001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.85);
+            backdrop-filter: blur(6px);
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: rgba(0, 0, 0, 0.95);
+            margin: auto;
+            padding: 30px;
+            border: 1px solid rgba(34, 139, 34, 0.3);
+            border-radius: 0;
+            width: 80%;
+            max-width: 800px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.8);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-image {
+            width: 100%;
+            height: auto;
+            max-height: 350px;
+            object-fit: contain;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+            border-radius: 0;
+        }
+
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            font-size: 35px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: #dc143c;
+            text-decoration: none;
+            transform: scale(1.1);
+        }
+
+        .modal-title {
+            color: #ffffff;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .modal-category {
+            color: #888;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        .modal-price {
+            color: #dc143c;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .modal-description {
+            color: #b0b0b0;
+            line-height: 1.7;
+            margin-bottom: 30px;
+            font-size: 1rem;
+            white-space: pre-wrap;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .modal-actions .btn {
+            width: auto;
+            padding: 12px 25px;
+            font-size: 1rem;
+            border-radius: 0;
+        }
+
+        #cartModal .modal-content {
+            max-width: 600px;
+        }
+
+        .cart-modal-items {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding-right: 10px;
+        }
+
+        .cart-modal-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .cart-modal-item:last-child {
+            border-bottom: none;
+        }
+
+        .cart-item-info {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+
+        .cart-item-name {
+            color: #ffffff;
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        .cart-item-quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .quantity-btn {
+            background: rgba(34, 139, 34, 0.3);
+            border: 1px solid #228B22;
+            color: #00ff00;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border-radius: 0;
+        }
+
+        .quantity-btn:hover {
+            background: #228B22;
+        }
+
+        .item-quantity {
+            color: #00ff00;
+            font-weight: bold;
+            width: 25px;
+            text-align: center;
+        }
+
+        .cart-item-price-total {
+            color: #dc143c;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-left: 15px;
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .cart-item-remove-btn {
+            background: rgba(220, 20, 60, 0.3);
+            border: 1px solid #dc143c;
+            color: #ff4757;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            font-size: 1.2rem;
+            margin-left: 10px;
+            border-radius: 0;
+        }
+
+        .cart-item-remove-btn:hover {
+            background: #dc143c;
+            color: white;
+        }
+
+        .cart-modal-total {
+            text-align: right;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00ff00;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 20px;
+        }
+
+        .cart-modal-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .cart-modal-actions .btn {
+            flex: 1;
+            margin: 0;
+        }
+
+        #removeQuantityModal .modal-content {
+            max-width: 400px;
+            padding: 25px;
+        }
+
+        #removeQuantityModal h3 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #ffffff;
+            text-align: center;
+        }
+
+        #removeQuantityModal input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #228B22;
+            color: #00ff00;
+            font-size: 1rem;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 0;
+        }
+
+        #removeQuantityModal .btn {
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .auth-container {
+                padding: 30px 25px;
+            }
+
+            .forum-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .shop-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cart-widget {
+                top: 20px;
+                right: 20px;
+                padding: 15px;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .modal-title {
+                font-size: 1.5rem;
+            }
+
+            .modal-price {
+                font-size: 1.8rem;
+            }
+
+            .modal-actions {
+                flex-direction: column;
+            }
+
+            .cart-modal-item {
+                flex-wrap: wrap;
+                justify-content: center;
+                text-align: center;
+            }
+
+            .cart-item-info, .cart-item-quantity-controls, .cart-item-price-total, .cart-item-remove-btn {
+                width: 100%;
+                margin: 5px 0;
+                justify-content: center;
+            }
+
+            .cart-item-price-total {
+                text-align: center;
+            }
+        }
+
+        /* Styles pour les nouvelles sections d'information */
+        .info-section {
+            margin-top: 40px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .info-card {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(34, 139, 34, 0.2);
+            border-radius: 0;
+            padding: 25px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .info-card:hover {
+            border-color: #228B22;
+            box-shadow: 0 5px 20px rgba(34, 139, 34, 0.3);
+            transform: translateY(-3px);
+        }
+
+        .info-card-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            margin-bottom: 15px;
+            border-radius: 0;
+        }
+
+        .info-card-title {
+            color: #ffffff;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .info-card-date {
+            color: #888;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+        }
+
+        .info-card-summary {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Styles pour les boutons d'édition */
+        .edit-btn, .add-new-btn, .post-edit-btn {
+            background: #0099ff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-left: 10px;
+            transition: background 0.3s ease;
+        }
+
+        .edit-btn:hover, .add-new-btn:hover, .post-edit-btn:hover {
+            background: #007acc;
+        }
+
+        .add-new-btn {
+            display: block;
+            margin-bottom: 20px;
+            width: fit-content;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+
+        .post-edit-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 8px;
+            font-size: 0.7rem;
+        }
+
+        /* Styles pour les modales d'édition/ajout */
+        .edit-modal-form label {
+            display: block;
+            margin-bottom: 5px;
+            color: #b0b0b0;
+        }
+
+        .edit-modal-form input[type="text"],
+        .edit-modal-form input[type="number"],
+        .edit-modal-form textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(34, 139, 34, 0.3);
+            color: #ffffff;
+            border-radius: 0;
+        }
+
+        .edit-modal-form textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .edit-modal-form .btn {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="security-overlay" id="securityOverlay">
+        <div class="matrix-bg" id="matrixBg"></div>
+        <div class="terminal-window">
+            <div class="terminal-header">
+                <div class="terminal-buttons">
+                    <div class="terminal-button"></div>
+                    <div class="terminal-button"></div>
+                    <div class="terminal-button"></div>
+                </div>
+                <div class="terminal-title">SECURE_ACCESS_TERMINAL v2.1.4</div>
+            </div>
+            <div class="terminal-content">
+                <div class="scan-line"></div>
+                <div id="terminalOutput"></div>
+                <div class="progress-bar" style="display: none;" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="main-content" id="mainContent">
+        <div class="background-overlay"></div>
+        <div class="container">
+            <div class="header">
+                <div class="logo">
+                    <img src="https://media.discordapp.net/attachments/1232583375181582366/1387087700313505852/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png?ex=685c1196&is=685ac016&hm=0b98e6a808a15974a5bf2b1dd9d6467734bb0c31341970e093e34bee56b17fbb&=&format=webp&quality=lossless&width=930&height=930" alt="El Cartel Logo">
+                </div>
+                <h1 class="title">EL CARTEL</h1>
+                <p class="subtitle">SECURE ACCESS PORTAL</p>
+                <a href="index.html" class="btn" id="homeRedirect">💧 EveryWater</a>
+            </div>
+            <div class="page active" id="authPage">
+                <div class="auth-container">
+                    <h2 class="auth-title">AUTHENTIFICATION REQUISE</h2>
+                    <form id="authForm">
+                        <div class="form-group">
+                            <label for="name">ID</label>
+                            <input type="text" id="name" name="name" placeholder="Entrez votre identifiant" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Code d'accès / Message</label>
+                            <input type="text" id="message" name="message" placeholder="Entrez votre code d'accès" required>
+                        </div>
+                        <button type="submit" class="btn">AUTHENTIFIER</button>
+                        <div class="loading" id="loading">Vérification en cours...</div>
+                        <div class="error-message" id="errorMessage">Accès refusé. Vérifiez vos identifiants.</div>
+                    </form>
+                </div>
+            </div>
+            <div class="page" id="forumPage">
+                <div class="cart-widget" onclick="openCartModal()">
+                    <div class="cart-header">
+                        <span class="cart-icon">🛒</span>
+                        <span class="cart-count" id="cartCount">0</span>
+                    </div>
+                </div>
+                <div class="forum-container">
+                    <div class="forum-header">
+                        <h2 class="forum-title">CENTRE D'INFORMATION SÉCURISÉ</h2>
+                        <div class="flag-divider"></div>
+                    </div>
+                    <div class="forum-grid">
+                        <div class="forum-category shop-section" id="productSection">
+                            <h3 class="forum-category-title shop-title">🛍️ Marché Privé</h3>
+                            <div class="shop-grid" id="productGrid">
+                            </div>
+                        </div>
+                        <div class="forum-category info-section" id="newsSection">
+                            <h3 class="forum-category-title">📰 Dernières Nouvelles</h3>
+                            <div class="info-grid" id="newsGrid">
+                            </div>
+                        </div>
+                        <div class="forum-category info-section" id="sensitiveInfoSection" style="display: none;">
+                            <h3 class="forum-category-title">🚨 Informations Sensibles</h3>
+                            <div class="info-grid" id="sensitiveInfoGrid">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Modale Produit -->
+        <div id="productModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('productModal')">&times;</span>
+                <img id="modalImage" src="" alt="Product Image" class="modal-image">
+                <h3 id="modalTitle" class="modal-title"></h3>
+                <p id="modalCategory" class="modal-category"></p>
+                <p id="modalPrice" class="modal-price"></p>
+                <p id="modalDescription" class="modal-description"></p>
+                <div class="modal-actions">
+                    <button class="btn" id="modalAddToCartBtn">PANIER 🛒</button>
+                    <button class="btn btn-danger" id="modalBuyDirectBtn">ACHETER 🪙</button>
+                </div>
+            </div>
+        </div>
+        <!-- Modale Panier -->
+        <div id="cartModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('cartModal')">&times;</span>
+                <h3 class="modal-title">Votre Panier 🛒</h3>
+                <div class="cart-modal-items" id="cartModalItems">
+                </div>
+                <div class="cart-modal-total" id="cartModalTotal">
+                    Total: $0
+                </div>
+                <div class="cart-modal-actions">
+                    <button class="btn btn-danger" onclick="clearCart()">Vider le panier</button>
+                    <button class="btn" onclick="checkout()">ACHETER 🪙</button>
+                </div>
+            </div>
+        </div>
+        <!-- Modale Suppression Quantité -->
+        <div id="removeQuantityModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('removeQuantityModal')">&times;</span>
+                <h3>Supprimer une quantité</h3>
+                <p style="color: #b0b0b0; text-align: center; margin-bottom: 15px;">Combien d'unités de "<span id="removeQuantityProductName" style="color: #00ff00;"></span>" souhaitez-vous supprimer ?</p>
+                <input type="number" id="quantityToRemove" min="1" value="1">
+                <button class="btn btn-danger" id="confirmRemoveQuantityBtn">Confirmer la suppression</button>
+            </div>
+        </div>
+        <!-- Modale Actualité -->
+        <div id="newsModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('newsModal')">&times;</span>
+                <img id="newsModalImage" src="" alt="Article Image" class="modal-image" style="display: none;">
+                <h3 id="newsModalTitle" class="modal-title"></h3>
+                <p id="newsModalDate" class="modal-category"></p>
+                <p id="newsModalContent" class="modal-description"></p>
+            </div>
+        </div>
+        <!-- Modale Info Gouvernementale -->
+        <div id="govInfoModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('govInfoModal')">&times;</span>
+                <img id="govInfoModalImage" src="" alt="Info Image" class="modal-image" style="display: none;">
+                <h3 id="govInfoModalTitle" class="modal-title"></h3>
+                <p id="govInfoModalContent" class="modal-description"></p>
+            </div>
+        </div>
+        <!-- Modale d'édition/ajout (générique) -->
+        <div id="editAddModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('editAddModal')">&times;</span>
+                <h3 id="editAddModalTitle" class="modal-title"></h3>
+                <form id="editAddForm" class="edit-modal-form">
+                    <!-- Les champs du formulaire seront générés dynamiquement ici -->
+                    <button type="submit" class="btn">Sauvegarder</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="notification" id="notification">
+            <h3>COMMANDE ENREGISTRÉE</h3>
+            <p>Votre demande a été transmise avec succès.</p>
+            <p>Un membre de notre équipe vous contactera dans les plus brefs délais via des canaux sécurisés.</p>
+            <p style="font-size: 0.9rem; color: #666;">Référence: <span id="orderRef"></span></p>
+            <button class="btn" onclick="closeNotification()">FERMER</button>
+        </div>
+    </div>
+    <script>
+        class SecurityAnimation {
+            constructor() {
+                this.terminalOutput = document.getElementById('terminalOutput');
+                this.progressBar = document.getElementById('progressBar');
+                this.progressFill = document.getElementById('progressFill');
+                this.securityOverlay = document.getElementById('securityOverlay');
+                this.mainContent = document.getElementById('mainContent');
+
+                this.commands = [
+                    { text: ">>> Initialisation du module de sécurité...", type: "info", delay: 80 },
+                    { text: ">>> Vérification des protocoles de communication...", type: "success", delay: 120 },
+                    { text: ">>> Établissement d'une connexion chiffrée (AES-256)...", type: "info", delay: 100 },
+                    { text: ">>> Validation des certificats de sécurité...", type: "success", delay: 110 },
+                    { text: ">>> Routage via des nœuds anonymes...", type: "info", delay: 130 },
+                    { text: "ALERTE: Tentative d'analyse de port détectée", type: "warning", delay: 200 },
+                    { text: ">>> Activation des contre-mesures défensives...", type: "info", delay: 90 },
+                    { text: ">>> Déploiement du pare-feu dynamique...", type: "success", delay: 120 },
+                    { text: "ERREUR: Tentative d'injection de code bloquée", type: "error", delay: 180 },
+                    { text: ">>> Réinitialisation des identifiants de session...", type: "info", delay: 100 },
+                    { text: ">>> Obfuscation de l'empreinte numérique...", type: "success", delay: 90 },
+                    { text: ">>> Vérification de l'intégrité du système...", type: "info", delay: 120 },
+                    { text: ">>> Génération de clés éphémères...", type: "success", delay: 110 },
+                    { text: ">>> Établissement du tunnel sécurisé...", type: "info", delay: 130 },
+                    { text: "AVERTISSEMENT: Authentification multi-facteurs requise", type: "warning", delay: 250 },
+                    { text: ">>> Vérification des identifiants biométriques...", type: "info", delay: 300 },
+                    { text: ">>> Accès accordé - Bienvenue sur le portail", type: "success", delay: 120 },
+                    { text: ">>> Chargement de l'interface EL CARTEL...", type: "success", delay: 100 }
+                ];
+
+                this.currentCommand = 0;
+                this.isTyping = false;
+            }
+
+            init() {
+                this.createMatrixEffect();
+                setTimeout(() => {
+                    this.startSecuritySequence();
+                }, 500);
+            }
+
+            createMatrixEffect() {
+                const matrixBg = document.getElementById('matrixBg');
+                const chars = '01ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+-=[]{}|;:,.<>?';
+                for (let i = 0; i < 50; i++) {
+                    const char = document.createElement('div');
+                    char.className = 'matrix-char';
+                    char.textContent = chars[Math.floor(Math.random() * chars.length)];
+                    char.style.left = Math.random() * 100 + '%';
+                    char.style.animationDelay = Math.random() * 2 + 's';
+                    char.style.animationDuration = (Math.random() * 2 + 1) + 's';
+                    matrixBg.appendChild(char);
+                }
+            }
+
+            async startSecuritySequence() {
+                for (const command of this.commands) {
+                    await this.typeCommand(command);
+                    await this.sleep(command.delay);
+                }
+                await this.showProgressBar();
+                await this.sleep(1000);
+                this.completeAccess();
+            }
+
+            async typeCommand(command) {
+                return new Promise((resolve) => {
+                    const line = document.createElement('div');
+                    line.className = `terminal-line ${command.type}`;
+                    if (command.type === 'error' || command.type === 'warning') {
+                        const glitchSpan = document.createElement('span');
+                        glitchSpan.className = 'glitch';
+                        glitchSpan.setAttribute('data-text', command.text);
+                        glitchSpan.textContent = command.text;
+                        line.appendChild(glitchSpan);
+                    } else {
+                        line.textContent = command.text;
+                    }
+                    this.terminalOutput.appendChild(line);
+                    if (this.terminalOutput.scrollHeight > this.terminalOutput.clientHeight) {
+                        this.terminalOutput.scrollTop = this.terminalOutput.scrollHeight;
+                    }
+
+                    setTimeout(resolve, 30);
+                });
+            }
+
+            async showProgressBar() {
+                this.progressBar.style.display = 'block';
+                const line = document.createElement('div');
+                line.className = 'terminal-line success';
+                line.innerHTML = '>>> Finalisation de la connexion sécurisée... <span class="cursor"></span>';
+                this.terminalOutput.appendChild(line);
+                this.terminalOutput.scrollTop = this.terminalOutput.scrollHeight;
+
+                return new Promise((resolve) => {
+                    let progress = 0;
+                    const interval = setInterval(() => {
+                        progress += Math.random() * 10 + 5;
+                        if (progress >= 100) {
+                            progress = 100;
+                            clearInterval(interval);
+                            this.progressFill.style.width = '100%';
+                            setTimeout(resolve, 300);
+                        } else {
+                            this.progressFill.style.width = progress + '%';
+                        }
+                    }, 100);
+                });
+            }
+
+            completeAccess() {
+                const finalLine = document.createElement('div');
+                finalLine.className = 'terminal-line success';
+                finalLine.innerHTML = '<strong>✓ ACCÈS SÉCURISÉ ÉTABLI - REDIRECTION EN COURS...</strong>';
+                this.terminalOutput.appendChild(finalLine);
+                requestAnimationFrame(() => {
+                    this.terminalOutput.scrollTop = this.terminalOutput.scrollHeight;
+                });
+
+                setTimeout(() => {
+                    this.securityOverlay.classList.add('hidden');
+                    setTimeout(() => {
+                        this.mainContent.classList.add('visible');
+                        document.body.style.overflow = 'auto';
+                        loadContent();
+                    }, 1000);
+                }, 1500);
+            }
+
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const animation = new SecurityAnimation();
+            animation.init();
+        });
+        function createSecurityParticles() {
+            const particles = [];
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.style.position = 'absolute';
+                particle.style.width = '1px';
+                particle.style.height = '1px';
+                particle.style.background = '#00ff00';
+                particle.style.borderRadius = '50%';
+                particle.style.opacity = Math.random() * 0.5;
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animation = `float ${Math.random() * 3 + 2}s linear infinite`;
+                document.querySelector('.matrix-bg').appendChild(particle);
+            }
+        }
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes float {
+                0% { transform: translateY(0px) rotate(0deg); }
+                50% { transform: translateY(-10px) rotate(180deg); } /* Mouvement réduit */
+                100% { transform: translateY(0px) rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+        let products = [];
+        let sensitiveInfo = [];
+        let darkwebAccess = [
+            {
+                credentials: {
+                    name: "US1D7045GC041C",
+                    email: "client@everywater.fr",
+                    subject: "other"
+                },
+                requiredKeywords: ["1750"],
+                redirectPage: "darkweb.html",
+                webhookMessage: "⚡ Accès détecté pour un membre des DGC"
+            },
+            {
+                credentials: {
+                    name: "Admin",
+                    email: "admin@system.fr",
+                    subject: "other"
+                },
+                requiredKeywords: ["code"],
+                redirectPage: "forumPage",
+                webhookMessage: "⚠️ Accès admin détecté",
+                admin: true
+            },
+            {
+                credentials: {
+                    name: "Analyste",
+                    email: "analyst@elcartel.fr",
+                    subject: "sensitive_data"
+                },
+                requiredKeywords: ["topsecret"],
+                redirectPage: "forumPage",
+                webhookMessage: "👁️ Accès Analyste détecté - Informations Sensibles",
+                admin: true
+            }
+        ];
+        let isAdmin = false;
+        let currentUser = null;
+        let editMode = false;
+        let currentEditItem = null;
+        let currentEditType = null;
+
+
+        async function loadContent() {
+            try {
+                let files = {
+                    products: '/_data/products.json',
+                    sensitive_info: '/_data/sensitive_info.json',
+                    darkweb_access: '/_data/darkweb_access.json',
+                    news_articles: '/_data/news_articles.json'
+                };
+
+                const responses = await Promise.all([
+                    fetch(files.products),
+                    fetch(files.sensitive_info), 
+                    fetch(files.darkweb_access),
+                    fetch(files.news_articles)
+                ]);
+
+                let [prodRes, sensRes, accessRes, newsRes] = responses;
+
+                products = await prodRes.json();
+                if (products.items) products = products.items;
+                
+                sensitiveInfo = await sensRes.json();
+                if (sensitiveInfo.items) sensitiveInfo = sensitiveInfo.items;
+
+                darkwebAccess = await accessRes.json();
+                if (darkwebAccess.items) darkwebAccess = darkwebAccess.items;
+
+                newsArticles = await newsRes.json();
+                if (newsArticles.items) newsArticles = newsArticles.items;
+                
+                const currentAccess = darkwebAccess.find(a => 
+                    a.credentials.name === currentUser?.credentials.name
+                );
+
+                if (currentAccess?.admin) {
+                    enableAdminFeatures();
+                }
+
+                renderProducts();
+                renderNewsArticles();
+                if (currentAccess) {
+                    document.getElementById('sensitiveInfoSection').style.display = 'block';
+                    renderSensitiveInfo();
+                }
+            } catch (error) {
+                console.error("Erreur lors du chargement du contenu:", error);
+            }
+        }
+
+        function enableAdminFeatures() {
+            isAdmin = true;
+
+            document.querySelectorAll('.forum-category-title').forEach(title => {
+                const editButton = document.createElement('button');
+                editButton.className = 'edit-btn';
+                editButton.textContent = '✏️ Mode Édition';
+                editButton.onclick = toggleEditMode;
+                title.appendChild(editButton);
+            });
+
+            document.querySelectorAll('.forum-category').forEach(category => {
+                const addBtn = document.createElement('button');
+                addBtn.className = 'add-new-btn';
+                addBtn.textContent = '+ Ajouter';
+                addBtn.onclick = () => openAddModal(category.id.replace('Section', ''));
+                category.prepend(addBtn);
+            });
+        }
+
+ 
+        function toggleEditMode() {
+            editMode = !editMode;
+            const editButtons = document.querySelectorAll('.edit-btn');
+            editButtons.forEach(btn => {
+                btn.textContent = editMode ? '✅ Mode Édition Actif' : '✏️ Mode Édition';
+                btn.style.background = editMode ? '#28a745' : '#0099ff';
+            });
+
+            document.querySelectorAll('.product-card, .info-card').forEach(card => {
+                if (editMode) {
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'post-edit-btn';
+                    editBtn.textContent = '✏️';
+                    editBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        openEditModal(card.dataset.id, card.dataset.type);
+                    };
+                    card.appendChild(editBtn);
+                } else {
+                    const btn = card.querySelector('.post-edit-btn');
+                    if (btn) btn.remove();
+                }
+            });
+        }
+
+        async function saveContent(type, id, newData) {
+            try {
+                const response = await fetch('/.netlify/functions/update-content', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        type,
+                        id,
+                        newData,
+                        user: currentUser.credentials.name
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Échec de la sauvegarde');
+                }
+                loadContent();
+                alert('Modifications sauvegardées!');
+                closeModal('editAddModal');
+            } catch (error) {
+                console.error("Error saving content:", error);
+                alert('Erreur lors de la sauvegarde: ' + error.message);
+            }
+        }
+
+        function openEditModal(id, type) {
+            currentEditItem = null;
+            currentEditType = type;
+            let item;
+            let formHtml = '';
+            const form = document.getElementById('editAddForm');
+            document.getElementById('editAddModalTitle').textContent = `Modifier ${type}`;
+
+            if (type === 'product') {
+                item = products.find(p => p.id === id);
+                formHtml = `
+                    <label for="edit-product-name">Nom:</label>
+                    <input type="text" id="edit-product-name" value="${item.name}" required>
+                    <label for="edit-product-category">Catégorie:</label>
+                    <input type="text" id="edit-product-category" value="${item.category}" required>
+                    <label for="edit-product-price">Prix:</label>
+                    <input type="number" id="edit-product-price" value="${item.price}" required>
+                    <label for="edit-product-description">Description:</label>
+                    <textarea id="edit-product-description" required>${item.description}</textarea>
+                    <label for="edit-product-image">URL Image:</label>
+                    <input type="text" id="edit-product-image" value="${item.image || ''}">
+                `;
+            } else if (type === 'news') {
+                item = newsArticles.find(n => n.id === id);
+                formHtml = `
+                    <label for="edit-news-title">Titre:</label>
+                    <input type="text" id="edit-news-title" value="${item.title}" required>
+                    <label for="edit-news-date">Date:</label>
+                    <input type="text" id="edit-news-date" value="${item.date}" required>
+                    <label for="edit-news-summary">Résumé:</label>
+                    <textarea id="edit-news-summary" required>${item.summary}</textarea>
+                    <label for="edit-news-content">Contenu:</label>
+                    <textarea id="edit-news-content" required>${item.content}</textarea>
+                    <label for="edit-news-image">URL Image:</label>
+                    <input type="text" id="edit-news-image" value="${item.image || ''}">
+                `;
+            } else if (type === 'sensitiveInfo') {
+                item = sensitiveInfo.find(s => s.id === id);
+                formHtml = `
+                    <label for="edit-sensitive-title">Titre:</label>
+                    <input type="text" id="edit-sensitive-title" value="${item.title}" required>
+                    <label for="edit-sensitive-summary">Résumé:</label>
+                    <textarea id="edit-sensitive-summary" required>${item.summary}</textarea>
+                    <label for="edit-sensitive-content">Contenu:</label>
+                    <textarea id="edit-sensitive-content" required>${item.content}</textarea>
+                    <label for="edit-sensitive-image">URL Image:</label>
+                    <input type="text" id="edit-sensitive-image" value="${item.image || ''}">
+                `;
+            }
+            currentEditItem = item;
+            form.innerHTML = formHtml + '<button type="submit" class="btn">Sauvegarder</button>';
+            form.onsubmit = (e) => {
+                e.preventDefault();
+                let newData = {};
+                if (type === 'product') {
+                    newData = {
+                        name: document.getElementById('edit-product-name').value,
+                        category: document.getElementById('edit-product-category').value,
+                        price: parseInt(document.getElementById('edit-product-price').value),
+                        description: document.getElementById('edit-product-description').value,
+                        image: document.getElementById('edit-product-image').value
+                    };
+                } else if (type === 'news') {
+                    newData = {
+                        title: document.getElementById('edit-news-title').value,
+                        date: document.getElementById('edit-news-date').value,
+                        summary: document.getElementById('edit-news-summary').value,
+                        content: document.getElementById('edit-news-content').value,
+                        image: document.getElementById('edit-news-image').value
+                    };
+                } else if (type === 'sensitiveInfo') {
+                    newData = {
+                        title: document.getElementById('edit-sensitive-title').value,
+                        summary: document.getElementById('edit-sensitive-summary').value,
+                        content: document.getElementById('edit-sensitive-content').value,
+                        image: document.getElementById('edit-sensitive-image').value
+                    };
+                }
+                saveContent(type, id, newData);
+            };
+            document.getElementById('editAddModal').classList.add('show');
+        }
+
+        function openAddModal(type) {
+            currentEditItem = null;
+            currentEditType = type;
+            let formHtml = '';
+            const form = document.getElementById('editAddForm');
+            document.getElementById('editAddModalTitle').textContent = `Ajouter ${type}`;
+
+            if (type === 'product') {
+                formHtml = `
+                    <label for="add-product-name">Nom:</label>
+                    <input type="text" id="add-product-name" required>
+                    <label for="add-product-category">Catégorie:</label>
+                    <input type="text" id="add-product-category" required>
+                    <label for="add-product-price">Prix:</label>
+                    <input type="number" id="add-product-price" required>
+                    <label for="add-product-description">Description:</label>
+                    <textarea id="add-product-description" required></textarea>
+                    <label for="add-product-image">URL Image:</label>
+                    <input type="text" id="add-product-image">
+                `;
+            } else if (type === 'news') {
+                formHtml = `
+                    <label for="add-news-title">Titre:</label>
+                    <input type="text" id="add-news-title" required>
+                    <label for="add-news-date">Date (YYYY-MM-DD):</label>
+                    <input type="text" id="add-news-date" value="${new Date().toISOString().slice(0,10)}" required>
+                    <label for="add-news-summary">Résumé:</label>
+                    <textarea id="add-news-summary" required></textarea>
+                    <label for="add-news-content">Contenu:</label>
+                    <textarea id="add-news-content" required></textarea>
+                    <label for="add-news-image">URL Image:</label>
+                    <input type="text" id="add-news-image">
+                `;
+            } else if (type === 'sensitiveInfo') {
+                formHtml = `
+                    <label for="add-sensitive-title">Titre:</label>
+                    <input type="text" id="add-sensitive-title" required>
+                    <label for="add-sensitive-summary">Résumé:</label>
+                    <textarea id="add-sensitive-summary" required></textarea>
+                    <label for="add-sensitive-content">Contenu:</label>
+                    <textarea id="add-sensitive-content" required></textarea>
+                    <label for="add-sensitive-image">URL Image:</label>
+                    <input type="text" id="add-sensitive-image">
+                `;
+            }
+            form.innerHTML = formHtml + '<button type="submit" class="btn">Ajouter</button>';
+            form.onsubmit = (e) => {
+                e.preventDefault();
+                let newData = {};
+                const newId = 'new-' + Date.now(); // Générer un ID unique
+                if (type === 'product') {
+                    newData = {
+                        id: newId,
+                        name: document.getElementById('add-product-name').value,
+                        category: document.getElementById('add-product-category').value,
+                        price: parseInt(document.getElementById('add-product-price').value),
+                        description: document.getElementById('add-product-description').value,
+                        image: document.getElementById('add-product-image').value
+                    };
+                } else if (type === 'news') {
+                    newData = {
+                        id: newId,
+                        title: document.getElementById('add-news-title').value,
+                        date: document.getElementById('add-news-date').value,
+                        summary: document.getElementById('add-news-summary').value,
+                        content: document.getElementById('add-news-content').value,
+                        image: document.getElementById('add-news-image').value
+                    };
+                } else if (type === 'sensitiveInfo') {
+                    newData = {
+                        id: newId,
+                        title: document.getElementById('add-sensitive-title').value,
+                        summary: document.getElementById('add-sensitive-summary').value,
+                        content: document.getElementById('add-sensitive-content').value,
+                        image: document.getElementById('add-sensitive-image').value
+                    };
+                }
+                saveContent(type, newId, newData); // Utiliser saveContent pour ajouter
+            };
+            document.getElementById('editAddModal').classList.add('show');
+        }
+
+        let cart = [];
+        let currentProductInModal = null;
+        let currentProductIdToRemove = null;
+
+        document.getElementById('authForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = {
+                name: document.getElementById('name').value.trim(),
+                message: document.getElementById('message').value.trim()
+            };
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('errorMessage').classList.remove('show');
+            setTimeout(() => {
+                const accessGranted = validateAccess(formData);
+                document.getElementById('loading').classList.remove('show');
+                if (accessGranted) {
+                    currentUser = accessGranted;
+                    grantAccess(accessGranted);
+                } else {
+                    document.getElementById('errorMessage').classList.add('show');
+                }
+            }, 1500);
+        });
+
+        function redirectToHome(closeCurrentPage) {
+            if (closeCurrentPage) {
+                window.open('index.html', '_blank');
+                try {
+                    window.open('', '_self').close();
+                } catch (e) {
+                    window.location.href = 'index.html';
+                }
+            } else {
+                window.location.href = 'index.html';
+            }
+        }
+
+        function validateAccess(formData) {
+            for (const access of darkwebAccess) {
+                if (access.credentials.name === formData.name) {
+                    const hasRequiredKeyword = formData.message.toLowerCase().includes(access.requiredKeywords[0].toLowerCase());
+                    if (hasRequiredKeyword) {
+                        return access;
+                    }
+                }
+            }
+            return null;
+        }
+
+        function grantAccess(accessConfig) {
+            console.log(`Webhook envoyé: ${accessConfig.webhookMessage}`);
+            console.log(`Utilisateur: ${accessConfig.credentials.name}`);
+            console.log(`Redirection vers: ${accessConfig.redirectPage}`);
+            sendDiscordWebhook(`**Accès au portail**\nUtilisateur: \`${accessConfig.credentials.name}\`\nMessage: \`${document.getElementById('message').value.trim()}\`\nStatut: Accès accordé (${accessConfig.webhookMessage})`, 0x228B22);
+            document.getElementById('authPage').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('forumPage').classList.add('active');
+                loadContent();
+            }, 300);
+        }
+
+        function renderProducts() {
+            const productGrid = document.getElementById('productGrid');
+            productGrid.innerHTML = '';
+            products.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.classList.add('product-card');
+                productCard.setAttribute('data-product-id', product.id);
+                productCard.setAttribute('data-id', product.id);
+                productCard.setAttribute('data-type', 'product');
+                productCard.onclick = () => openProductModal(product.id);
+                productCard.innerHTML = `
+                    <div class="product-header">
+                        <div>
+                            <h3 class="product-title">${product.name}</h3>
+                            <p class="product-category">${product.category}</p>
+                        </div>
+                        <div class="product-price">$${product.price.toLocaleString()}</div>
+                    </div>
+                    <p class="product-description">${product.description}</p>
+                    <div class="product-actions">
+                        <button class="btn" onclick="event.stopPropagation(); addToCart('${product.id}')">PANIER 🛒</button>
+                        <button class="btn btn-danger" onclick="event.stopPropagation(); buyDirect('${product.id}')">ACHETER 🪙</button>
+                    </div>
+                `;
+                productGrid.appendChild(productCard);
+            });
+            if (isAdmin && editMode) {
+                toggleEditMode();
+                toggleEditMode();
+            }
+        }
+
+        function renderNewsArticles() {
+            const newsGrid = document.getElementById('newsGrid');
+            newsGrid.innerHTML = '';
+            newsArticles.forEach(article => {
+                const newsCard = document.createElement('div');
+                newsCard.classList.add('info-card');
+                newsCard.setAttribute('data-id', article.id);
+                newsCard.setAttribute('data-type', 'news');
+                newsCard.onclick = () => openNewsModal(article.id);
+                newsCard.innerHTML = `
+                    ${article.image ? `<img src="${article.image}" alt="${article.title}" class="info-card-image">` : ''}
+                    <h3 class="info-card-title">${article.title}</h3>
+                    <p class="info-card-date">${article.date}</p>
+                    <p class="info-card-summary">${article.summary}</p>
+                `;
+                newsGrid.appendChild(newsCard);
+            });
+            if (isAdmin && editMode) {
+                toggleEditMode();
+                toggleEditMode();
+            }
+        }
+
+        function renderSensitiveInfo() {
+            const sensitiveInfoGrid = document.getElementById('sensitiveInfoGrid');
+            sensitiveInfoGrid.innerHTML = '';
+            sensitiveInfo.forEach(info => {
+                const infoCard = document.createElement('div');
+                infoCard.classList.add('info-card');
+                infoCard.setAttribute('data-id', info.id);
+                infoCard.setAttribute('data-type', 'sensitiveInfo');
+                infoCard.onclick = () => openGovInfoModal(info.id);
+                infoCard.innerHTML = `
+                    ${info.image ? `<img src="${info.image}" alt="${info.title}" class="info-card-image">` : ''}
+                    <h3 class="info-card-title">${info.title}</h3>
+                    <p class="info-card-summary">${info.summary}</p>
+                `;
+                sensitiveInfoGrid.appendChild(infoCard);
+            });
+            if (isAdmin && editMode) {
+                toggleEditMode();
+                toggleEditMode();
+            }
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (product) {
+                cart.push({ ...product, cartId: Date.now() + Math.random() });
+                updateCartDisplay();
+                animateCartIcon();
+            }
+        }
+
+        function updateCartDisplay() {
+            const cartCountElement = document.getElementById('cartCount');
+            const cartModalItemsContainer = document.getElementById('cartModalItems');
+            const cartModalTotalElement = document.getElementById('cartModalTotal');
+            cartCountElement.textContent = cart.length;
+            cartModalItemsContainer.innerHTML = '';
+            let totalAmount = 0;
+            if (cart.length === 0) {
+                cartModalItemsContainer.innerHTML = '<p style="color: #666; text-align: center;">Votre panier est vide.</p>';
+            } else {
+                const groupedItems = {};
+                cart.forEach(item => {
+                    if (groupedItems[item.id]) {
+                        groupedItems[item.id].quantity += 1;
+                    } else {
+                        groupedItems[item.id] = { ...item, quantity: 1 };
+                    }
+                });
+                Object.values(groupedItems).forEach(item => {
+                    const itemTotal = item.price * item.quantity;
+                    totalAmount += itemTotal;
+
+                    const itemDiv = document.createElement('div');
+                    itemDiv.classList.add('cart-modal-item');
+                    itemDiv.innerHTML = `
+                        <div class="cart-item-info">
+                            <span class="cart-item-name">${item.name}</span>
+                        </div>
+                        <div class="cart-item-quantity-controls">
+                            <button class="quantity-btn" onclick="adjustQuantity('${item.id}', -1)">-</button>
+                            <span class="item-quantity">${item.quantity}</span>
+                            <button class="quantity-btn" onclick="adjustQuantity('${item.id}', 1)">+</button>
+                        </div>
+                        <span class="cart-item-price-total">$${itemTotal.toLocaleString()}</span>
+                        <button class="cart-item-remove-btn" onclick="openRemoveQuantityModal('${item.id}')">🗑️</button>
+                    `;
+                    cartModalItemsContainer.appendChild(itemDiv);
+                });
+            }
+
+            cartModalTotalElement.textContent = `Total: $${totalAmount.toLocaleString()}`;
+        }
+
+        function adjustQuantity(productId, change) {
+            const productInCart = cart.filter(item => item.id === productId);
+            if (productInCart.length === 0) return;
+            if (change > 0) {
+                const product = products.find(p => p.id === productId);
+                if (product) {
+                    cart.push({ ...product, cartId: Date.now() + Math.random() });
+                }
+            } else {
+                if (productInCart.length + change >= 0) {
+                    for (let i = 0; i < Math.abs(change); i++) {
+                        const index = cart.findIndex(item => item.id === productId);
+                        if (index !== -1) {
+                            cart.splice(index, 1);
+                        } else {
+                            break;
+                        }
+                    }
+                } else {
+                    cart = cart.filter(item => item.id !== productId);
+                }
+            }
+            updateCartDisplay();
+        }
+
+        function openRemoveQuantityModal(productId) {
+            currentProductIdToRemove = productId;
+            const product = products.find(p => p.id === productId);
+            const productInCart = cart.filter(item => item.id === productId);
+
+            if (!product || productInCart.length === 0) {
+                console.error("Product not found in cart for removal.");
+                return;
+            }
+
+            document.getElementById('removeQuantityProductName').textContent = product.name;
+            const quantityInput = document.getElementById('quantityToRemove');
+            quantityInput.value = 1;
+            quantityInput.max = productInCart.length;
+
+            document.getElementById('confirmRemoveQuantityBtn').onclick = () => removeSelectedQuantity(productId);
+            document.getElementById('removeQuantityModal').classList.add('show');
+        }
+
+        function removeSelectedQuantity(productId) {
+            const quantityToRemove = parseInt(document.getElementById('quantityToRemove').value);
+            const productInCart = cart.filter(item => item.id === productId);
+
+            if (isNaN(quantityToRemove) || quantityToRemove <= 0 || quantityToRemove > productInCart.length) {
+                alert(`Veuillez entrer une quantité valide entre 1 et ${productInCart.length}.`);
+                return;
+            }
+
+            for (let i = 0; i < quantityToRemove; i++) {
+                const index = cart.findIndex(item => item.id === productId);
+                if (index !== -1) {
+                    cart.splice(index, 1);
+                }
+            }
+            closeModal('removeQuantityModal');
+            updateCartDisplay();
+        }
+
+        function clearCart() {
+            if (confirm("Êtes-vous sûr de vouloir vider complètement votre panier ?")) {
+                cart = [];
+                updateCartDisplay();
+                closeModal('cartModal');
+            }
+        }
+
+        function openCartModal() {
+            updateCartDisplay();
+            document.getElementById('cartModal').classList.add('show');
+        }
+
+        function animateCartIcon() {
+            const cartIcon = document.querySelector('.cart-icon');
+            cartIcon.classList.add('animated');
+            setTimeout(() => {
+                cartIcon.classList.remove('animated');
+            }, 500);
+        }
+
+        function checkout() {
+            if (cart.length === 0) {
+                alert('Votre panier est vide !');
+                return;
+            }
+            const orderDetails = cart.map(item => `${item.name} ($${item.price.toLocaleString()})`).join('\n');
+            const totalAmount = cart.reduce((sum, item) => sum + item.price, 0);
+            const orderRef = 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+            sendDarkwebOrderWebhook({
+                type: 'checkout',
+                orderRef: orderRef,
+                userName: currentUser ? currentUser.credentials.name : 'Inconnu',
+                orderDetails: orderDetails,
+                totalAmount: totalAmount,
+                items: cart
+            });
+            showNotification(orderRef);
+            cart = [];
+            updateCartDisplay();
+            closeModal('cartModal');
+        }
+
+        function buyDirect(productId) {
+            const product = products.find(p => p.id === productId);
+            if (product) {
+                const orderRef = 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+                sendDarkwebOrderWebhook({
+                    type: 'direct_buy',
+                    orderRef: orderRef,
+                    userName: currentUser ? currentUser.credentials.name : 'Inconnu',
+                    product: product,
+                    totalAmount: product.price
+                });
+                showNotification(orderRef);
+                closeModal('productModal');
+            }
+        }
+
+        async function sendDarkwebOrderWebhook(orderData) {
+            try {
+                const response = await fetch('/.netlify/functions/send-darkweb-order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(orderData)
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Erreur lors de l\'envoi de la commande darkweb:', errorData.error);
+                } else {
+                    console.log('Commande darkweb envoyée avec succès via Netlify Function');
+                }
+            } catch (error) {
+                console.error('Erreur réseau lors de l\'envoi de la commande darkweb:', error);
+            }
+        }
+
+        async function sendDiscordWebhook(message, color) {
+            try {
+                const response = await fetch('/.netlify/functions/send-darkweb', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        type: 'general_alert',
+                        message: message,
+                        color: color,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Erreur lors de l\'envoi du webhook Discord:', errorData.error);
+                } else {
+                    console.log('Webhook Discord envoyé avec succès.');
+                }
+            } catch (error) {
+                console.error('Erreur réseau lors de l\'envoi du webhook Discord:', error);
+            }
+        }
+
+        function openProductModal(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            currentProductInModal = product;
+
+            document.getElementById('modalImage').src = product.image;
+            document.getElementById('modalTitle').textContent = product.name;
+            document.getElementById('modalCategory').textContent = product.category;
+            document.getElementById('modalPrice').textContent = `$${product.price.toLocaleString()}`;
+            document.getElementById('modalDescription').textContent = product.description;
+
+            document.getElementById('modalAddToCartBtn').onclick = () => {
+                addToCart(currentProductInModal.id);
+                closeModal('productModal');
+            };
+            document.getElementById('modalBuyDirectBtn').onclick = () => {
+                buyDirect(currentProductInModal.id);
+            };
+
+            document.getElementById('productModal').classList.add('show');
+        }
+
+        function openNewsModal(articleId) {
+            const article = newsArticles.find(a => a.id === articleId);
+            if (!article) return;
+
+            const newsModalImage = document.getElementById('newsModalImage');
+            if (article.image) {
+                newsModalImage.src = article.image;
+                newsModalImage.style.display = 'block';
+            } else {
+                newsModalImage.style.display = 'none';
+            }
+
+            document.getElementById('newsModalTitle').textContent = article.title;
+            document.getElementById('newsModalDate').textContent = `Date: ${article.date}`;
+            document.getElementById('newsModalContent').textContent = article.content;
+
+            document.getElementById('newsModal').classList.add('show');
+        }
+
+        function openGovInfoModal(infoId) {
+            const info = sensitiveInfo.find(i => i.id === infoId);
+            if (!info) return;
+
+            const govInfoModalImage = document.getElementById('govInfoModalImage');
+            if (info.image) {
+                govInfoModalImage.src = info.image;
+                govInfoModalImage.style.display = 'block';
+            } else {
+                govInfoModalImage.style.display = 'none';
+            }
+
+            document.getElementById('govInfoModalTitle').textContent = info.title;
+            document.getElementById('govInfoModalContent').textContent = info.content;
+
+            document.getElementById('govInfoModal').classList.add('show');
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('show');
+            }
+            if (modalId === 'productModal') {
+                currentProductInModal = null;
+            }
+            if (modalId === 'removeQuantityModal') {
+                currentProductIdToRemove = null;
+            }
+            if (modalId === 'editAddModal') {
+                currentEditItem = null;
+                currentEditType = null;
+            }
+        }
+
+        window.onclick = function(event) {
+            const productModal = document.getElementById('productModal');
+            const newsModal = document.getElementById('newsModal');
+            const govInfoModal = document.getElementById('govInfoModal');
+            const cartModal = document.getElementById('cartModal');
+            const removeQuantityModal = document.getElementById('removeQuantityModal');
+            const editAddModal = document.getElementById('editAddModal');
+
+
+            if (event.target == productModal) {
+                closeModal('productModal');
+            }
+            if (event.target == cartModal) {
+                closeModal('cartModal');
+            }
+            if (event.target == removeQuantityModal) {
+                closeModal('removeQuantityModal');
+            }
+            if (event.target == newsModal) {
+                closeModal('newsModal');
+            }
+            if (event.target == govInfoModal) {
+                closeModal('govInfoModal');
+            }
+            if (event.target == editAddModal) {
+                closeModal('editAddModal');
+            }
+        }
+
+        function showNotification(orderRef) {
+            const notification = document.getElementById('notification');
+            document.getElementById('orderRef').textContent = orderRef;
+            notification.classList.add('show');
+        }
+
+        function closeNotification() {
+            const notification = document.getElementById('notification');
+            notification.classList.remove('show');
+        }
+    </script>
+</body>
+</html>

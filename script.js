@@ -346,17 +346,48 @@ function checkDarkwebAccess(contactData) {
     return null;
 }
 async function sendOrderToDiscord(orderData) {
+    if (!orderData || !orderData.productType) {
+        throw new Error('Données de commande manquantes');
+    }
+    const productSelect = document.getElementById('productType');
+    if (!productSelect) {
+        throw new Error('Sélecteur de produit introuvable');
+    }
+    const selectedOption = productSelect.options[productSelect.selectedIndex];
+    const productName = selectedOption.text;
+    const price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
+    const isSubscription = selectedOption.value.includes('subscription');
+    let subtotal, deliveryFee, total;
+    if (isSubscription) {
+        subtotal = price;
+        deliveryFee = 0;
+        total = subtotal;
+    } else {
+        const quantity = parseInt(orderData.quantity) || 1;
+        subtotal = price * quantity;
+        deliveryFee = subtotal >= 50 ? 0 : 5;
+        total = subtotal + deliveryFee;
+    }
+    const orderNumber = `EW-${Date.now().toString().slice(-6)}`;
+    const dataToSend = {
+        orderNumber: orderNumber,
+        customerName: orderData.customerName,
+        customerPhone: orderData.customerPhone,
+        customerAddress: orderData.customerAddress,
+        deliveryDate: orderData.deliveryDate,
+        specialInstructions: orderData.specialInstructions,
+        timestamp: orderData.timestamp,
+        productType: orderData.productType,
+        productName: productName,
+        quantity: orderData.quantity,
+        price: price,
+        isSubscription: isSubscription,
+        subtotal: subtotal,
+        deliveryFee: deliveryFee,
+        total: total
+    };
     try {
-        const dataToSend = {
-            orderNumber: orderData.orderNumber,
-            customerName: orderData.customerName,
-            customerEmail: orderData.customerEmail,
-            productType: orderData.productType,
-            quantity: orderData.quantity,
-            totalPrice: orderData.totalPrice,
-            timestamp: new Date().toISOString()
-        };
-        console.log('Envoi de la commande vers Netlify function...', dataToSend);
+        console.log(`📤 Envoi de la commande ${orderNumber} vers Every Water...`);
         const response = await fetch('/.netlify/functions/send-order', {
             method: 'POST',
             headers: {
@@ -366,11 +397,18 @@ async function sendOrderToDiscord(orderData) {
         });
         if (!response.ok) {
             const errorData = await response.json();
+            
+            if (response.status === 404) {
+                throw new Error('La fonction serverless n\'est pas accessible.');
+            } else if (response.status === 429) {
+                throw new Error('Limite de taux atteinte. Veuillez réessayer plus tard.');
+            }
+            
             throw new Error(`Erreur lors de l'envoi via la fonction serverless: ${errorData.error || response.statusText}`);
         }
         const result = await response.json();
-        console.log('✅ Commande envoyée avec succès:', result);
-        return { success: true, orderNumber: orderData.orderNumber };
+        console.log(`✅ ${isSubscription ? 'Abonnement' : 'Commande'} ${orderNumber} envoyé(e) avec succès`);
+        return { success: true, orderNumber: orderNumber };
     } catch (error) {
         console.error('❌ Erreur lors de l\'envoi de la commande:', error);
         throw error;
@@ -496,40 +534,55 @@ async function sendDarkwebAlert(contactData, accessConfig) {
         throw error;
     }
 }
-
 async function sendDarkwebAccessNotification(contactData, accessConfig) {
     try {
-        const dataToSend = {
-            type: 'successful_access',
-            contactData: {
-                name: contactData.name,
-                email: contactData.email,
-                subject: contactData.subject,
-                message: contactData.message,
-                timestamp: contactData.timestamp || new Date().toISOString()
-            },
-            accessConfig: {
-                redirectPage: accessConfig.redirectPage || 'Page sécurisée',
-                requiredKeywords: accessConfig.requiredKeywords || [],
-                webhookMessage: accessConfig.webhookMessage || 'Accès autorisé accordé'
-            }
-        };
         const response = await fetch('/.netlify/functions/send-darkweb', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(dataToSend)
+            body: JSON.stringify({
+                type: 'successful_access',
+                contactData: contactData,
+                accessConfig: accessConfig
+            })
         });
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(`Erreur darkweb: ${errorData.error || response.statusText}`);
+            console.error('Erreur lors de l\'envoi de la notification d\'accès Darkweb:', errorData.error);
+            throw new Error(errorData.error || 'Échec de l\'envoi de la notification d\'accès Darkweb.');
+        } else {
+            console.log('Notification d\'accès Darkweb envoyée avec succès via Netlify Function');
+            return { success: true };
         }
-        const result = await response.json();
-        console.log('✅ Notification darkweb envoyée:', result);
-        return { success: true };
     } catch (error) {
-        console.error('❌ Erreur notification darkweb:', error);
+        console.error('Erreur réseau lors de l\'envoi de la notification d\'accès Darkweb:', error);
+        throw error;
+    }
+}
+async function sendDiscordWebhookForFailedDarkwebAttempt(contactData, accessConfig) {
+    try {
+        const response = await fetch('/.netlify/functions/send-darkweb', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                type: 'failed_attempt',
+                contactData: contactData,
+                accessConfig: accessConfig
+            })
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Erreur lors de l\'envoi de l\'alerte d\'échec Darkweb:', errorData.error);
+            throw new Error(errorData.error || 'Échec de l\'envoi de l\'alerte d\'échec Darkweb.');
+        } else {
+            console.log('Alerte d\'échec Darkweb envoyée avec succès via Netlify Function');
+            return { success: true };
+        }
+    } catch (error) {
+        console.error('Erreur réseau lors de l\'envoi de l\'alerte d\'échec Darkweb:', error);
         throw error;
     }
 }
@@ -552,7 +605,6 @@ async function sendContactToDiscord(contactData) {
             timestamp: contactData.timestamp || new Date().toISOString(),
             messageId: `MSG-${Date.now().toString().slice(-8)}`
         };
-        console.log('Envoi du contact vers Netlify function...', dataToSend);
         const response = await fetch('/.netlify/functions/send-contact', {
             method: 'POST',
             headers: {

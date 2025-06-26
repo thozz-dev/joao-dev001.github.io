@@ -33,65 +33,59 @@ exports.handler = async (event, context) => {
         };
     }
     try {
-        const data = JSON.parse(event.body);
-        if (!data.type || !data.contactData || !data.accessConfig) {
-            return {
-                statusCode: 400,
-                headers: {
-                    'Access-Control-Allow-Origin': '*',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ error: 'Données manquantes: type, contactData et accessConfig sont requis.' })
+        const data = JSON.parse(event.body); 
+        let discordPayload;
+        if (data.type === 'general_alert') {
+            discordPayload = {
+                embeds: [{
+                    title: "El Cartel",
+                    description: data.message,
+                    color: data.color,
+                    timestamp: data.timestamp,
+                    fields: [
+                        {
+                            name: "Statut",
+                            value: "Vérification en cours...",
+                            inline: true
+                        },
+                        {
+                            name: "Date et Heure",
+                            value: new Date().toLocaleString(),
+                            inline: true
+                        }
+                    ],
+                    footer: {
+                        text: "Secure Access Portal",
+                        icon_url: "https://media.discordapp.net/attachments/1232583375181582366/1387087700313505852/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png?ex=685c1196&is=685ac016&hm=0b98e6a808a15974a5bf2b1dd9d6467734bb0c31341970e093e34bee56b17fbb&=&format=webp&quality=lossless&width=930&height=930"
+                    }
+                }]
+            };
+        } else {
+            let embedTitle = "🚨 ALERTE DARKWEB - ACCÈS DÉTECTÉ 🚨";
+            let embedColor = 0xFF5733;
+            let description = `Un accès spécial a été détecté pour la page : **${data.accessConfig?.redirectPage || 'Page sécurisée'}**`;
+            if (data.type === 'failed_attempt') {
+                embedTitle = "⚠️ ALERTE : TENTATIVE D'ACCÈS ÉCHOUÉE ⚠️";
+                embedColor = 0xffc107;
+                description = `Une tentative d'accès à la page **${data.accessConfig?.redirectPage || 'Page sécurisée'}** a échoué.`;
+            }
+            discordPayload = {
+                content: `⚠️ **ALERTE SÉCURITÉ** ⚠️\n${data.type === 'failed_attempt' ? 'Une tentative d\'accès non autorisée' : 'Un accès spécial'} a été détecté.`,
+                embeds: [{
+                    title: embedTitle,
+                    description: description,
+                    color: embedColor,
+                    fields: [
+                        {
+                            name: "👤 Informations de l'utilisateur",
+                            value: `**Nom:** ${data.contactData?.name || 'N/A'}\n**Email:** ${data.contactData?.email || 'N/A'}`,
+                            inline: false
+                        }
+                    ],
+                    timestamp: new Date().toISOString()
+                }]
             };
         }
-        let embedTitle = "🚨 ALERTE DARKWEB - ACCÈS DÉTECTÉ 🚨";
-        let embedColor = 0xFF5733;
-        let description = `Un accès spécial a été détecté pour la page : **${data.accessConfig.redirectPage}**`;
-        let fields = [
-            {
-                name: "👤 Informations de l'utilisateur",
-                value: `**Nom:** ${data.contactData.name}\n**Email:** ${data.contactData.email}\n**Sujet:** ${data.contactData.subject}`,
-                inline: false
-            },
-            {
-                name: "💬 Message soumis",
-                value: `\`\`\`\n${data.contactData.message.substring(0, 1000)}\n\`\`\``,
-                inline: false
-            },
-            {
-                name: "⏰ Heure de l'accès",
-                value: `<t:${Math.floor(new Date(data.contactData.timestamp).getTime() / 1000)}:F>`,
-                inline: true
-            }
-        ];
-        if (data.type === 'failed_attempt') {
-            embedTitle = "⚠️ ALERTE : TENTATIVE D'ACCÈS ÉCHOUÉE ⚠️";
-            embedColor = 0xffc107;
-            description = `Une tentative d'accès à la page **${data.accessConfig.redirectPage}** a échoué.`;
-            fields.unshift({
-                name: "Motif de l'échec",
-                value: "Les informations fournies ne correspondent pas aux critères d'accès.",
-                inline: false
-            });
-        }
-        const embed = {
-            title: embedTitle,
-            description: description,
-            color: embedColor,
-            fields: fields,
-            thumbnail: {
-                url: "https://cdn-icons-png.flaticon.com/512/2889/2889676.png"
-            },
-            footer: {
-                text: `Accès Sécurisé • ${new Date().getFullYear()}`,
-                icon_url: "https://cdn-icons-png.flaticon.com/512/1828/1828884.png"
-            },
-            timestamp: new Date().toISOString()
-        };
-        const discordPayload = {
-            content: `⚠️ **ALERTE SÉCURITÉ** ⚠️\n${data.type === 'failed_attempt' ? 'Une tentative d\'accès non autorisée' : 'Un accès spécial'} a été détecté.`,
-            embeds: [embed]
-        };
         const response = await fetch(DISCORD_DARKWEB_WEBHOOK, {
             method: 'POST',
             headers: { 
@@ -112,7 +106,7 @@ exports.handler = async (event, context) => {
                 body: JSON.stringify({ error: `Discord API Error: ${errorText}` }) 
             };
         }
-        console.log(`✅ Notification darkweb (${data.type}) envoyée avec succès à Discord`);
+        console.log(`✅ Alerte darkweb envoyée avec succès à Discord`);
         return {
             statusCode: 200,
             headers: {
@@ -121,19 +115,19 @@ exports.handler = async (event, context) => {
             },
             body: JSON.stringify({ 
                 success: true, 
-                message: `Notification darkweb (${data.type}) envoyée avec succès!` 
+                message: 'Alerte darkweb envoyée avec succès!'
             })
         };
     } catch (error) {
         console.error('Darkweb function error:', error);
         return { 
-            statusCode: 500,
+            statusCode: 500 ,
             headers: {
                 'Access-Control-Allow-Origin': '*',
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ 
-                error: `Erreur lors de l'envoi de la notification darkweb: ${error.message}` 
+                error: `Erreur lors de l'envoi de l'alerte darkweb: ${error.message}` 
             }) 
         };
     }

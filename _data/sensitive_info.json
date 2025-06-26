@@ -1,0 +1,12 @@
+{
+  "items": [
+    {
+        "id": "news001",
+        "title": "Opération 'Ombre Verte' : Succès ou Échec ?",
+        "date": "2024-07-20",
+        "image": "https://media.discordapp.net/attachments/1377987867539669044/1387395084298883172/image.png?ex=685e815c&is=685d2fdc&hm=67a44e86a6a8cf42ee041dcdfad331e133cf4379a80e56256488080211863287&=&format=webp&quality=lossless&width=660&height=930",
+        "summary": "Les rumeurs persistent concernant la récente opération 'Ombre Verte' menée par les forces spéciales. Des sources non confirmées parlent de pertes importantes...",
+        "content": "Les rumeurs persistent concernant la récente opération 'Ombre Verte' menée par les forces spéciales. Des sources non confirmées parlent de pertes importantes, tandis que les communiqués officiels restent évasifs. Une analyse approfondie des données interceptées suggère une situation plus complexe que ce qui est rapporté. Les implications pour nos opérations futures sont à évaluer. Il est crucial de rester vigilant et de ne pas sous-estimer la capacité de l'ennemi à s'adapter. Des rapports supplémentaires seront publiés dès que de nouvelles informations fiables seront disponibles.'"
+    }
+  ]
+}
