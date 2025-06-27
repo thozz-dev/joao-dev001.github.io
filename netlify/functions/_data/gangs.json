@@ -1,0 +1,47 @@
+{
+  "gangs": [
+    {
+      "name": "Los Santos Vagos",
+      "description": "Un gang de rue hispanique basé à East Los Santos, connu pour ses activités de trafic de drogue et de violence. Rivaux des Families et des Ballas.",
+      "territory": "East Los Santos, Rancho, El Burro Heights",
+      "activities": ["Trafic de drogue", "Extorsion", "Vol de voitures"],
+      "members": [
+        { "name": "Ricardo 'El Jefe' Sanchez", "role": "Leader" },
+        { "name": "Maria 'La Sombra' Rodriguez", "role": "Bras Droit" }
+      ],
+      "notableEvents": [
+        { "date": "2023-01-15", "description": "Affrontement majeur avec les Families pour le contrôle de Rancho." },
+        { "date": "2023-03-22", "description": "Découverte d'un laboratoire de méthamphétamine dans un entrepôt abandonné." }
+      ]
+    },
+    {
+      "name": "Grove Street Families",
+      "description": "Un gang afro-américain historique de Los Santos, cherchant à reprendre le contrôle de leur territoire et à lutter contre l'influence des drogues dures.",
+      "territory": "Grove Street, Ganton, Davis",
+      "activities": ["Protection de quartier", "Petits larcins", "Vente d'armes légères"],
+      "members": [
+        { "name": "Franklin Clinton", "role": "Membre influent" },
+        { "name": "Lamar Davis", "role": "Membre actif" }
+      ],
+      "notableEvents": [
+        { "date": "2023-02-01", "description": "Tentative de pacification avec les Ballas, qui a échoué." },
+        { "date": "2023-04-10", "description": "Opération de nettoyage de rue contre le trafic de crack." }
+      ]
+    },
+    {
+      "name": "The Lost Motorcycle Club",
+      "description": "Un club de motards criminel avec une présence significative à Blaine County et dans les zones rurales, impliqué dans le trafic d'armes et de stupéfiants.",
+      "territory": "Blaine County, Sandy Shores, Grapeseed",
+      "activities": ["Trafic d'armes", "Production de drogues", "Extorsion"],
+      "members": [
+        { "name": "Trevor Philips", "role": "Ancien associé" },
+        { "name": "Johnny Klebitz", "role": "Ancien président (décédé)" }
+      ],
+      "notableEvents": [
+        { "date": "2023-05-05", "description": "Raid du FIB sur leur repaire principal à Sandy Shores." },
+        { "date": "2023-06-18", "description": "Conflit territorial avec les O'Neil Brothers pour le contrôle des routes de contrebande." }
+      ]
+    }
+  ]
+}
+    
