@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const DATA_FILE = path.resolve(__dirname, '_data/gangs.json');
+const DATA_FILE = path.resolve(__dirname, 'gangs.json');
 const ADMIN_SECRET_KEY = process.env.ADMIN_SECRET_KEY || "code";
 exports.handler = async (event, context) => {
     if (event.httpMethod === 'GET') {
@@ -34,25 +34,38 @@ exports.handler = async (event, context) => {
                 body: JSON.stringify({ error: "Forbidden: Invalid or missing authorization key." }),
             };
         }
+        let newData;
         try {
-            const newData = JSON.parse(event.body);
-            if (!newData || !Array.isArray(newData.gangs)) {
-                return {
-                    statusCode: 400,
-                    body: JSON.stringify({ error: "Invalid data format. Expected { gangs: [] }." }),
-                };
+            if (event.isBase64Encoded) {
+                newData = JSON.parse(Buffer.from(event.body, 'base64').toString('utf8'));
+            } else {
+                newData = JSON.parse(event.body);
             }
+        } catch (parseError) {
+            console.error("Error parsing request body:", parseError);
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ error: "Invalid JSON format in request body." }),
+            };
+        }
+        if (!newData || !Array.isArray(newData.gangs)) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ error: "Invalid data format. Expected { gangs: [] }." }),
+            };
+        }
+        try {
             fs.writeFileSync(DATA_FILE, JSON.stringify(newData, null, 2), 'utf8');
             return {
                 statusCode: 200,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ message: "Gangs data updated successfully." }),
             };
-        } catch (error) {
-            console.error("Error writing gangs data:", error);
+        } catch (writeError) {
+            console.error("Error writing gangs data to file:", writeError);
             return {
-                statusCode: 400,
-                body: JSON.stringify({ error: "Invalid JSON format or failed to write data." }),
+                statusCode: 500,
+                body: JSON.stringify({ error: "Failed to write data to file." }),
             };
         }
     } else {
@@ -62,3 +75,4 @@ exports.handler = async (event, context) => {
         };
     }
 };
+    
