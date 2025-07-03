@@ -488,6 +488,83 @@
             margin-top: 40px;
         }
 
+        .shop-title {
+            color: #00ff00;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+        }
+        .shop-description {
+            color: #b0b0b0;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        .shop-filters {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            border: 1px solid rgba(34, 139, 34, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .filter-group label {
+            color: #00ff00;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .filter-group select {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            border-radius: 5px;
+            color: #ffffff;
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20256%22%3E%3Cpath%20fill%3D%22%2300ff00%22%20d%3D%22M208%2096L128%20176L48%2096z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 12px;
+        }
+        .filter-group select:hover {
+            border-color: #00ff00;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
+        }
+
+        /* Media Queries for responsiveness */
+        @media (max-width: 768px) {
+            .shop-filters {
+                flex-direction: column;
+                gap: 15px;
+                padding: 10px;
+            }
+            .filter-group {
+                width: 100%;
+                align-items: center;
+            }
+            .filter-group select {
+                width: 90%;
+            }
+        }
+
         .product-card {
             background: rgba(0, 0, 0, 0.7);
             border: 1px solid rgba(34, 139, 34, 0.3);
@@ -642,7 +719,7 @@
         }
 
         .cart-items-list {
-            max-height: 400px;
+            max-height: 600px;
             overflow-y: auto;
             margin-bottom: 20px;
             padding-right: 10px; /* For scrollbar */
@@ -1334,6 +1411,29 @@
                     <div class="shop-header">
                         <h2 class="shop-title">MARCHÉ NOIR</h2>
                     </div>
+                    <div class="shop-filters">
+                    <div class="filter-group">
+                        <label for="categoryFilter">Filtrer par Catégorie:</label>
+                        <select id="categoryFilter" onchange="applyFiltersAndSort()">
+                            <option value="all">Toutes</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="priceSort">Classer par Prix:</label>
+                        <select id="priceSort" onchange="applyFiltersAndSort()">
+                            <option value="none">Aucun</option>
+                            <option value="asc">Prix Croissant</option>
+                            <option value="desc">Prix Décroissant</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="alphaSort">Classer par Nom:</label>
+                        <select id="alphaSort" onchange="applyFiltersAndSort()">
+                            <option value="none">Aucun</option>
+                            <option value="asc">A-Z</option>
+                            <option value="desc">Z-A</option>
+                        </select>
+                    </div>
                     <div class="shop-grid" id="productGrid">
                     </div>
                 </div>
@@ -1549,7 +1649,7 @@
                 category: 'Munitions',
                 price: 20000,
                 description: 'Chargeur de pistolet à usage unique. Garanti de sécurité maximale et résistance à toutes les conditions.',
-                image: 'img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png'
+                image: 'img/ammo-9.png'
             },
             {
                 id: 'prod002',
@@ -1557,7 +1657,7 @@
                 category: 'Munitions',
                 price: 60000,
                 description: 'Chargeur de SMG à usage unique. Optimisé pour une efficacité sans pareille dans les situations critiques.',
-                image: 'img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png'
+                image: 'img/ammo-45.png'
             },
             {
                 id: 'prod003',
@@ -1565,7 +1665,7 @@
                 category: 'Munitions',
                 price: 100000,
                 description: 'Chargeur de pompe à usage unique. Conçu pour des opérations spéciales nécessitant une précision accrue.',
-                image: 'img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png'
+                image: 'img/ammo-shotgun.png'
             },
             {
                 id: 'prod004',
@@ -1573,7 +1673,7 @@
                 category: 'Munitions',
                 price: 100000,
                 description: 'Chargeur de fusil d\'assaut à usage unique. Optimisé pour des opérations critiques et des situations critiques.',
-                image: 'img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png'
+                image: 'img/ammo-rifle.png'
             },
             {
                 id: 'prod005',
@@ -1581,7 +1681,7 @@
                 category: 'Munitions',
                 price: 200000,
                 description: 'Chargeur permettant de stocker plus de munitions sur une arme de poing.',
-                image: 'img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png'
+                image: 'img/at_clip_extended.png'
             },
             {
                 id: 'prod006',
@@ -1589,7 +1689,7 @@
                 category: 'Munitions',
                 price: 700000,
                 description: 'Chargeur permettant de stocker plus de munitions sur une arme lourde.',
-                image: 'img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png'
+                image: 'img/at_clip_extended2.png'
             },
             {
                 id: 'prod007',
@@ -1597,7 +1697,7 @@
                 category: 'Accessoires',
                 price: 160000,
                 description: 'Silencieux sur arme de poing tel que des pistolets.',
-                image: 'img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png'
+                image: 'img/at_suppressor.png'
             },
             {
                 id: 'prod008',
@@ -1605,7 +1705,7 @@
                 category: 'Accessoires',
                 price: 300000,
                 description: 'Silencieux sur arme lourdes tel que des fusil d\'assaut ou des fusil de sniper.',
-                image: 'img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png'
+                image: 'img/at_suppressor.png'
             },
             {
                 id: 'prod009',
@@ -1613,7 +1713,7 @@
                 category: 'Arme',
                 price: 250000,
                 description: 'Pistolet arme de poing. Conçu pour une precision et une puissance exceptionnelle.',
-                image: 'img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png'
+                image: 'img/pi-pistolet.png'
             },
             {
                 id: 'prod010',
@@ -1621,7 +1721,7 @@
                 category: 'Arme',
                 price: 250000,
                 description: 'Pistolet arme de poing. Conçu pour une discrétion et une tracabilité indeniable.',
-                image: 'img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png'
+                image: 'img/ceramic-pistol.png'
             },
         ];
 
@@ -1765,10 +1865,11 @@
             currentUserRole = accessConfig.role;
             updateNavigationVisibility();
             showPage('shopPage'); // Default to shop page after login
-            // Load static data directly
+            populateCategoryFilter();
+            applyFiltersAndSort();
+
             renderGangsGrid(staticGangsData.gangs);
             renderCartelContent(staticCartelData);
-            renderProducts();
         }
 
         function logout() {
@@ -1804,11 +1905,51 @@
 
         document.addEventListener('DOMContentLoaded', updateNavigationVisibility);
 
+        function populateCategoryFilter() {
+            const categoryFilter = document.getElementById('categoryFilter');
+            const categories = [...new Set(products.map(p => p.category))];
+            while (categoryFilter.options.length > 1) {
+                categoryFilter.remove(1);
+            }
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categoryFilter.appendChild(option);
+            });
+        }
 
-        function renderProducts() {
+        function applyFiltersAndSort() {
+            let filteredProducts = [...products];
+            const selectedCategory = document.getElementById('categoryFilter').value;
+            if (selectedCategory !== 'all') {
+                filteredProducts = filteredProducts.filter(product => product.category === selectedCategory);
+            }
+            const priceSort = document.getElementById('priceSort').value;
+            if (priceSort === 'asc') {
+                filteredProducts.sort((a, b) => a.price - b.price);
+            } else if (priceSort === 'desc') {
+                filteredProducts.sort((a, b) => b.price - a.price);
+            }
+            const alphaSort = document.getElementById('alphaSort').value;
+            if (alphaSort === 'asc') {
+                filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
+            } else if (alphaSort === 'desc') {
+                filteredProducts.sort((a, b) => b.name.localeCompare(a.name));
+            }
+            renderProducts(filteredProducts);
+        }
+
+        function renderProducts(productsToRender = products) {
             const productGrid = document.getElementById('productGrid');
             productGrid.innerHTML = '';
-            products.forEach(product => {
+            
+            if (productsToRender.length === 0) {
+                productGrid.innerHTML = '<p class="no-products">Aucun produit ne correspond à vos critères de filtrage.</p>';
+                return;
+            }
+            
+            productsToRender.forEach(product => {
                 const productCard = document.createElement('div');
                 productCard.classList.add('product-card');
                 productCard.setAttribute('data-product-id', product.id);
