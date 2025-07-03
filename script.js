@@ -25,13 +25,13 @@ const CONFIG = {
     darkwebAccess: [
         {
             credentials: {
-                name: "US1D7045GC041C",
+                name: "US1T7045GC041C",
                 email: "client@everywater.fr",
                 subject: "other"
             },
-            requiredKeywords: ["1750"],
+            requiredKeywords: ["2350"],
             redirectPage: "darkweb.html",
-            webhookMessage: "🚨 Accès détecté pour un membre des DGC"
+            webhookMessage: "🆕 Accès détecté pour un membre des TGC"
         },
         {
             credentials: {

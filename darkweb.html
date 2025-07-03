@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Access Portal - El Cartel</title>
+    <title>EL CARTEL DE RIVERA</title>
     <style>
         * {
             margin: 0;
@@ -12,11 +12,13 @@
         }
 
         body {
-            font-family: 'Courier New', monospace;
-            background: #000;
+            font-family: 'Consolas', 'Courier New', monospace;
+            background: #0a0a0a;
             color: #00ff00;
             overflow: hidden;
-            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .security-overlay {
@@ -25,13 +27,13 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: #000;
+            background: #0a0a0a;
             z-index: 9999;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            transition: opacity 0.8s ease-out;
+            transition: opacity 1.2s ease-out;
         }
 
         .security-overlay.hidden {
@@ -41,52 +43,64 @@
 
         .terminal-window {
             width: 90vw;
-            max-width: 800px;
-            height: 45vh;
-            max-height: 1000px;
-            background: rgba(0, 0, 0, 0.95);
-            border: 2px solid #00ff00;
-            border-radius: 5px;
-            box-shadow: 0 0 30px rgba(0, 255, 0, 0.2);
+            max-width: 900px;
+            height: 60vh;
+            max-height: 700px;
+            background: rgba(10, 10, 10, 0.98);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            border-radius: 8px;
+            box-shadow: 0 0 40px rgba(0, 255, 0, 0.15), inset 0 0 10px rgba(0, 255, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .terminal-header {
-            background: linear-gradient(90deg, #001100, #003300);
-            padding: 1rem;
-            border-bottom: 1px solid #00ff00;
+            background: linear-gradient(90deg, #1a1a1a, #2a2a2a);
+            padding: 0.8rem 1.2rem;
+            border-bottom: 1px solid rgba(0, 255, 0, 0.2);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
         }
 
         .terminal-buttons {
             display: flex;
-            gap: 5px;
+            gap: 6px;
         }
 
         .terminal-button {
-            width: 12px;
-            height: 12px;
-            border-radius: 15px;
-            background: #ff5f56;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            box-shadow: inset 0 0 3px rgba(0,0,0,0.3);
         }
 
-        .terminal-button:nth-child(2) { background: #ffbd2e; }
-        .terminal-button:nth-child(3) { background: #27ca3f; }
+        .terminal-button:nth-child(2) { background: #ffe66d; }
+        .terminal-button:nth-child(3) { background: #6bff6b; }
 
         .terminal-title {
             color: #00ff00;
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: bold;
+            flex-grow: 1;
+            text-align: center;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
         }
 
         .terminal-content {
-            padding: 1rem;
-            height: calc(100% - 60px);
+            padding: 1.5rem;
+            height: calc(100% - 50px);
             overflow-y: auto;
             position: relative;
             scrollbar-width: none;
             -ms-overflow-style: none;
+            flex-grow: 1;
+            font-size: 0.95rem;
+            line-height: 1.5;
         }
 
         .terminal-content::-webkit-scrollbar {
@@ -94,25 +108,31 @@
         }
 
         .terminal-line {
-            margin: 0.4rem 0;
+            margin: 0.6rem 0;
             opacity: 0;
-            animation: typeIn 0.03s ease-in-out forwards;
+            animation: typeIn 0.04s ease-in-out forwards;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
 
         .terminal-line.error {
-            color: #ff3333;
+            color: #ff4d4d;
+            text-shadow: 0 0 5px rgba(255, 77, 77, 0.3);
         }
 
         .terminal-line.warning {
-            color: #ffaa00;
+            color: #ffcc00;
+            text-shadow: 0 0 5px rgba(255, 204, 0, 0.3);
         }
 
         .terminal-line.success {
             color: #00ff00;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
         }
 
         .terminal-line.info {
-            color: #0099ff;
+            color: #00bfff;
+            text-shadow: 0 0 5px rgba(0, 191, 255, 0.3);
         }
 
         .cursor {
@@ -120,7 +140,8 @@
             background: #00ff00;
             width: 2px;
             height: 1em;
-            animation: blink 0.8s infinite;
+            animation: blink 0.8s infinite step-end;
+            vertical-align: middle;
         }
 
         @keyframes typeIn {
@@ -128,25 +149,27 @@
         }
 
         @keyframes blink {
-            50% { opacity: 0; }
+            50% { background: transparent; }
         }
 
         .progress-bar {
             width: 100%;
-            height: 18px;
-            background: rgba(0, 255, 0, 0.1);
-            border: 1px solid #00ff00;
+            height: 20px;
+            background: rgba(0, 255, 0, 0.08);
+            border: 1px solid rgba(0, 255, 0, 0.2);
             border-radius: 10px;
             overflow: hidden;
-            margin: 1rem 0;
+            margin: 1.5rem 0;
+            box-shadow: inset 0 0 5px rgba(0, 255, 0, 0.1);
         }
 
         .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, #00ff00, #00aa00);
             width: 0%;
-            transition: width 0.2s ease;
+            transition: width 0.3s ease-out;
             position: relative;
+            border-radius: 10px;
         }
 
         .progress-fill::after {
@@ -156,8 +179,8 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            animation: shimmer 1.5s infinite;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            animation: shimmer 1.8s infinite;
         }
 
         @keyframes shimmer {
@@ -165,123 +188,18 @@
             100% { transform: translateX(100%); }
         }
 
-        .matrix-bg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            opacity: 0.05;
-        }
-
-        .matrix-char {
-            position: absolute;
-            color: #00ff00;
-            font-family: 'Courier New', monospace;
-            font-size: 10px;
-            animation: matrixFall 2s linear infinite;
-        }
-
-        @keyframes matrixFall {
-            0% {
-                transform: translateY(-100vh);
-                opacity: 0.8;
-            }
-            100% {
-                transform: translateY(100vh);
-                opacity: 0;
-            }
-        }
-
-        .glitch {
-            position: relative;
-            display: inline-block;
-        }
-
-        .glitch::before,
-        .glitch::after {
-            content: attr(data-text);
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        .glitch::before {
-            animation: glitch1 0.15s infinite; /* Glitch plus rapide */
-            color: #ff0000;
-            z-index: -1;
-        }
-
-        .glitch::after {
-            animation: glitch2 0.15s infinite; /* Glitch plus rapide */
-            color: #0000ff;
-            z-index: -2;
-        }
-
-        @keyframes glitch1 {
-            0%, 100% { transform: translate(0); }
-            20% { transform: translate(-1px, 1px); } /* Décalage réduit */
-            40% { transform: translate(-1px, -1px); }
-            60% { transform: translate(1px, 1px); }
-            80% { transform: translate(1px, -1px); }
-        }
-
-        @keyframes glitch2 {
-            0%, 100% { transform: translate(0); }
-            20% { transform: translate(1px, -1px); } /* Décalage réduit */
-            40% { transform: translate(1px, 1px); }
-            60% { transform: translate(-1px, -1px); }
-            80% { transform: translate(-1px, 1px); }
-        }
-
-        .scan-line {
-            position: absolute;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #00ff00, transparent);
-            animation: scan 1.5s linear infinite; /* Scan plus rapide */
-        }
-
-        @keyframes scan {
-            0% { top: 0; opacity: 1; }
-            100% { top: 100%; opacity: 0; }
-        }
-
-        @media (max-width: 768px) {
-            .terminal-window {
-                width: 95vw;
-                height: 60vh;
-            }
-
-            .terminal-title {
-                font-size: 0.8rem;
-            }
-
-            .terminal-content {
-                padding: 0.5rem;
-                height: calc(100% - 50px);
-            }
-
-            .terminal-line {
-                margin: 0.3rem 0;
-                font-size: 0.9rem;
-            }
-
-            .progress-bar {
-                height: 15px;
-            }
-        }
-
+        /* Contenu principal après l'animation */
         .main-content {
             opacity: 0;
-            transition: opacity 0.8s ease-in;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0d1a0d 100%);
+            transition: opacity 1s ease-in;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0d1a0d 100%);
             min-height: 100vh;
             color: #e0e0e0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            width: 100%;
+            padding-top: 20px;
+            padding-bottom: 20px;
+            overflow-y: auto;
         }
 
         .main-content.visible {
@@ -295,219 +213,258 @@
             width: 100%;
             height: 100%;
             background:
-                radial-gradient(circle at 20% 50%, rgba(34, 139, 34, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(220, 20, 60, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+                radial-gradient(circle at 20% 50%, rgba(34, 139, 34, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(220, 20, 60, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
             pointer-events: none;
             z-index: -1;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
         }
 
-        .header {
-            text-align: center;
-            padding: 60px 0 40px;
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: 10px;
-            margin-bottom: 40px;
-            border: 1px solid rgba(34, 139, 34, 0.3);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        .header .btn {
-            display: inline-block;
-            align-items: center;
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #228B22, #32CD32);
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: 900;
-            font-size: 1.0rem;
-            text-align: center;
+        .nav-header {
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(34, 139, 34, 0.2);
+            border-radius: 12px;
+            padding: 20px 30px;
+            margin-bottom: 80px;
             margin-top: 20px;
-            max-width: 250px;
-            max-height: 50px;;
-            transition: background 0.3s ease;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 80px;
+            z-index: 100;
         }
 
-        .header .btn:hover {
-            background: linear-gradient(135deg, #228B22, #ffffff, #dc143c);
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
-        .logo {
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 30px;
+        .nav-logo img {
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
-            overflow: hidden;
-            border: 3px solid #dc143c;
-            box-shadow: 0 0 30px rgba(220, 20, 60, 0.3);
-            transition: all 0.3s ease;
+            border: 2px solid #dc143c;
+            box-shadow: 0 0 20px rgba(220, 20, 60, 0.3);
         }
 
-        .logo:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 40px rgba(220, 20, 60, 0.5);
-        }
-
-        .logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .title {
-            font-size: 2.8rem;
-            font-weight: 300;
+        .nav-title {
+            font-size: 1.8rem;
+            font-weight: 700;
             background: linear-gradient(135deg, #228B22, #ffffff, #dc143c);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 15px;
-            letter-spacing: 2px;
         }
 
-        .subtitle {
-            color: #888;
-            font-size: 1.1rem;
-            font-weight: 300;
-            margin-bottom: 30px;
-            letter-spacing: 1px;
+        .nav-actions {
+            display: flex;
+            gap: 15px;
         }
 
-        .flag-divider {
-            width: 200px;
-            height: 4px;
-            background: linear-gradient(to right, #228B22 33%, white 33%, white 66%, #dc143c 66%);
-            margin: 0 auto;
-            border-radius: 2px;
+        .nav-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #228B22, #32CD32);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .nav-btn:hover {
+            background: linear-gradient(135deg, #32CD32, #228B22);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(34, 139, 34, 0.4);
+        }
+
+        .nav-btn.danger {
+            background: linear-gradient(135deg, #dc143c, #ff4757);
+        }
+
+        .nav-btn.danger:hover {
+            background: linear-gradient(135deg, #ff4757, #dc143c);
+            box-shadow: 0 4px 15px rgba(220, 20, 60, 0.4);
         }
 
         .page {
             display: none;
-            animation: fadeInUp 0.6s ease-out;
+            animation: fadeInScale 0.8s ease-out forwards;
+            transform: scale(0.98);
+            opacity: 0;
         }
 
         .page.active {
             display: block;
+            transform: scale(1);
+            opacity: 1;
         }
 
-        @keyframes fadeInUp {
+        @keyframes fadeInScale {
             from {
                 opacity: 0;
-                transform: translateY(30px);
+                transform: translateY(20px) scale(0.98);
             }
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(0) scale(1);
             }
         }
 
         .auth-container {
-            max-width: 500px;
+            max-width: 550px;
             margin: 0 auto;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 50px;
-            border-radius: 10px;
-            border: 1px solid rgba(34, 139, 34, 0.3);
-            backdrop-filter: blur(15px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.85);
+            padding: 45px;
+            border-radius: 12px;
+            border: 1px solid rgba(34, 139, 34, 0.25);
+            backdrop-filter: blur(18px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
         }
 
         .auth-title {
             text-align: center;
             color: #ffffff;
-            font-size: 1.8rem;
-            font-weight: 300;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(34, 139, 34, 0.3);
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 35px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(34, 139, 34, 0.2);
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
         }
 
         .form-group {
-            margin-bottom: 30px;
+            margin-bottom: 28px;
             position: relative;
         }
 
         .form-group label {
             display: block;
-            color: #b0b0b0;
-            margin-bottom: 10px;
+            color: #c0c0c0;
+            margin-bottom: 8px;
             font-weight: 500;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.2px;
         }
 
-        .form-group input, .form-group select {
+        .form-group input {
             width: 100%;
-            padding: 15px 20px;
-            background: rgba(0, 0, 0, 0.6);
-            border: 2px solid rgba(34, 139, 34, 0.4);
-            border-radius: 5px;
+            padding: 16px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(34, 139, 34, 0.3);
+            border-radius: 6px;
             color: #ffffff;
-            font-size: 1rem;
+            font-size: 1.05rem;
             transition: all 0.3s ease;
             outline: none;
+            box-shadow: inset 0 0 8px rgba(0, 255, 0, 0.05);
         }
 
-        .form-group input:focus, .form-group select:focus {
+        .form-group input:focus {
             border-color: #228B22;
-            box-shadow: 0 0 20px rgba(34, 139, 34, 0.2);
-            background: rgba(0, 0, 0, 0.8);
-        }
-
-        .form-group input::placeholder {
-            color: #666;
+            box-shadow: 0 0 25px rgba(34, 139, 34, 0.3), inset 0 0 10px rgba(34, 139, 34, 0.1);
+            background: rgba(0, 0, 0, 0.9);
         }
 
         .btn {
             width: 100%;
-            padding: 15px;
+            padding: 16px;
             background: linear-gradient(135deg, #228B22, #32CD32);
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             color: white;
-            font-weight: 600;
-            font-size: 1rem;
+            font-weight: 700;
+            font-size: 1.1rem;
             cursor: pointer;
             transition: all 0.3s ease;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 20px;
+            letter-spacing: 1.5px;
+            margin-top: 25px;
+            box-shadow: 0 5px 20px rgba(34, 139, 34, 0.3);
         }
 
         .btn:hover {
             background: linear-gradient(135deg, #32CD32, #228B22);
-            box-shadow: 0 5px 20px rgba(34, 139, 34, 0.4);
-            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(34, 139, 34, 0.5);
+            transform: translateY(-4px);
         }
 
-        .btn:active {
-            transform: translateY(0);
+        .error-message {
+            background: rgba(220, 20, 60, 0.15);
+            border: 1px solid rgba(220, 20, 60, 0.4);
+            color: #ff8c9a;
+            padding: 18px;
+            border-radius: 8px;
+            margin-top: 25px;
+            text-align: center;
+            display: none;
+            font-size: 0.95rem;
         }
 
-        .btn-danger {
-            background: linear-gradient(135deg, #dc143c, #ff4757);
+        .error-message.show {
+            display: block;
+            animation: shake 0.6s ease;
         }
 
-        .btn-danger:hover {
-            background: linear-gradient(135deg, #ff4757, #dc143c);
-            box-shadow: 0 5px 20px rgba(220, 20, 60, 0.4);
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #228 B22;
+            margin-top: 25px;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            border: 3px solid #228B22;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-left: 12px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         .shop-container {
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 12px;
             padding: 40px;
-            border: 1px solid rgba(34, 139, 34, 0.3);
-            backdrop-filter: blur(15px);
+            border: 1px solid rgba(34, 139, 34, 0.25);
+            backdrop-filter: blur(18px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            margin-top: 50px;
         }
 
         .shop-header {
@@ -516,30 +473,32 @@
         }
 
         .shop-title {
-            font-size: 2.5rem;
-            font-weight: 300;
+            font-size: 2.8rem;
+            font-weight: 600;
             color: #ffffff;
             margin-bottom: 20px;
             letter-spacing: 2px;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
         }
 
         .shop-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 30px;
             margin-top: 40px;
         }
 
         .product-card {
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.7);
             border: 1px solid rgba(34, 139, 34, 0.3);
             border-radius: 10px;
-            padding: 30px;
+            padding: 25px;
             transition: all 0.4s ease;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(12px);
             position: relative;
             overflow: hidden;
             cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
         }
 
         .product-card::before {
@@ -559,8 +518,8 @@
 
         .product-card:hover {
             border-color: #228B22;
-            box-shadow: 0 10px 40px rgba(34, 139, 34, 0.2);
-            transform: translateY(-5px);
+            box-shadow: 0 12px 45px rgba(34, 139, 34, 0.3);
+            transform: translateY(-8px);
         }
 
         .product-header {
@@ -572,7 +531,7 @@
 
         .product-title {
             color: #ffffff;
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             font-weight: 600;
             margin-bottom: 5px;
         }
@@ -586,9 +545,10 @@
 
         .product-price {
             color: #dc143c;
-            font-size: 1.8rem;
+            font-size: 2rem;
             font-weight: 700;
             white-space: nowrap;
+            text-shadow: 0 0 10px rgba(220, 20, 60, 0.2);
         }
 
         .product-description {
@@ -607,21 +567,23 @@
         .product-actions .btn {
             flex: 1;
             margin: 0;
-            padding: 12px;
-            font-size: 0.9rem;
+            padding: 14px;
+            font-size: 0.95rem;
         }
 
+        /* Widget Panier */
         .cart-widget {
             position: fixed;
             top: 30px;
             right: 30px;
-            background: rgba(0, 0, 0, 0.9);
-            border: 1px solid rgba(220, 20, 60, 0.5);
-            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid rgba(220, 20, 60, 0.4);
+            border-radius: 12px;
             padding: 20px;
             z-index: 1000;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
         }
 
         .cart-header {
@@ -637,69 +599,79 @@
 
         .cart-icon {
             color: #dc143c;
-            font-size: 1.4rem;
-            margin-right: 10px;
+            font-size: 1.6rem;
+            margin-right: 12px;
+            transition: transform 0.2s ease;
+        }
+
+        .cart-icon.animated {
+            animation: bounce 0.5s;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
         }
 
         .cart-count {
             background: linear-gradient(135deg, #dc143c, #ff4757);
             color: white;
             border-radius: 20px;
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             font-weight: bold;
+            box-shadow: 0 2px 8px rgba(220, 20, 60, 0.4);
         }
 
-        .cart-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            width: 350px;
-            background: rgba(0, 0, 0, 0.95);
-            border: 1px solid rgba(220, 20, 60, 0.5);
-            border-radius: 10px;
-            padding: 25px;
-            margin-top: 15px;
-            display: none;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        /* Cart Modal Specific Styles */
+        #cartModal .modal-content {
+            max-width: 600px;
+            padding: 30px;
         }
 
-        .cart-dropdown.open {
-            display: block;
-            animation: slideDown 0.4s ease;
+        #cartModal .modal-title {
+            color: #dc143c;
+            font-size: 2rem;
+            margin-bottom: 25px;
+            border-bottom: 1px solid rgba(220, 20, 60, 0.2);
+            padding-bottom: 10px;
         }
 
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .cart-items-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding-right: 10px; /* For scrollbar */
         }
 
         .cart-item {
-            padding: 15px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 1rem;
         }
 
         .cart-item:last-child {
             border-bottom: none;
         }
 
+        .cart-item-info {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            margin-right: 5px;
+        }
+
         .cart-item-name {
             color: #ffffff;
             font-weight: 500;
+            margin-bottom: 5px;
         }
 
         .cart-item-price {
@@ -707,41 +679,89 @@
             font-weight: bold;
         }
 
-        .cart-item-remove {
-            background: none;
-            border: none;
-            color: #dc143c;
-            cursor: pointer;
-            font-size: 1.2rem;
-            padding: 5px;
-            border-radius: 5px;
-            transition: all 0.3s ease;
+        .cart-item-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .cart-item-remove:hover {
+        .cart-item-controls button {
             background: rgba(220, 20, 60, 0.2);
+            border: 1px solid rgba(220, 20, 60, 0.4);
+            color: #dc143c;
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
         }
 
+        .cart-item-controls button:hover {
+            background: rgba(220, 20, 60, 0.4);
+            transform: scale(1.05);
+        }
+
+        .cart-item-quantity {
+            color: #ffffff;
+            font-weight: bold;
+            min-width: 25px;
+            text-align: center;
+        }
+
+        .cart-total {
+            color: #ffffff;
+            font-size: 1.3rem;
+            font-weight: bold;
+            text-align: right;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .cart-modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .cart-modal-actions .btn {
+            width: 100%;
+            margin-top: 0;
+        }
+
+        .cart-modal-actions .btn.clear-cart {
+            background: linear-gradient(135deg, #555, #333);
+        }
+
+        .cart-modal-actions .btn.clear-cart:hover {
+            background: linear-gradient(135deg, #333, #555);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+
+
+        /* Notification */
         .notification {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.95);
+            background: rgba(0, 0, 0, 0.98);
             border: 1px solid #228B22;
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 40px;
             text-align: center;
             z-index: 2000;
             display: none;
-            backdrop-filter: blur(15px);
+            backdrop-filter: blur(20px);
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-            max-width: 500px;
+            max-width: 550px;
+            animation: modalAppear 0.5s ease forwards;
         }
 
         .notification.show {
             display: block;
-            animation: modalAppear 0.5s ease;
         }
 
         @keyframes modalAppear {
@@ -757,66 +777,26 @@
 
         .notification h3 {
             color: #228B22;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             margin-bottom: 20px;
-            font-weight: 300;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(34, 139, 34, 0.2);
         }
 
         .notification p {
             color: #b0b0b0;
             margin-bottom: 15px;
-            line-height: 1.5;
+            line-height: 1.6;
+            font-size: 1rem;
         }
 
-        .error-message {
-            background: rgba(220, 20, 60, 0.1);
-            border: 1px solid rgba(220, 20, 60, 0.3);
-            color: #ff6b7a;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
-            text-align: center;
-            display: none;
+        .notification .btn {
+            margin-top: 30px;
+            width: auto;
+            padding: 12px 30px;
         }
 
-        .error-message.show {
-            display: block;
-            animation: shake 0.5s ease;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            color: #228B22;
-            margin-top: 20px;
-        }
-
-        .loading.show {
-            display: block;
-        }
-
-        .loading::after {
-            content: '';
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #228B22;
-            border-radius: 50%;
-            border-top-color: transparent;
-            animation: spin 1s linear infinite;
-            margin-left: 10px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
+        /* Modals généraux (produits, gangs, cartel) */
         .modal {
             display: flex;
             position: fixed;
@@ -826,8 +806,8 @@
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px);
+            background-color: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
             justify-content: center;
             align-items: center;
             opacity: 0;
@@ -841,137 +821,456 @@
         }
 
         .modal-content {
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.95);
             margin: auto;
-            padding: 30px;
-            border: 1px solid rgba(34, 139, 34, 0.5);
-            border-radius: 10px;
-            width: 80%;
-            max-width: 700px;
-            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.7);
-            transform: scale(0.9);
+            padding: 35px;
+            border: 1px solid rgba(34, 139, 34, 0.4);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 15px 60px rgba(0, 0, 0, 0.8);
+            transform: scale(0.95);
             transition: transform 0.3s ease;
             position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .modal.show .modal-content {
             transform: scale(1);
         }
 
-        .modal-image {
-            width: 100%;
-            height: auto;
-            max-height: 300px;
-            object-fit: contain;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(220, 20, 60, 0.3);
-        }
-
         .close-button {
             color: #aaa;
             position: absolute;
-            top: 15px;
-            right: 25px;
-            font-size: 35px;
+            top: 18px;
+            right: 28px;
+            font-size: 38px;
             font-weight: bold;
             cursor: pointer;
             transition: 0.3s;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
         }
 
         .close-button:hover,
         .close-button:focus {
             color: #dc143c;
             text-decoration: none;
-            transform: scale(1.1);
+            transform: scale(1.15) rotate(5deg);
+        }
+
+        .modal-image {
+            width: 100%;
+            max-height: 350px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(220, 20, 60, 0.3);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
         }
 
         .modal-title {
             color: #ffffff;
-            font-size: 2rem;
+            font-size: 2.2rem;
             margin-bottom: 10px;
-            font-weight: 600;
+            font-weight: 700;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
         }
 
         .modal-category {
             color: #888;
             font-size: 1rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.2px;
             margin-bottom: 15px;
+            text-align: center;
         }
 
         .modal-price {
             color: #dc143c;
-            font-size: 2.2rem;
-            font-weight: 700;
-            margin-bottom: 20px;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 25px;
+            text-shadow: 0 0 15px rgba(220, 20, 60, 0.3);
         }
 
         .modal-description {
             color: #b0b0b0;
             line-height: 1.7;
             margin-bottom: 30px;
-            font-size: 1rem;
+            font-size: 1.05rem;
+            text-align: center;
+            max-width: 600px;
         }
 
         .modal-actions {
             display: flex;
             gap: 15px;
             justify-content: center;
+            width: 100%;
+            max-width: 400px;
         }
 
         .modal-actions .btn {
             width: auto;
-            padding: 12px 25px;
+            flex-grow: 1;
+            padding: 14px 25px;
             font-size: 1rem;
         }
 
-        @media (max-width: 768px) {
+        /* Styles pour les sections Gangs et Cartel (MDT-like) */
+        .mdt-section {
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: 12px;
+            padding: 40px;
+            border: 1px solid rgba(34, 139, 34, 0.25);
+            backdrop-filter: blur(18px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .mdt-title {
+            font-size: 2.8rem;
+            font-weight: 600;
+            color: #00ff00;
+            margin-bottom: 30px;
+            text-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+            text-align: center;
+        }
+
+        .mdt-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .mdt-card {
+            background: rgba(10, 10, 10, 0.7);
+            border: 1px solid rgba(0, 255, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 255, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mdt-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(0, 255, 0, 0.05), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 0;
+        }
+
+        .mdt-card:hover::before {
+            opacity: 1;
+        }
+
+        .mdt-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 255, 0, 0.3);
+            border-color: rgba(0, 255, 0, 0.4);
+        }
+
+        .mdt-card-content {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+        }
+
+        .mdt-card img {
+            width: 100%;
+            max-height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(0, 255, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .mdt-card-title {
+            font-size: 1.6rem;
+            color: #00ff00;
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-shadow: 0 0 8px rgba(0, 255, 0, 0.2);
+        }
+
+        .mdt-card-subtitle {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        /* Modal de détails MDT */
+        .mdt-detail-modal .modal-content {
+            max-width: 900px;
+            padding: 40px;
+        }
+
+        .mdt-detail-modal .modal-image {
+            max-height: 400px;
+            margin-bottom: 30px;
+        }
+
+        .mdt-detail-modal .modal-title {
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+        }
+
+        .mdt-detail-modal .modal-subtitle {
+            font-size: 1.2rem;
+            color: #00ff00;
+            margin-bottom: 20px;
+            text-shadow: 0 0 8px rgba(0, 255, 0, 0.2);
+        }
+
+        .mdt-detail-modal .modal-section-title {
+            font-size: 1.5rem;
+            color: #00bfff;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 191, 255, 0.2);
+            padding-bottom: 5px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .mdt-detail-modal .modal-text {
+            color: #c0c0c0;
+            line-height: 1.7;
+            margin-bottom: 15px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .mdt-detail-modal ul {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+            width: 100%;
+            text-align: left;
+        }
+
+        .mdt-detail-modal ul li {
+            color: #b0b0b0;
+            margin-bottom: 8px;
+            padding-left: 25px;
+            position: relative;
+            font-size: 0.95rem;
+        }
+
+        .mdt-detail-modal ul li::before {
+            content: "»";
+            color: #00ff00;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-size: 1.2em;
+        }
+
+        .mdt-detail-modal .modal-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .mdt-detail-modal .modal-gallery img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: zoom-in;
+            transition: transform 0.2s ease;
+        }
+
+        .mdt-detail-modal .modal-gallery img:hover {
+            transform: scale(1.05);
+        }
+
+        /* Modal d'édition des données de gangs */
+        .edit-textarea {
+            width: 100%;
+            height: 400px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(34, 139, 34, 0.4);
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 1rem;
+            padding: 20px;
+            resize: vertical;
+            font-family: 'Consolas', 'Courier New', monospace;
+            margin-bottom: 25px;
+            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.1);
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .edit-textarea:focus {
+            border-color: #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3), inset 0 0 15px rgba(0, 255, 0, 0.2);
+        }
+
+        /* Media Queries */
+        @media (max-width: 1024px) {
             .container {
                 padding: 15px;
             }
-
-            .auth-container {
-                padding: 30px 25px;
-            }
-
-            .shop-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .cart-widget {
-                top: 20px;
-                right: 20px;
+            .nav-header {
+                flex-direction: column;
+                gap: 20px;
                 padding: 15px;
             }
-
-            .cart-dropdown {
-                width: 280px;
+            .nav-actions {
+                flex-wrap: wrap;
+                justify-content: center;
             }
-
-            .modal-content {
-                width: 95%;
+            .shop-grid, .mdt-grid {
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            }
+            .product-card, .mdt-card {
                 padding: 20px;
             }
-
-            .modal-title {
-                font-size: 1.5rem;
+            .product-title, .mdt-card-title {
+                font-size: 1.3rem;
             }
-
-            .modal-price {
+            .product-price {
                 font-size: 1.8rem;
             }
+            .modal-content {
+                width: 95%;
+                padding: 25px;
+            }
+            .modal-title {
+                font-size: 1.8rem;
+            }
+            .modal-price {
+                font-size: 2rem;
+            }
+            .mdt-detail-modal .modal-title {
+                font-size: 2.2rem;
+            }
+            .mdt-detail-modal .modal-subtitle {
+                font-size: 1rem;
+            }
+            .mdt-detail-modal .modal-section-title {
+                font-size: 1.3rem;
+            }
+        }
 
+        @media (max-width: 768px) {
+            body {
+                align-items: flex-start;
+            }
+            .terminal-window {
+                width: 95vw;
+                height: 80vh;
+                margin-top: 20px;
+            }
+            .terminal-content {
+                padding: 1rem;
+                font-size: 0.85rem;
+            }
+            .nav-logo img {
+                width: 40px;
+                height: 40px;
+            }
+            .nav-title {
+                font-size: 1.5rem;
+            }
+            .nav-btn {
+                padding: 8px 15px;
+                font-size: 0.8rem;
+            }
+            .auth-container {
+                padding: 30px 20px;
+            }
+            .auth-title {
+                font-size: 1.6rem;
+            }
+            .form-group input {
+                padding: 12px 15px;
+                font-size: 0.95rem;
+            }
+            .btn {
+                padding: 14px;
+                font-size: 1rem;
+            }
+            .shop-container, .mdt-section {
+                padding: 30px 20px;
+            }
+            .shop-title, .mdt-title {
+                font-size: 2.2rem;
+            }
+            .shop-grid, .mdt-grid {
+                grid-template-columns: 1fr;
+            }
+            .cart-widget {
+                top: 15px;
+                right: 15px;
+                padding: 15px;
+            }
+            .modal-content {
+                padding: 20px;
+            }
+            .close-button {
+                font-size: 30px;
+                top: 10px;
+                right: 15px;
+            }
+            .modal-image {
+                max-height: 200px;
+            }
+            .modal-title {
+                font-size: 1.6rem;
+            }
+            .modal-price {
+                font-size: 2rem;
+            }
+            .modal-description {
+                font-size: 0.95rem;
+            }
             .modal-actions {
                 flex-direction: column;
+            }
+            .mdt-detail-modal .modal-title {
+                font-size: 1.8rem;
+            }
+            .mdt-detail-modal .modal-section-title {
+                font-size: 1.2rem;
+            }
+            .edit-textarea {
+                height: 300px;
+                padding: 15px;
             }
         }
     </style>
 </head>
 <body>
     <div class="security-overlay" id="securityOverlay">
-        <div class="matrix-bg" id="matrixBg"></div>
         <div class="terminal-window">
             <div class="terminal-header">
                 <div class="terminal-buttons">
@@ -979,10 +1278,9 @@
                     <div class="terminal-button"></div>
                     <div class="terminal-button"></div>
                 </div>
-                <div class="terminal-title">SECURE_ACCESS_TERMINAL v2.1.4</div>
+                <div class="terminal-title">NEXUS_OBSCUR_PROTOCOL v3.0.1</div>
             </div>
             <div class="terminal-content">
-                <div class="scan-line"></div>
                 <div id="terminalOutput"></div>
                 <div class="progress-bar" style="display: none;" id="progressBar">
                     <div class="progress-fill" id="progressFill"></div>
@@ -993,25 +1291,30 @@
     <div class="main-content" id="mainContent">
         <div class="background-overlay"></div>
         <div class="container">
-            <div class="header">
-                <div class="logo">
-                    <img src="https://media.discordapp.net/attachments/1232583375181582366/1387087700313505852/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png?ex=685c1196&is=685ac016&hm=0b98e6a808a15974a5bf2b1dd9d6467734bb0c31341970e093e34bee56b17fbb&=&format=webp&quality=lossless&width=930&height=930" alt="El Cartel Logo">
+            <div class="nav-header">
+                <div class="nav-logo">
+                    <img src="img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png" alt="El Cartel Logo">
+                    <h1 class="nav-title">RIVERA</h1>
                 </div>
-                <h1 class="title">EL CARTEL</h1>
-                <p class="subtitle">SECURE ACCESS PORTAL</p>
-                <a href="index.html" class="btn" id="homeRedirect">💧 EveryWater</a>
+                <div class="nav-actions">
+                    <button class="nav-btn" id="navShopBtn" onclick="showPage('shopPage')">Boutique</button>
+                    <button class="nav-btn" id="navGangsBtn" onclick="showPage('gangsPage')">Gangs & Orgas</button>
+                    <button class="nav-btn" id="navAuthBtn" onclick="showPage('authPage')">Authentification</button>
+                    <button class="nav-btn danger" id="navLogoutBtn" onclick="logout()">Déconnexion</button>
+                </div>
             </div>
+
             <div class="page active" id="authPage">
                 <div class="auth-container">
-                    <h2 class="auth-title">AUTHENTIFICATION REQUISE</h2>
+                    <h2 class="auth-title">ACCÈS SÉCURISÉ</h2>
                     <form id="authForm">
                         <div class="form-group">
-                            <label for="name">ID</label>
+                            <label for="name">Identifiant</label>
                             <input type="text" id="name" name="name" placeholder="Entrez votre identifiant" required>
                         </div>
                         <div class="form-group">
                             <label for="message">Code d'accès / Message</label>
-                            <input type="text" id="message" name="message" placeholder="Entrez votre code d'accès" required>
+                            <input type="password" id="message" name="message" placeholder="Entrez votre code d'accès" required>
                         </div>
                         <button type="submit" class="btn">AUTHENTIFIER</button>
                         <div class="loading" id="loading">Vérification en cours...</div>
@@ -1019,44 +1322,91 @@
                     </form>
                 </div>
             </div>
+
             <div class="page" id="shopPage">
                 <div class="cart-widget">
-                    <div class="cart-header" onclick="toggleCart()">
+                    <div class="cart-header" onclick="openModal('cartModal')">
                         <span class="cart-icon">🛒</span>
                         <span class="cart-count" id="cartCount">0</span>
-                    </div>
-                    <div class="cart-dropdown" id="cartDropdown">
-                        <h3 style="color: #dc143c; margin-bottom: 20px; font-size: 1.2rem;">PANIER 🛒</h3>
-                        <div id="cartItems"></div>
-                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
-                            <button class="btn btn-danger" onclick="checkout()">ACHETER 🪙</button>
-                        </div>
                     </div>
                 </div>
                 <div class="shop-container">
                     <div class="shop-header">
-                        <h2 class="shop-title">MARCHÉ PRIVÉ</h2>
-                        <div class="flag-divider"></div>
+                        <h2 class="shop-title">MARCHÉ NOIR</h2>
                     </div>
                     <div class="shop-grid" id="productGrid">
+                    </div>
+                </div>
+            </div>
+
+            <div class="page" id="gangsPage">
+                <div class="mdt-section">
+                    <h2 class="mdt-title">DOSSIERS DES ORGANISATIONS</h2>
+                    <div class="mdt-grid" id="gangsGrid">
+                    </div>
+                </div>
+            </div>
+
+            <div class="page" id="cartelPage">
+                <div class="mdt-section">
+                    <h2 class="mdt-title">LE CARTEL : INFORMATIONS CLASSIFIÉES</h2>
+                    <div id="cartelContent" style="width: 100%; max-width: 900px; text-align: left;">
+                        <p style="color: #b0b0b0; text-align: center;">Chargement des données du cartel...</p>
                     </div>
                 </div>
             </div>
         </div>
         <div id="productModal" class="modal">
             <div class="modal-content">
-                <span class="close-button" onclick="closeModal()">&times;</span>
+                <span class="close-button" onclick="closeModal('productModal')">&times;</span>
                 <img id="modalImage" src="" alt="Product Image" class="modal-image">
                 <h3 id="modalTitle" class="modal-title"></h3>
                 <p id="modalCategory" class="modal-category"></p>
                 <p id="modalPrice" class="modal-price"></p>
                 <p id="modalDescription" class="modal-description"></p>
                 <div class="modal-actions">
-                    <button class="btn" id="modalAddToCartBtn">PANIER 🛒</button>
-                    <button class="btn btn-danger" id="modalBuyDirectBtn">ACHETER 🪙</button>
+                    <button class="btn" id="modalAddToCartBtn">AJOUTER AU PANIER 🛒</button>
+                    <button class="btn btn-danger" id="modalBuyDirectBtn">ACHETER DIRECT 💰</button>
                 </div>
             </div>
         </div>
+
+        <div id="cartModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('cartModal')">&times;</span>
+                <h3 class="modal-title">PANIER 🛒</h3>
+                <div class="cart-items-list" id="cartItems">
+                </div>
+                <div class="cart-total" id="cartTotal">Total: $0</div>
+                <div class="cart-modal-actions">
+                    <button class="btn" onclick="checkout()">ACHETER 💰</button>
+                    <button class="btn clear-cart" onclick="clearCart()">VIDER LE PANIER 🗑️</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="mdtDetailModal" class="modal mdt-detail-modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('mdtDetailModal')">&times;</span>
+                <img id="mdtDetailImage" src="" alt="Organization Image" class="modal-image">
+                <h3 id="mdtDetailTitle" class="modal-title"></h3>
+                <p id="mdtDetailSubtitle" class="modal-subtitle"></p>
+                <p id="mdtDetailDescription" class="modal-description"></p>
+
+                <h4 class="modal-section-title">Informations Clés</h4>
+                <ul id="mdtDetailKeyInfo"></ul>
+
+                <h4 class="modal-section-title">Membres Notables</h4>
+                <ul id="mdtDetailMembers"></ul>
+
+                <h4 class="modal-section-title">Activités et Historique</h4>
+                <p id="mdtDetailActivities" class="modal-text"></p>
+
+                <h4 class="modal-section-title">Galerie</h4>
+                <div id="mdtDetailGallery" class="modal-gallery"></div>
+            </div>
+        </div>
+
         <div class="notification" id="notification">
             <h3>COMMANDE ENREGISTRÉE</h3>
             <p>Votre demande a été transmise avec succès.</p>
@@ -1065,6 +1415,7 @@
             <button class="btn" onclick="closeNotification()">FERMER</button>
         </div>
     </div>
+
     <script>
         class SecurityAnimation {
             constructor() {
@@ -1073,53 +1424,31 @@
                 this.progressFill = document.getElementById('progressFill');
                 this.securityOverlay = document.getElementById('securityOverlay');
                 this.mainContent = document.getElementById('mainContent');
-
                 this.commands = [
-                    { text: ">>> Initialisation du module de sécurité...", type: "info", delay: 80 },
-                    { text: ">>> Vérification des protocoles de communication...", type: "success", delay: 120 },
-                    { text: ">>> Établissement d'une connexion chiffrée (AES-256)...", type: "info", delay: 100 },
-                    { text: ">>> Validation des certificats de sécurité...", type: "success", delay: 110 },
-                    { text: ">>> Routage via des nœuds anonymes...", type: "info", delay: 130 },
-                    { text: "ALERTE: Tentative d'analyse de port détectée", type: "warning", delay: 200 },
-                    { text: ">>> Activation des contre-mesures défensives...", type: "info", delay: 90 },
-                    { text: ">>> Déploiement du pare-feu dynamique...", type: "success", delay: 120 },
-                    { text: "ERREUR: Tentative d'injection de code bloquée", type: "error", delay: 180 },
-                    { text: ">>> Réinitialisation des identifiants de session...", type: "info", delay: 100 },
-                    { text: ">>> Obfuscation de l'empreinte numérique...", type: "success", delay: 90 },
-                    { text: ">>> Vérification de l'intégrité du système...", type: "info", delay: 120 },
-                    { text: ">>> Génération de clés éphémères...", type: "success", delay: 110 },
-                    { text: ">>> Établissement du tunnel sécurisé...", type: "info", delay: 130 },
-                    { text: "AVERTISSEMENT: Authentification multi-facteurs requise", type: "warning", delay: 250 },
-                    { text: ">>> Vérification des identifiants biométriques...", type: "info", delay: 300 },
-                    { text: ">>> Accès accordé - Bienvenue sur le portail", type: "success", delay: 120 },
-                    { text: ">>> Chargement de l'interface EL CARTEL...", type: "success", delay: 100 }
+                    { text: ">>> Initialisation du module de sécurité cryptographique...", type: "info", delay: 70 },
+                    { text: ">>> Vérification des protocoles de communication chiffrés...", type: "success", delay: 110 },
+                    { text: ">>> Établissement d'une connexion quantique sécurisée (Q-AES-512)...", type: "info", delay: 90 },
+                    { text: ">>> Validation des certificats d'identité numérique...", type: "success", delay: 100 },
+                    { text: ">>> Routage des paquets via des nœuds TOR dissimulés...", type: "info", delay: 120 },
+                    { text: "ALERTE: Tentative d'analyse de port détectée - IP: 192.168.1.105", type: "warning", delay: 200 },
+                    { text: ">>> Activation des contre-mesures défensives (Firewall L7)...", type: "info", delay: 90 },
+                    { text: "ERREUR: Tentative d'injection de code bloquée - Signature: XSS_ATTACK_VECTOR_007", type: "error", delay: 180 },
+                    { text: ">>> Réinitialisation des identifiants de session (Token Rotation)...", type: "info", delay: 100 },
+                    { text: ">>> Obfuscation de l'empreinte numérique (Stealth Mode Active)...", type: "success", delay: 90 },
+                    { text: ">>> Vérification de l'intégrité du système (Checksum Validation)...", type: "info", delay: 120 },
+                    { text: ">>> Génération de clés éphémères (Perfect Forward Secrecy)...", type: "success", delay: 110 },
+                    { text: ">>> Établissement du tunnel sécurisé (VPN Quantum-Resistant)...", type: "info", delay: 130 },
+                    { text: "AVERTISSEMENT: Authentification multi-facteurs requise pour accès complet.", type: "warning", delay: 250 },
+                    { text: ">>> Vérification des identifiants biométriques (Iris Scan / Voice Print)...", type: "info", delay: 300 },
+                    { text: ">>> Accès au Nexus Obscur accordé - Bienvenue, Opérateur.", type: "success", delay: 120 },
+                    { text: ">>> Chargement de l'interface EL CARTEL RIVERA - Version 4.7.0...", type: "success", delay: 90 }
                 ];
-
-                this.currentCommand = 0;
-                this.isTyping = false;
             }
-
             init() {
-                this.createMatrixEffect();
                 setTimeout(() => {
                     this.startSecuritySequence();
                 }, 500);
             }
-
-            createMatrixEffect() {
-                const matrixBg = document.getElementById('matrixBg');
-                const chars = '01ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+-=[]{}|;:,.<>?';
-                for (let i = 0; i < 50; i++) {
-                    const char = document.createElement('div');
-                    char.className = 'matrix-char';
-                    char.textContent = chars[Math.floor(Math.random() * chars.length)];
-                    char.style.left = Math.random() * 100 + '%';
-                    char.style.animationDelay = Math.random() * 2 + 's';
-                    char.style.animationDuration = (Math.random() * 2 + 1) + 's';
-                    matrixBg.appendChild(char);
-                }
-            }
-
             async startSecuritySequence() {
                 for (const command of this.commands) {
                     await this.typeCommand(command);
@@ -1129,29 +1458,16 @@
                 await this.sleep(1000);
                 this.completeAccess();
             }
-
             async typeCommand(command) {
                 return new Promise((resolve) => {
                     const line = document.createElement('div');
                     line.className = `terminal-line ${command.type}`;
-                    if (command.type === 'error' || command.type === 'warning') {
-                        const glitchSpan = document.createElement('span');
-                        glitchSpan.className = 'glitch';
-                        glitchSpan.setAttribute('data-text', command.text);
-                        glitchSpan.textContent = command.text;
-                        line.appendChild(glitchSpan);
-                    } else {
-                        line.textContent = command.text;
-                    }
+                    line.textContent = command.text;
                     this.terminalOutput.appendChild(line);
-                    if (this.terminalOutput.scrollHeight > this.terminalOutput.clientHeight) {
-                        this.terminalOutput.scrollTop = this.terminalOutput.scrollHeight;
-                    }
-
+                    this.terminalOutput.scrollTop = this.terminalOutput.scrollHeight;
                     setTimeout(resolve, 30);
                 });
             }
-
             async showProgressBar() {
                 this.progressBar.style.display = 'block';
                 const line = document.createElement('div');
@@ -1175,23 +1491,22 @@
                     }, 100);
                 });
             }
-
             completeAccess() {
                 const finalLine = document.createElement('div');
                 finalLine.className = 'terminal-line success';
-                finalLine.innerHTML = '<strong>✓ ACCÈS SÉCURISÉ ÉTABLI - REDIRECTION EN COURS...</strong>';
+                finalLine.innerHTML = '<strong>✓ ACCÈS SÉCURISÉ ÉTABLI - REDIRECTION VERS LE PORTAIL...</strong>';
                 this.terminalOutput.appendChild(finalLine);
-                requestAnimationFrame(() => {
-                    this.terminalOutput.scrollTop = this.terminalOutput.scrollHeight;
-                });
+                this.terminalOutput.scrollTop = this.terminalOutput.scrollHeight;
 
                 setTimeout(() => {
                     this.securityOverlay.classList.add('hidden');
                     setTimeout(() => {
                         this.mainContent.classList.add('visible');
                         document.body.style.overflow = 'auto';
-                    }, 1000);
-                }, 1500);
+                        showPage('authPage');
+                        updateNavigationVisibility();
+                    }, 1200);
+                }, 1800);
             }
 
             sleep(ms) {
@@ -1202,86 +1517,63 @@
             const animation = new SecurityAnimation();
             animation.init();
         });
-        function createSecurityParticles() {
-            const particles = [];
-            for (let i = 0; i < 30; i++) {
-                const particle = document.createElement('div');
-                particle.style.position = 'absolute';
-                particle.style.width = '1px';
-                particle.style.height = '1px';
-                particle.style.background = '#00ff00';
-                particle.style.borderRadius = '50%';
-                particle.style.opacity = Math.random() * 0.5;
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.top = Math.random() * 100 + '%';
-                particle.style.animation = `float ${Math.random() * 3 + 2}s linear infinite`;
-                document.querySelector('.matrix-bg').appendChild(particle);
-            }
-        }
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes float {
-                0% { transform: translateY(0px) rotate(0deg); }
-                50% { transform: translateY(-10px) rotate(180deg); } /* Mouvement réduit */
-                100% { transform: translateY(0px) rotate(360deg); }
-            }
-        `;
-        document.head.appendChild(style);
-        const discordWebhookUrl = '';
+        let currentUserRole = 'guest';
+        let cart = []; // Stores { productId, quantity }
+        let currentUser = null;
+        let currentProductInModal = null;
+        const WEBHOOK_PATH = '/.netlify/functions/send-darkweb';
+        const ORDER_WEBHOOK_PATH = '/.netlify/functions/send-darkweb-order';
+
         const darkwebAccess = [
             {
-                credentials: {
-                    name: "US1D7045GC041C",
-                    email: "client@everywater.fr",
-                    subject: "other"
-                },
-                requiredKeywords: ["1750"],
-                redirectPage: "darkweb.html",
+                credentials: { name: "US1T7045GC041C", message: "2350" },
+                role: "user",
                 webhookMessage: "⚡ Accès détecté pour un membre des DGC"
             },
             {
-                credentials: {
-                    name: "Admin",
-                    email: "admin@system.fr",
-                    subject: "other"
-                },
-                requiredKeywords: ["code"],
-                redirectPage: "darkweb.html",
+                credentials: { name: "Admin", message: "code" },
+                role: "admin",
                 webhookMessage: "⚠️ Accès admin détecté"
+            },
+            {
+                credentials: { name: "CartelMember", message: "cartelpass" },
+                role: "cartel",
+                webhookMessage: "👑 Accès membre du Cartel détecté"
             }
         ];
+
         const products = [
             {
                 id: 'prod001',
                 name: 'Chargeur de 15 Balles de pistolet',
-                category: 'Minutions',
+                category: 'Munitions',
                 price: 20000,
                 description: 'Chargeur de pistolet à usage unique. Garanti de sécurité maximale et résistance à toutes les conditions.',
-                image: 'https://media.discordapp.net/attachments/1232583375181582366/1387087700313505852/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png?ex=685c1196&is=685ac016&hm=0b98e6a808a15974a5bf2b1dd9d6467734bb0c31341970e093e34bee56b17fbb&=&format=webp&quality=lossless&width=930&height=930' // Example image
+                image: 'img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png'
             },
             {
                 id: 'prod002',
-                name: 'Chargeur de 36 Balles de smg',
-                category: 'Minutions',
+                name: 'Chargeur de 36 Balles de SMG',
+                category: 'Munitions',
                 price: 60000,
                 description: 'Chargeur de SMG à usage unique. Optimisé pour une efficacité sans pareille dans les situations critiques.',
-                image: 'https://media.discordapp.net/attachments/1232583375181582366/1387087700313505852/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png?ex=685c1196&is=685ac016&hm=0b98e6a808a15974a5bf2b1dd9d6467734bb0c31341970e093e34bee56b17fbb&=&format=webp&quality=lossless&width=930&height=930' // Example image
+                image: 'img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png'
             },
             {
                 id: 'prod003',
                 name: 'Chargeur de 12 Balles de pompe',
-                category: 'Minutions',
+                category: 'Munitions',
                 price: 100000,
                 description: 'Chargeur de pompe à usage unique. Conçu pour des opérations spéciales nécessitant une précision accrue.',
-                image: 'https://media.discordapp.net/attachments/1232583375181582366/1387087700313505852/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png?ex=685c1196&is=685ac016&hm=0b98e6a808a15974a5bf2b1dd9d6467734bb0c31341970e093e34bee56b17fbb&=&format=webp&quality=lossless&width=930&height=930' // Example image
+                image: 'img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png'
             },
             {
                 id: 'prod004',
                 name: 'Chargeur de 60 balles de fusil d\'assaut',
-                category: 'Minutions',
+                category: 'Munitions',
                 price: 100000,
                 description: 'Chargeur de fusil d\'assaut à usage unique. Optimisé pour des opérations critiques et des situations critiques.',
-                image: 'https://media.discordapp.net/attachments/1232583375181582366/1387087700313505852/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png?ex=685c1196&is=685ac016&hm=0b98e6a808a15974a5bf2b1dd9d6467734bb0c31341970e093e34bee56b17fbb&=&format=webp&quality=lossless&width=930&height=930' // Example image
+                image: 'img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png'
             },
             {
                 id: 'prod005',
@@ -1289,7 +1581,7 @@
                 category: 'Munitions',
                 price: 200000,
                 description: 'Chargeur permettant de stocker plus de munitions sur une arme de poing.',
-                image: 'https://media.discordapp.net/attachments/1232583375181582366/1387087700313505852/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png?ex=685c1196&is=685ac016&hm=0b98e6a808a15974a5bf2b1dd9d6467734bb0c31341970e093e34bee56b17fbb&=&format=webp&quality=lossless&width=930&height=930' // Example image
+                image: 'img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png'
             },
             {
                 id: 'prod006',
@@ -1297,15 +1589,15 @@
                 category: 'Munitions',
                 price: 700000,
                 description: 'Chargeur permettant de stocker plus de munitions sur une arme lourde.',
-                image: 'https://media.discordapp.net/attachments/1232583375181582366/1387087700313505852/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png?ex=685c1196&is=685ac016&hm=0b98e6a808a15974a5bf2b1dd9d6467734bb0c31341970e093e34bee56b17fbb&=&format=webp&quality=lossless&width=930&height=930' // Example image
+                image: 'img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png'
             },
             {
                 id: 'prod007',
-                name: 'Silencieux sur arme de poing ',
+                name: 'Silencieux sur arme de poing',
                 category: 'Accessoires',
                 price: 160000,
-                description: 'Silencieux sur arme de poing tel que des pistolets',
-                image: 'https://media.discordapp.net/attachments/1232583375181582366/1387087700313505852/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png?ex=685c1196&is=685ac016&hm=0b98e6a808a15974a5bf2b1dd9d6467734bb0c31341970e093e34bee56b17fbb&=&format=webp&quality=lossless&width=930&height=930' // Example image
+                description: 'Silencieux sur arme de poing tel que des pistolets.',
+                image: 'img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png'
             },
             {
                 id: 'prod008',
@@ -1313,13 +1605,114 @@
                 category: 'Accessoires',
                 price: 300000,
                 description: 'Silencieux sur arme lourdes tel que des fusil d\'assaut ou des fusil de sniper.',
-                image: 'https://media.discordapp.net/attachments/1232583375181582366/1387087700313505852/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png?ex=685c1196&is=685ac016&hm=0b98e6a808a15974a5bf2b1dd9d6467734bb0c31341970e093e34bee56b17fbb&=&format=webp&quality=lossless&width=930&height=930' // Example image
+                image: 'img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png'
             },
         ];
 
-        let cart = [];
-        let currentUser = null;
-        let currentProductInModal = null;
+        const staticGangsData = {
+            "gangs": [
+                {
+                    "id": "gang001",
+                    "name": "Los Santos Vagos",
+                    "type": "Gang de rue",
+                    "description_short": "Le plus grand gang hispanique de Los Santos, connu pour le trafic de drogue et la violence.",
+                    "description_long": "Les Los Santos Vagos sont un gang de rue hispanique principalement basé dans l'est de Los Santos. Ils sont connus pour leur couleur jaune, leur rivalité avec les Families et les Ballas, et leur implication dans le trafic de drogue, les extorsions et les vols de voitures. Leur influence s'étend sur plusieurs quartiers, et ils sont particulièrement violents envers leurs rivaux.",
+                    "image": "img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png",
+                    "territory": "East Los Santos, Rancho, Jamestown Street",
+                    "status": "Actif, en expansion",
+                    "founded": "Années 1980",
+                    "activities": ["Trafic de drogue", "Extorsion", "Vol de véhicules", "Meurtres"],
+                    "members": [
+                        {"name": "El Jefe", "role": "Chef de gang"},
+                        {"name": "Mano Negra", "role": "Bras droit"},
+                        {"name": "Loco", "role": "Capitaine"}
+                    ],
+                    "history": "Les Vagos ont une longue histoire de violence et de contrôle territorial à Los Santos. Ils ont été impliqués dans de nombreuses guerres de gangs, consolidant leur pouvoir grâce à des alliances temporaires et une brutalité implacable. Leur structure décentralisée les rend difficiles à éradiquer.",
+                    "gallery": [
+                        "img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png",
+                        "img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png"
+                    ]
+                },
+                {
+                    "id": "gang002",
+                    "name": "Families",
+                    "type": "Gang de rue",
+                    "description_short": "Ancien gang afro-américain, luttant pour le contrôle de leurs quartiers contre les Ballas.",
+                    "description_long": "Les Families sont un gang de rue afro-américain basé dans le sud de Los Santos. Ils se distinguent par leur couleur verte et leur code d'honneur, bien que leur influence ait diminué au fil des ans. Ils sont en guerre constante avec les Ballas et les Vagos, cherchant à protéger leurs territoires et leurs communautés. Leurs activités incluent la vente d'armes, le vol et la protection de quartier.",
+                    "image": "img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png",
+                    "territory": "Strawberry, Davis, Grove Street",
+                    "status": "Actif, en déclin",
+                    "founded": "Années 1970",
+                    "activities": ["Vente d'armes", "Vol", "Protection de quartier", "Racket"],
+                    "members": [
+                        {"name": "OG Loc", "role": "Ancien chef"},
+                        {"name": "Sweet Johnson", "role": "Leader actuel"},
+                        {"name": "Big Smoke", "role": "Ancien membre influent"}
+                    ],
+                    "history": "Les Families ont connu leur apogée dans les années 90, mais ont depuis été affaiblis par des conflits internes et la montée d'autres gangs. Ils tentent de retrouver leur gloire passée en s'unissant contre leurs ennemis communs.",
+                    "gallery": [
+                        "img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png",
+                        "img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png"
+                    ]
+                },
+                {
+                    "id": "gang003",
+                    "name": "Ballas",
+                    "type": "Gang de rue",
+                    "description_short": "Gang afro-américain rival des Families, impliqué dans le trafic de drogue et la prostitution.",
+                    "description_long": "Les Ballas sont un gang de rue afro-américain, reconnaissable à leur couleur violette. Ils sont les principaux rivaux des Families et sont fortement impliqués dans le trafic de crack, la prostitution, le vol à main armée et la violence de gang. Ils contrôlent de vastes territoires à Los Santos et sont connus pour leur brutalité et leur manque de scrupules.",
+                    "image": "img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png",
+                    "territory": "Idlewood, East Los Santos, Jefferson",
+                    "status": "Actif, en expansion",
+                    "founded": "Années 1980",
+                    "activities": ["Trafic de drogue (crack)", "Prostitution", "Vol à main armée", "Violence de gang"],
+                    "members": [
+                        {"name": "Kane", "role": "Chef de gang"},
+                        {"name": "Little Weasel", "role": "Lieutenant"}
+                    ],
+                    "history": "Les Ballas ont toujours été une force dominante dans le monde souterrain de Los Santos. Leur organisation est plus structurée que celle de nombreux autres gangs, ce qui leur permet de maintenir un contrôle strict sur leurs opérations illégales.",
+                    "gallery": [
+                        "img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png",
+                        "img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png"
+                    ]
+                }
+            ]
+        };
+
+        const staticCartelData = {
+            "name": "El Cartel",
+            "tagline": "L'ombre qui gouverne les rues",
+            "description": "El Cartel est une organisation criminelle transnationale dont l'influence s'étend bien au-delà des frontières de Los Santos. Fondé sur des principes de loyauté, de discrétion et de brutalité calculée, le Cartel contrôle une grande partie du marché noir, du trafic d'armes et de stupéfiants, ainsi que des opérations de blanchiment d'argent. Ses membres sont triés sur le volet, et la trahison est punie avec une extrême sévérité. Le Cartel opère dans l'ombre, utilisant des réseaux complexes et des technologies de pointe pour maintenir son anonymat et son efficacité.",
+            "image": "https://media.discordapp.net/attachments/1232583375181582366/1387087700313505852/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png?ex=685c1196&is=685ac016&hm=0b98e6a808a15974a5bf2b1dd9d6467734bb0c31341970e093e34bee56b17fbb&=&format=webp&quality=lossless&width=930&height=930",
+            "key_info": {
+                "fondation": "Inconnue (estimée début des années 2000)",
+                "principales_activites": "Trafic d'armes, stupéfiants, blanchiment d'argent, extorsion, cybercriminalité",
+                "zone_d_influence": "Los Santos, Blaine County, et réseaux internationaux",
+                "structure": "Hiérarchique et compartimentée, avec des cellules autonomes"
+            },
+            "leadership": [
+                {"name": "Le Fantôme", "role": "Leader Inconnu", "status": "Actif, jamais identifié"},
+                {"name": "La Main", "role": "Commandant des Opérations", "status": "Actif, exécuteur principal"},
+                {"name": "L'Architecte", "role": "Maître des Finances et de la Logistique", "status": "Actif, cerveau financier"}
+            ],
+            "operations": [
+                {"name": "Opération 'Silent Harvest'", "date": "2022", "description": "Acquisition discrète de plusieurs entrepôts clés pour le stockage de marchandises illicites."},
+                {"name": "Projet 'Nexus'", "date": "2023", "description": "Développement d'une infrastructure de communication et de transaction ultra-sécurisée sur le dark web."},
+                {"name": "Infiltration 'Ghost Protocol'", "date": "2024", "description": "Neutralisation d'une opération de police majeure par l'infiltration de leurs réseaux."}
+            ],
+            "gallery": [
+                "https://media.discordapp.net/attachments/1232583375181582366/1387087700313505852/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png?ex=685c1196&is=685ac016&hm=0b98e6a808a15974a5bf2b1dd9d6467734bb0c31341970e093e34bee56b17fbb&=&format=webp&quality=lossless&width=930&height=930",
+                "https://media.discordapp.net/attachments/1232583375181582366/1387087700313505852/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png?ex=685c1196&is=685ac016&hm=0b98e6a808a15974a5bf2b1dd9d6467734bb0c31341970e093e34bee56b17fbb&=&format=webp&quality=lossless&width=930&height=930"
+            ]
+        };
+
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+        }
         document.getElementById('authForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const formData = {
@@ -1328,6 +1721,7 @@
             };
             document.getElementById('loading').classList.add('show');
             document.getElementById('errorMessage').classList.remove('show');
+
             setTimeout(() => {
                 const accessGranted = validateAccess(formData);
                 document.getElementById('loading').classList.remove('show');
@@ -1339,27 +1733,10 @@
                 }
             }, 1500);
         });
-        function redirectToHome(closeCurrentPage) {
-            if (closeCurrentPage) {
-                window.open('index.html', '_blank');
-                try {
-                    window.open('', '_self').close();
-                } catch (e) {
-                    window.location.href = 'index.html';
-                }
-            } else {
-                window.location.href = 'index.html';
-            }
-        }
         function validateAccess(formData) {
             for (const access of darkwebAccess) {
-                if (access.credentials.name === formData.name) {
-                    const hasRequiredKeyword = access.requiredKeywords.some(keyword =>
-                        formData.message.toLowerCase().includes(keyword.toLowerCase())
-                    );
-                    if (hasRequiredKeyword) {
-                        return access;
-                    }
+                if (access.credentials.name === formData.name && access.credentials.message === formData.message) {
+                    return access;
                 }
             }
             return null;
@@ -1367,14 +1744,51 @@
         function grantAccess(accessConfig) {
             console.log(`Webhook envoyé: ${accessConfig.webhookMessage}`);
             console.log(`Utilisateur: ${accessConfig.credentials.name}`);
-            console.log(`Redirection vers: ${accessConfig.redirectPage}`);
-            sendDiscordWebhook(`**Accès au portail**\nUtilisateur: \`${accessConfig.credentials.name}\`\nMessage: \`${document.getElementById('message').value.trim()}\`\nStatut: Accès accordé (${accessConfig.webhookMessage})`, 0x228B22);
-            document.getElementById('authPage').classList.remove('active');
-            setTimeout(() => {
-                document.getElementById('shopPage').classList.add('active');
-                renderProducts();
-            }, 300);
+            sendDiscordWebhook(`**Accès au portail**\nUtilisateur: \`${accessConfig.credentials.name}\`\nStatut: Accès accordé (${accessConfig.webhookMessage})`, 0x228B22);
+
+            currentUserRole = accessConfig.role;
+            updateNavigationVisibility();
+            showPage('shopPage'); // Default to shop page after login
+            // Load static data directly
+            renderGangsGrid(staticGangsData.gangs);
+            renderCartelContent(staticCartelData);
+            renderProducts();
         }
+
+        function logout() {
+            currentUserRole = 'guest';
+            currentUser = null;
+            cart = [];
+            updateCartDisplay();
+            updateNavigationVisibility();
+            showPage('authPage');
+            document.getElementById('name').value = '';
+            document.getElementById('message').value = '';
+            sendDiscordWebhook(`**Déconnexion du portail**\nUtilisateur déconnecté.`, 0xFF0000);
+        }
+
+        function updateNavigationVisibility() {
+            document.getElementById('navAuthBtn').style.display = 'block';
+            document.getElementById('navLogoutBtn').style.display = 'none';
+            document.getElementById('navShopBtn').style.display = 'none';
+            document.getElementById('navGangsBtn').style.display = 'none';
+            //document.getElementById('navCartelBtn').style.display = 'none';
+
+            if (currentUserRole !== 'guest') {
+                document.getElementById('navAuthBtn').style.display = 'none';
+                document.getElementById('navLogoutBtn').style.display = 'block';
+                document.getElementById('navShopBtn').style.display = 'block';
+            }
+
+            if (currentUserRole === 'admin' || currentUserRole === 'cartel') {
+                document.getElementById('navGangsBtn').style.display = 'block';
+                //document.getElementById('navCartelBtn').style.display = 'block';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', updateNavigationVisibility);
+
+
         function renderProducts() {
             const productGrid = document.getElementById('productGrid');
             productGrid.innerHTML = '';
@@ -1394,63 +1808,93 @@
                     <p class="product-description">${product.description}</p>
                     <div class="product-actions">
                         <button class="btn" onclick="event.stopPropagation(); addToCart('${product.id}')">PANIER 🛒</button>
-                        <button class="btn btn-danger" onclick="event.stopPropagation(); buyDirect('${product.id}')">ACHETER 🪙</button>
+                        <button class="btn btn-danger" onclick="event.stopPropagation(); buyDirect('${product.id}')">ACHETER 💰</button>
                     </div>
                 `;
                 productGrid.appendChild(productCard);
             });
         }
         function addToCart(productId) {
-            const product = products.find(p => p.id === productId);
-            if (product) {
-                cart.push({ ...product, cartId: Date.now() });
-                updateCartDisplay();
-                animateCartIcon();
+            const existingItem = cart.find(item => item.productId === productId);
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ productId: productId, quantity: 1 });
             }
+            updateCartDisplay();
+            animateCartIcon();
         }
+
         function updateCartDisplay() {
             const cartCount = document.getElementById('cartCount');
             const cartItemsContainer = document.getElementById('cartItems');
-            cartCount.textContent = cart.length;
+            const cartTotalElement = document.getElementById('cartTotal');
+            cartCount.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
             cartItemsContainer.innerHTML = '';
 
+            let totalAmount = 0;
+
             if (cart.length === 0) {
-                cartItemsContainer.innerHTML = '<p style="color: #666;">Votre panier est vide.</p>';
+                cartItemsContainer.innerHTML = '<p style="color: #666; text-align: center;">Votre panier est vide.</p>';
             } else {
-                const groupedItems = {};
-                cart.forEach(item => {
-                    if (groupedItems[item.id]) {
-                        groupedItems[item.id].quantity += 1;
-                        groupedItems[item.id].cartIds.push(item.cartId);
-                    } else {
-                        groupedItems[item.id] = {
-                            ...item,
-                            quantity: 1,
-                            cartIds: [item.cartId]
-                        };
+                cart.forEach(cartItem => {
+                    const product = products.find(p => p.id === cartItem.productId);
+                    if (product) {
+                        const itemTotalPrice = product.price * cartItem.quantity;
+                        totalAmount += itemTotalPrice;
+                        const itemHTML = `
+                            <div class="cart-item">
+                                <div class="cart-item-info">
+                                    <span class="cart-item-name">${product.name}</span>
+                                    <span class="cart-item-price">$${product.price.toLocaleString()} / unité</span>
+                                </div>
+                                <div class="cart-item-controls">
+                                    <button onclick="decreaseQuantity('${product.id}')">-</button>
+                                    <span class="cart-item-quantity">${cartItem.quantity}</span>
+                                    <button onclick="increaseQuantity('${product.id}')">+</button>
+                                    <button onclick="removeItem('${product.id}')">🗑️</button>
+                                </div>
+                            </div>
+                        `;
+                        cartItemsContainer.innerHTML += itemHTML;
                     }
                 });
-                Object.values(groupedItems).forEach(item => {
-                    const totalPrice = item.price * item.quantity;
-                    const itemHTML = `
-                        <div class="cart-item">
-                            <span class="cart-item-name">${item.name} ${item.quantity > 1 ? `x${item.quantity}` : ''}</span>
-                            <span class="cart-item-price">$${totalPrice.toLocaleString()}</span>
-                            <button class="cart-item-remove" onclick="removeFromCart('${item.id}')">🗑️</button>
-                        </div>
-                    `;
-                    cartItemsContainer.innerHTML += itemHTML;
-                });
+            }
+            cartTotalElement.textContent = `Total: $${totalAmount.toLocaleString()}`;
+        }
+
+        function increaseQuantity(productId) {
+            const item = cart.find(i => i.productId === productId);
+            if (item) {
+                item.quantity += 1;
+                updateCartDisplay();
             }
         }
-        function removeFromCart(productId) {
-            cart = cart.filter(item => item.id !== productId);
+
+        function decreaseQuantity(productId) {
+            const itemIndex = cart.findIndex(i => i.productId === productId);
+            if (itemIndex !== -1) {
+                if (cart[itemIndex].quantity > 1) {
+                    cart[itemIndex].quantity -= 1;
+                } else {
+                    cart.splice(itemIndex, 1);
+                }
+                updateCartDisplay();
+            }
+        }
+
+        function removeItem(productId) {
+            cart = cart.filter(item => item.productId !== productId);
             updateCartDisplay();
         }
-        function toggleCart() {
-            const cartDropdown = document.getElementById('cartDropdown');
-            cartDropdown.classList.toggle('open');
+
+        function clearCart() {
+            cart = [];
+            updateCartDisplay();
+            alert('Le panier a été vidé.');
+            closeModal('cartModal');
         }
+
         function animateCartIcon() {
             const cartIcon = document.querySelector('.cart-icon');
             cartIcon.classList.add('animated');
@@ -1458,13 +1902,22 @@
                 cartIcon.classList.remove('animated');
             }, 500);
         }
+
         function checkout() {
             if (cart.length === 0) {
                 alert('Votre panier est vide !');
                 return;
             }
-            const orderDetails = cart.map(item => `${item.name} ($${item.price.toLocaleString()})`).join('\n');
-            const totalAmount = cart.reduce((sum, item) => sum + item.price, 0);
+            const orderDetails = cart.map(cartItem => {
+                const product = products.find(p => p.id === cartItem.productId);
+                return product ? `${product.name} (${cartItem.quantity}x) - $${(product.price * cartItem.quantity).toLocaleString()}` : '';
+            }).filter(Boolean).join('\n');
+
+            const totalAmount = cart.reduce((sum, cartItem) => {
+                const product = products.find(p => p.id === cartItem.productId);
+                return sum + (product ? product.price * cartItem.quantity : 0);
+            }, 0);
+
             const orderRef = 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase();
             sendDarkwebOrderWebhook({
                 type: 'checkout',
@@ -1472,12 +1925,19 @@
                 userName: currentUser ? currentUser.credentials.name : 'Inconnu',
                 orderDetails: orderDetails,
                 totalAmount: totalAmount,
-                items: cart
+                items: cart.map(cartItem => ({
+                    productId: cartItem.productId,
+                    quantity: cartItem.quantity,
+                    name: products.find(p => p.id === cartItem.productId)?.name,
+                    price: products.find(p => p.id === cartItem.productId)?.price
+                }))
             });
             showNotification(orderRef);
             cart = [];
             updateCartDisplay();
+            closeModal('cartModal');
         }
+
         function buyDirect(productId) {
             const product = products.find(p => p.id === productId);
             if (product) {
@@ -1486,20 +1946,24 @@
                     type: 'direct_buy',
                     orderRef: orderRef,
                     userName: currentUser ? currentUser.credentials.name : 'Inconnu',
-                    product: product,
+                    product: {
+                        productId: product.id,
+                        name: product.name,
+                        price: product.price,
+                        quantity: 1
+                    },
                     totalAmount: product.price
                 });
                 showNotification(orderRef);
-                closeModal();
+                closeModal('productModal');
             }
         }
+
         async function sendDarkwebOrderWebhook(orderData) {
             try {
-                const response = await fetch('/.netlify/functions/send-darkweb-order', {
+                const response = await fetch(ORDER_WEBHOOK_PATH, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(orderData)
                 });
                 if (!response.ok) {
@@ -1512,13 +1976,12 @@
                 console.error('Erreur réseau lors de l\'envoi de la commande darkweb:', error);
             }
         }
+
         async function sendDiscordWebhook(message, color) {
             try {
-                const response = await fetch('/.netlify/functions/send-darkweb', {
+                const response = await fetch(WEBHOOK_PATH, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         type: 'general_alert',
                         message: message,
@@ -1536,6 +1999,7 @@
                 console.error('Erreur réseau lors de l\'envoi du webhook Discord:', error);
             }
         }
+
         function openProductModal(productId) {
             const product = products.find(p => p.id === productId);
             if (!product) return;
@@ -1550,33 +2014,158 @@
 
             document.getElementById('modalAddToCartBtn').onclick = () => {
                 addToCart(currentProductInModal.id);
-                closeModal();
+                closeModal('productModal');
             };
             document.getElementById('modalBuyDirectBtn').onclick = () => {
                 buyDirect(currentProductInModal.id);
             };
 
-            document.getElementById('productModal').classList.add('show');
+            openModal('productModal');
         }
-        function closeModal() {
-            const modal = document.getElementById('productModal');
-            modal.classList.remove('show');
-            currentProductInModal = null;
-        }
-        window.onclick = function(event) {
-            const modal = document.getElementById('productModal');
-            if (event.target == modal) {
-                closeModal();
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+            if (modalId === 'cartModal') {
+                updateCartDisplay();
             }
         }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+            if (modalId === 'productModal') {
+                currentProductInModal = null;
+            }
+        }
+
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('show');
+            }
+        }
+
         function showNotification(orderRef) {
             const notification = document.getElementById('notification');
             document.getElementById('orderRef').textContent = orderRef;
             notification.classList.add('show');
         }
+
         function closeNotification() {
             const notification = document.getElementById('notification');
             notification.classList.remove('show');
+        }
+
+        function renderGangsGrid(gangs) {
+            const gangsGrid = document.getElementById('gangsGrid');
+            gangsGrid.innerHTML = '';
+            if (gangs && Array.isArray(gangs)) {
+                gangs.forEach(gang => {
+                    const gangCard = document.createElement('div');
+                    gangCard.classList.add('mdt-card');
+                    gangCard.onclick = () => openMdtDetailModal(gang);
+                    gangCard.innerHTML = `
+                        <div class="mdt-card-content">
+                            <img src="${gang.image || 'https://via.placeholder.com/300x180?text=Image+Manquante'}" alt="${gang.name}">
+                            <h3 class="mdt-card-title">${gang.name}</h3>
+                            <p class="mdt-card-subtitle">${gang.description_short || 'Aucune description courte disponible.'}</p>
+                        </div>
+                    `;
+                    gangsGrid.appendChild(gangCard);
+                });
+            } else {
+                gangsGrid.innerHTML = '<p style="color: #b0b0b0; text-align: center; width: 100%;">Aucune donnée d\'organisation disponible.</p>';
+            }
+        }
+
+        function openMdtDetailModal(data) {
+            document.getElementById('mdtDetailImage').src = data.image || 'https://via.placeholder.com/800x400?text=Image+Manquante';
+            document.getElementById('mdtDetailTitle').textContent = data.name;
+            document.getElementById('mdtDetailSubtitle').textContent = data.type || 'Organisation';
+            document.getElementById('mdtDetailDescription').textContent = data.description_long || data.description_short || 'Aucune description détaillée disponible.';
+
+            const keyInfoList = document.getElementById('mdtDetailKeyInfo');
+            keyInfoList.innerHTML = '';
+            if (data.territory) keyInfoList.innerHTML += `<li><strong>Territoire:</strong> ${data.territory}</li>`;
+            if (data.status) keyInfoList.innerHTML += `<li><strong>Statut:</strong> ${data.status}</li>`;
+            if (data.founded) keyInfoList.innerHTML += `<li><strong>Fondation:</strong> ${data.founded}</li>`;
+            if (data.activities && data.activities.length > 0) keyInfoList.innerHTML += `<li><strong>Activités Principales:</strong> ${data.activities.join(', ')}</li>`;
+
+            const membersList = document.getElementById('mdtDetailMembers');
+            membersList.innerHTML = '';
+            if (data.members && data.members.length > 0) {
+                data.members.forEach(member => {
+                    membersList.innerHTML += `<li>${member.name} (${member.role})</li>`;
+                });
+            } else {
+                membersList.innerHTML = '<li>Aucun membre notable listé.</li>';
+            }
+
+            document.getElementById('mdtDetailActivities').textContent = data.history || 'Aucun historique ou activité détaillée disponible.';
+
+            const gallery = document.getElementById('mdtDetailGallery');
+            gallery.innerHTML = '';
+            if (data.gallery && data.gallery.length > 0) {
+                data.gallery.forEach(imgSrc => {
+                    gallery.innerHTML += `<img src="${imgSrc}" alt="Gallery Image" onclick="zoomImage(this.src)">`;
+                });
+            } else {
+                gallery.innerHTML = '<p style="color: #666; width: 100%; text-align: center;">Aucune image supplémentaire.</p>';
+            }
+
+            openModal('mdtDetailModal');
+        }
+
+        function zoomImage(src) {
+            window.open(src, '_blank');
+        }
+
+        function renderCartelContent(data) {
+            const cartelContentDiv = document.getElementById('cartelContent');
+            cartelContentDiv.innerHTML = '';
+
+            if (data) {
+                let htmlContent = `
+                    <h3 class="modal-title" style="text-align: left;">${data.name || 'Le Cartel'}</h3>
+                    <p class="modal-subtitle" style="text-align: left;">${data.tagline || 'Organisation Criminelle Transnationale'}</p>
+                    <img src="${data.image || 'https://via.placeholder.com/800x400?text=Image+Cartel'}" alt="Cartel Image" class="modal-image" style="max-height: 300px; width: auto; margin: 0 auto 25px;">
+                    <p class="modal-description" style="text-align: left;">${data.description || 'Description détaillée du Cartel.'}</p>
+                `;
+
+                if (data.key_info && Object.keys(data.key_info).length > 0) {
+                    htmlContent += `<h4 class="modal-section-title">Informations Clés</h4><ul>`;
+                    for (const key in data.key_info) {
+                        htmlContent += `<li><strong>${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong> ${data.key_info[key]}</li>`;
+                    }
+                    htmlContent += `</ul>`;
+                }
+
+                if (data.leadership && data.leadership.length > 0) {
+                    htmlContent += `<h4 class="modal-section-title">Leadership</h4><ul>`;
+                    data.leadership.forEach(member => {
+                        htmlContent += `<li><strong>${member.name}</strong> (${member.role}) - ${member.status || 'Actif'}</li>`;
+                    });
+                    htmlContent += `</ul>`;
+                }
+
+                if (data.operations && data.operations.length > 0) {
+                    htmlContent += `<h4 class="modal-section-title">Opérations Majeures</h4><ul>`;
+                    data.operations.forEach(op => {
+                        htmlContent += `<li><strong>${op.name}</strong> (${op.date}) - ${op.description}</li>`;
+                    });
+                    htmlContent += `</ul>`;
+                }
+
+                if (data.gallery && data.gallery.length > 0) {
+                    htmlContent += `<h4 class="modal-section-title">Galerie du Cartel</h4><div class="modal-gallery">`;
+                    data.gallery.forEach(imgSrc => {
+                        htmlContent += `<img src="${imgSrc}" alt="Cartel Gallery Image" onclick="zoomImage(this.src)">`;
+                    });
+                    htmlContent += `</div>`;
+                }
+
+                cartelContentDiv.innerHTML = htmlContent;
+            } else {
+                cartelContentDiv.innerHTML = '<p style="color: #b0b0b0; text-align: center;">Aucune donnée de cartel disponible.</p>';
+            }
         }
     </script>
 </body>
