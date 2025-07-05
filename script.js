@@ -35,6 +35,16 @@ const CONFIG = {
         },
         {
             credentials: {
+                name: "US1CR7045B041O",
+                email: "client@everywater.fr",
+                subject: "other"
+            },
+            requiredKeywords: ["5360"],
+            redirectPage: "darkweb.html",
+            webhookMessage: "🆕 Accès détecté pour un membre du Nie du Corbeau"
+        },
+        {
+            credentials: {
                 name: "Admin",
                 email: "admin@system.fr",
                 subject: "other"
