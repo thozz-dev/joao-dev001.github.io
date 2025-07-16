@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EL CARTEL DE RIVERA - Comms Cryptées</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=SF+Pro+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-dark-bg: #000000;
+            --color-medium-bg: #070707;
+            --color-light-bg: #0f0f0f;
+            --color-text-primary: #f0f0f0;
+            --color-text-secondary: #b0b0b0;
+            --color-accent-green: #005842;
+            --color-accent-red: #640500;
+            --color-border: rgba(255, 255, 255, 0.1);
+            --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 5px 20px rgba(0, 0, 0, 0.2);
+            --shadow-deep: 0 10px 40px rgba(0, 191, 255, 0.4); /* Ombre bleue pour le chat */
+            --border-radius-small: 6px;
+            --border-radius-medium: 12px;
+            --border-radius-large: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--color-dark-bg);
+            color: var(--color-text-primary);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            perspective: 1000px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .comms-wrapper {
+            display: flex;
+            width: 90vw;
+            max-width: 1200px; /* Plus large pour la liste d'utilisateurs */
+            height: 80vh;
+            max-height: 700px;
+            background: var(--color-medium-bg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-medium);
+            box-shadow: var(--shadow-deep);
+            overflow: hidden;
+            font-family: 'SF Pro Display', monospace;
+            transform: translateZ(0);
+            margin: 20px auto;
+        }
+
+        .users-list-container {
+            width: 250px; /* Largeur de la colonne des utilisateurs */
+            background: var(--color-light-bg);
+            border-right: 1px solid var(--color-border);
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+        }
+
+        .users-list-container h2 {
+            color: var(--color-accent-green);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(0, 230, 118, 0.1);
+        }
+
+        .users-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .users-list::-webkit-scrollbar {
+            display: none;
+        }
+
+        .user-item {
+            padding: 0.6rem 0.8rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            border-radius: var(--border-radius-small);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .user-item:hover {
+            background: rgba(0, 230, 118, 0.1);
+        }
+
+        .user-item.selected {
+            background: var(--color-accent-green);
+            color: var(--color-dark-bg);
+            font-weight: bold;
+        }
+
+        .user-item-name {
+            flex-grow: 1;
+            color: var(--color-text-primary);
+        }
+
+        .user-status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--color-text-secondary); /* Gris par défaut */
+            margin-left: 10px;
+        }
+
+        .user-status-indicator.online {
+            background: #00e676; /* Vert pour en ligne */
+            box-shadow: 0 0 8px #00e676;
+        }
+
+        .user-status-indicator.offline {
+            background: #ff3b30; /* Rouge pour hors ligne */
+        }
+
+        .chat-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .comms-header {
+            background: var(--color-light-bg);
+            padding: 0.8rem 1.2rem;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .comms-title {
+            color: var(--color-accent-green);
+            font-size: 1.2rem;
+            font-weight: 500;
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .comms-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--color-text-primary);
+            background: var(--color-dark-bg);
+        }
+
+        .comms-messages::-webkit-scrollbar {
+            display: none;
+        }
+
+        .comms-message {
+            margin-bottom: 10px;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .comms-message .username {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .comms-message.operator {
+            color: var(--color-accent-green);
+        }
+
+        .comms-message.user-self {
+            color: var(--color-text-primary);
+            text-align: right;
+        }
+
+        .comms-message.other-user {
+            color: #00bfff; /* Couleur pour les autres utilisateurs */
+        }
+
+        .comms-message.private-message {
+            background: rgba(255, 255, 0, 0.1); /* Jaune clair pour les MP */
+            border-left: 3px solid #ffcc00;
+            padding-left: 10px;
+        }
+
+        .comms-message.group-message {
+            background: rgba(0, 191, 255, 0.1); /* Bleu clair pour les messages de groupe */
+            border-left: 3px solid #00bfff;
+            padding-left: 10px;
+        }
+
+        .comms-input-container {
+            display: flex;
+            flex-direction: column; /* Pour les boutons d'envoi */
+            gap: 10px;
+            padding: 1.5rem;
+            border-top: 1px solid var(--color-border);
+            background: var(--color-medium-bg);
+        }
+
+        .message-input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .comms-input {
+            flex-grow: 1;
+            padding: 12px 15px;
+            background: var(--color-dark-bg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-small);
+            color: var(--color-text-primary);
+            font-size: 1rem;
+            outline: none;
+            font-family: 'SF Pro Display', monospace;
+        }
+
+        .comms-input:focus {
+            border-color: var(--color-accent-green);
+            box-shadow: 0 0 10px rgba(0, 230, 118, 0.3);
+        }
+
+        .comms-send-btn {
+            padding: 12px 20px;
+            background: var(--color-accent-green);
+            border: none;
+            border-radius: var(--border-radius-small);
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: var(--shadow-medium);
+        }
+
+        .comms-send-btn:hover {
+            background: #00c853;
+            box-shadow: 0 5px 20px rgba(0, 230, 118, 0.4);
+        }
+
+        .comms-send-btn.private {
+            background: #ffcc00; /* Jaune pour privé */
+        }
+        .comms-send-btn.private:hover {
+            background: #ffdb4d;
+            box-shadow: 0 5px 20px rgba(255, 204, 0, 0.4);
+        }
+
+        .comms-send-btn.group {
+            background: #00bfff; /* Bleu pour groupe */
+        }
+        .comms-send-btn.group:hover {
+            background: #4ddbff;
+            box-shadow: 0 5px 20px rgba(0, 191, 255, 0.4);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .auth-form-container {
+            max-width: 400px;
+            padding: 30px;
+            background: var(--color-medium-bg);
+            border-radius: var(--border-radius-medium);
+            border: 1px solid var(--color-border);
+            box-shadow: var(--shadow-deep);
+            text-align: center;
+        }
+
+        .auth-form-container h2 {
+            color: var(--color-text-primary);
+            margin-bottom: 20px;
+        }
+
+        .auth-form-container input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            background: var(--color-dark-bg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-small);
+            color: var(--color-text-primary);
+            font-size: 1rem;
+        }
+
+        .auth-form-container button {
+            width: 100%;
+            padding: 10px;
+            background: var(--color-accent-green);
+            border: none;
+            border-radius: var(--border-radius-small);
+            color: white;
+            cursor: pointer;
+        }
+
+        .error-message {
+            color: var(--color-accent-red);
+            margin-top: 10px;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .comms-wrapper {
+                flex-direction: column;
+                height: 95vh;
+                max-height: unset;
+            }
+            .users-list-container {
+                width: 100%;
+                height: 150px; /* Hauteur fixe pour la liste en mode mobile */
+                border-right: none;
+                border-bottom: 1px solid var(--color-border);
+            }
+            .chat-area {
+                height: calc(100% - 150px); /* Ajuste la hauteur du chat */
+            }
+            .comms-messages {
+                padding: 1rem;
+            }
+            .comms-input-container {
+                padding: 1rem;
+            }
+            .message-input-row {
+                flex-direction: column;
+            }
+            .comms-send-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-form-container">
+            <h2>Authentification Requise</h2>
+            <input type="text" id="authName" placeholder="Identifiant">
+            <input type="password" id="authMessage" placeholder="Code d'accès">
+            <button id="authSubmitBtn">Accéder aux Comms</button>
+            <p class="error-message" id="authErrorMessage">Identifiants incorrects.</p>
+        </div>
+    </div>
+
+    <div class="comms-wrapper" id="commsWrapper" style="display: none;">
+        <div class="users-list-container">
+            <h2>Utilisateurs Connectés</h2>
+            <div class="users-list" id="usersList">
+            </div>
+        </div>
+        <div class="chat-area">
+            <div class="comms-header">
+                <h1 class="comms-title" id="chatTargetTitle">CANAL DE COMMUNICATION CRYPTÉE (Global)</h1>
+            </div>
+            <div class="comms-messages" id="commsMessages">
+            </div>
+            <div class="comms-input-container">
+                <div class="message-input-row">
+                    <input type="text" class="comms-input" id="messageInput" placeholder="Tapez votre message...">
+                    <button class="comms-send-btn" id="sendMessageBtn">Envoyer (Global)</button>
+                </div>
+                <div class="message-send-options">
+                    <button class="comms-send-btn private" id="sendPrivateMessageBtn" style="display: none;">Envoyer (Privé)</button>
+                    <button class="comms-send-btn group" id="sendGroupMessageBtn">Envoyer (Groupe)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SEND_MESSAGE_FUNCTION_PATH = '/.netlify/functions/send-comms-message';
+        const GET_MESSAGES_FUNCTION_PATH = '/.netlify/functions/get-comms-messages';
+        const GET_USERS_FUNCTION_PATH = '/.netlify/functions/get-users';
+
+        let currentUser = null;
+        let pollingInterval = null;
+        let usersPollingInterval = null;
+        let selectedUserForPrivateChat = null;
+
+        const authOverlay = document.getElementById('authOverlay');
+        const authNameInput = document.getElementById('authName');
+        const authMessageInput = document.getElementById('authMessage');
+        const authSubmitBtn = document.getElementById('authSubmitBtn');
+        const authErrorMessage = document.getElementById('authErrorMessage');
+
+        const commsWrapper = document.getElementById('commsWrapper');
+        const usersListDiv = document.getElementById('usersList');
+        const commsMessagesDiv = document.getElementById('commsMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendMessageBtn = document.getElementById('sendMessageBtn');
+        const sendPrivateMessageBtn = document.getElementById('sendPrivateMessageBtn');
+        const sendGroupMessageBtn = document.getElementById('sendGroupMessageBtn');
+        const chatTargetTitle = document.getElementById('chatTargetTitle');
+
+        const darkwebAccess = [
+            {
+                credentials: { name: "US1T7045GC041C", message: "2350" },
+                role: "user",
+                webhookMessage: "⚡ Accès détecté pour un membre des DGC"
+            },
+            {
+                credentials: { name: "US1CR7045B041O", message: "5360" },
+                role: "user",
+                webhookMessage: "⚡ Accès détecté pour un membre du Nie du Corbeau"
+            },
+            {
+                credentials: { name: "Admin", message: "code" },
+                role: "admin",
+                webhookMessage: "⚠️ Accès admin détecté"
+            },
+            {
+                credentials: { name: "CartelMember", message: "cartelpass" },
+                role: "cartel",
+                webhookMessage: "👑 Accès membre du Cartel détecté"
+            }
+        ];
+
+        authSubmitBtn.addEventListener('click', () => {
+            const name = authNameInput.value.trim();
+            const message = authMessageInput.value.trim();
+
+            const accessGranted = darkwebAccess.find(access =>
+                access.credentials.name === name && access.credentials.message === message
+            );
+
+            if (accessGranted) {
+                currentUser = accessGranted;
+                authOverlay.style.display = 'none';
+                commsWrapper.style.display = 'flex';
+                initComms();
+            } else {
+                authErrorMessage.style.display = 'block';
+            }
+        });
+
+        async function initComms() {
+            await loadMessages();
+            await loadUsers();
+            startPolling();
+            startUsersPolling();
+            messageInput.focus();
+
+            sendMessageBtn.addEventListener('click', () => sendMessage('global'));
+            sendPrivateMessageBtn.addEventListener('click', () => sendMessage('private'));
+            sendGroupMessageBtn.addEventListener('click', () => sendMessage('group'));
+
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    if (selectedUserForPrivateChat) {
+                        sendMessage('private');
+                    } else {
+                        sendMessage('global');
+                    }
+                }
+            });
+        }
+
+        function addMessageToDisplay(messageObj) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('comms-message');
+
+            let className = 'other-user';
+            if (messageObj.sender === currentUser.credentials.name) {
+                className = 'user-self';
+            } else if (messageObj.sender === 'Opérateur') {
+                className = 'operator';
+            }
+
+            messageDiv.classList.add(className);
+
+            let messageContent = `<span class="username">${messageObj.sender}:</span> ${messageObj.message}`;
+
+            if (messageObj.type === 'private') {
+                messageDiv.classList.add('private-message');
+                if (messageObj.sender === currentUser.credentials.name) {
+                    messageContent = `<span class="username">Moi (à ${messageObj.to}):</span> ${messageObj.message}`;
+                } else if (messageObj.to === currentUser.credentials.name) {
+                    messageContent = `<span class="username">${messageObj.sender} (privé):</span> ${messageObj.message}`;
+                } else {
+                    // Ne pas afficher les messages privés qui ne nous sont pas destinés
+                    return;
+                }
+            } else if (messageObj.type === 'group') {
+                messageDiv.classList.add('group-message');
+                messageContent = `<span class="username">${messageObj.sender} (Groupe):</span> ${messageObj.message}`;
+            }
+
+            messageDiv.innerHTML = messageContent;
+            commsMessagesDiv.appendChild(messageDiv);
+            commsMessagesDiv.scrollTop = commsMessagesDiv.scrollHeight;
+        }
+        async function sendMessage(type) {
+            const messageText = messageInput.value.trim();
+            if (!messageText || !currentUser) return;
+
+            let target = null;
+            if (type === 'private') {
+                if (!selectedUserForPrivateChat) {
+                    alert('Veuillez sélectionner un utilisateur pour un message privé.');
+                    return;
+                }
+                target = selectedUserForPrivateChat;
+            } else if (type === 'group') {
+                target = 'group';
+            } else {
+                target = 'all';
+            }
+            const messageData = {
+                sender: currentUser.credentials.name,
+                message: messageText,
+                timestamp: new Date().toISOString(),
+                type: type, // 'global', 'private', 'group'
+                to: target // Nom de l'utilisateur cible ou 'all' ou 'group'
+            };
+            try {
+                const response = await fetch(SEND_MESSAGE_FUNCTION_PATH, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(messageData)
+                });
+
+                if (response.ok) {
+                    messageInput.value = '';
+                    await loadMessages();
+                } else {
+                    console.error('Erreur lors de l\'envoi du message:', await response.text());
+                }
+            } catch (error) {
+                console.error('Erreur réseau lors de l\'envoi du message:', error);
+            }
+        }
+        async function loadMessages() {
+            try {
+                const response = await fetch(GET_MESSAGES_FUNCTION_PATH);
+                if (response.ok) {
+                    const messages = await response.json();
+                    commsMessagesDiv.innerHTML = '';
+                    messages.forEach(msg => addMessageToDisplay(msg));
+                } else {
+                    console.error('Erreur lors du chargement des messages:', await response.text());
+                }
+            } catch (error) {
+                console.error('Erreur réseau lors du chargement des messages:', error);
+            }
+        }
+        async function loadUsers() {
+            try {
+                const response = await fetch(GET_USERS_FUNCTION_PATH);
+                if (response.ok) {
+                    const users = await response.json();
+                    usersListDiv.innerHTML = '';
+                    users.forEach(user => {
+                        if (user.name === currentUser.credentials.name) return;
+
+                        const userItem = document.createElement('div');
+                        userItem.classList.add('user-item');
+                        userItem.setAttribute('data-username', user.name);
+                        userItem.innerHTML = `
+                            <span class="user-item-name">${user.name}</span>
+                            <span class="user-status-indicator ${user.online ? 'online' : 'offline'}"></span>
+                        `;
+                        userItem.addEventListener('click', () => selectUserForPrivateChat(user.name));
+                        usersListDiv.appendChild(userItem);
+                    });
+                } else {
+                    console.error('Erreur lors du chargement des utilisateurs:', await response.text());
+                }
+            } catch (error) {
+                console.error('Erreur réseau lors du chargement des utilisateurs:', error);
+            }
+        }
+        function selectUserForPrivateChat(username) {
+            if (selectedUserForPrivateChat === username) {
+                selectedUserForPrivateChat = null;
+                chatTargetTitle.textContent = 'CANAL DE COMMUNICATION CRYPTÉE (Global)';
+                sendMessageBtn.textContent = 'Envoyer (Global)';
+                sendPrivateMessageBtn.style.display = 'none';
+                document.querySelectorAll('.user-item').forEach(item => item.classList.remove('selected'));
+            } else {
+                selectedUserForPrivateChat = username;
+                chatTargetTitle.textContent = `CANAL DE COMMUNICATION CRYPTÉE (Privé avec ${username})`;
+                sendMessageBtn.textContent = 'Envoyer (Global)';
+                sendPrivateMessageBtn.style.display = 'block';
+                document.querySelectorAll('.user-item').forEach(item => item.classList.remove('selected'));
+                document.querySelector(`.user-item[data-username="${username}"]`).classList.add('selected');
+            }
+        }
+        function startPolling() {
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(loadMessages, 3000);
+        }
+        function startUsersPolling() {
+            if (usersPollingInterval) clearInterval(usersPollingInterval);
+            usersPollingInterval = setInterval(loadUsers, 10000);
+        }
+        window.addEventListener('beforeunload', () => {
+            if (pollingInterval) clearInterval(pollingInterval);
+            if (usersPollingInterval) clearInterval(usersPollingInterval);
+        });
+        document.addEventListener('DOMContentLoaded', () => {
+            addMessageToDisplay({ sender: 'Opérateur', message: 'Bienvenue sur le canal de communication cryptée. Authentifiez-vous pour commencer.', timestamp: new Date().toISOString() });
+        });
+
+    </script>
+</body>
+</html>
