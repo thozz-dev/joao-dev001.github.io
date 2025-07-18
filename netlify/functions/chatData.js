@@ -1,6 +1,6 @@
-const fs = require('fs').promises;
-const path = require('path');
-const DATA_FILE = path.join(process.cwd(), 'data', 'chatData.json');
+const fetch = require('node-fetch'); // Assurez-vous d'installer node-fetch si ce n'est pas déjà fait
+
+const GITHUB_URL = 'https://raw.githubusercontent.com/joao-dev001/joao-dev001.github.io/main/data/chatData.json';
 
 exports.handler = async (event, context) => {
     const headers = {
@@ -17,22 +17,23 @@ exports.handler = async (event, context) => {
     try {
         if (event.httpMethod === 'GET') {
             try {
-                const data = await fs.readFile(DATA_FILE, 'utf8');
+                const response = await fetch(GITHUB_URL);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
                 return {
                     statusCode: 200,
                     headers,
-                    body: data
+                    body: JSON.stringify(data)
                 };
             } catch (error) {
-                if (error.code === 'ENOENT') {
-                    return {
-                        statusCode: 200,
-                        headers,
-                        body: JSON.stringify({ conversations: [], messages: [] })
-                    };
-                }
-                console.error('Erreur lors de la lecture du fichier:', error);
-                throw error;
+                console.error('Erreur lors de la récupération des données:', error);
+                return {
+                    statusCode: 500,
+                    headers,
+                    body: JSON.stringify({ error: 'Erreur lors de la récupération des données' })
+                };
             }
         }
 
@@ -49,9 +50,10 @@ exports.handler = async (event, context) => {
                 };
             }
 
-            await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
-            await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2));
-            
+            // Note: Si vous souhaitez sauvegarder les données, vous devrez gérer cela différemment,
+            // car vous ne pouvez pas écrire sur GitHub directement depuis une fonction Netlify.
+            // Vous pourriez envisager d'utiliser une base de données ou un autre service pour stocker les données.
+
             return {
                 statusCode: 200,
                 headers,
