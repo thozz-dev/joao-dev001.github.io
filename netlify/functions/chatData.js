@@ -1,103 +1,4 @@
-const https = require('https');
-
-// Configuration GitHub
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN; // Token GitHub à ajouter dans les variables d'environnement Netlify
-const GITHUB_OWNER = process.env.GITHUB_OWNER; // Ton nom d'utilisateur GitHub
-const GITHUB_REPO = process.env.GITHUB_REPO;   // Nom de ton repository
-const DATA_FILE_PATH = 'data/chatData.json';   // Chemin du fichier dans ton repo
-
-// Fonction pour faire des requêtes HTTPS
-const makeRequest = (options, data = null) => {
-    return new Promise((resolve, reject) => {
-        const req = https.request(options, (res) => {
-            let body = '';
-            res.on('data', chunk => body += chunk);
-            res.on('end', () => {
-                try {
-                    const response = JSON.parse(body);
-                    resolve({ statusCode: res.statusCode, data: response });
-                } catch (e) {
-                    resolve({ statusCode: res.statusCode, data: body });
-                }
-            });
-        });
-        
-        req.on('error', reject);
-        
-        if (data) {
-            req.write(JSON.stringify(data));
-        }
-        
-        req.end();
-    });
-};
-
-// Fonction pour récupérer le fichier depuis GitHub
-const getFileFromGitHub = async () => {
-    const options = {
-        hostname: 'api.github.com',
-        path: `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${DATA_FILE_PATH}`,
-        method: 'GET',
-        headers: {
-            'Authorization': `token ${GITHUB_TOKEN}`,
-            'User-Agent': 'netlify-function',
-            'Accept': 'application/vnd.github.v3+json'
-        }
-    };
-
-    const response = await makeRequest(options);
-    
-    if (response.statusCode === 404) {
-        // Fichier n'existe pas encore
-        return null;
-    }
-    
-    if (response.statusCode !== 200) {
-        throw new Error(`GitHub API error: ${response.statusCode}`);
-    }
-    
-    // Décoder le contenu base64
-    const content = Buffer.from(response.data.content, 'base64').toString('utf8');
-    return {
-        content: JSON.parse(content),
-        sha: response.data.sha
-    };
-};
-
-// Fonction pour sauvegarder le fichier sur GitHub
-const saveFileToGitHub = async (data, sha = null) => {
-    const content = Buffer.from(JSON.stringify(data, null, 2)).toString('base64');
-    
-    const requestData = {
-        message: `Update chat data - ${new Date().toISOString()}`,
-        content: content,
-        branch: 'main' // ou 'master' selon ton repo
-    };
-    
-    if (sha) {
-        requestData.sha = sha;
-    }
-    
-    const options = {
-        hostname: 'api.github.com',
-        path: `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${DATA_FILE_PATH}`,
-        method: 'PUT',
-        headers: {
-            'Authorization': `token ${GITHUB_TOKEN}`,
-            'User-Agent': 'netlify-function',
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json'
-        }
-    };
-
-    const response = await makeRequest(options, requestData);
-    
-    if (response.statusCode !== 200 && response.statusCode !== 201) {
-        throw new Error(`GitHub API error: ${response.statusCode} - ${JSON.stringify(response.data)}`);
-    }
-    
-    return response.data;
-};
+const { getStore } = require('@netlify/blobs');
 
 exports.handler = async (event, context) => {
     const headers = {
@@ -111,33 +12,34 @@ exports.handler = async (event, context) => {
         return { statusCode: 200, headers };
     }
 
-    // Vérifier que les variables d'environnement sont définies
-    if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ error: 'Missing GitHub configuration' })
-        };
-    }
-
     try {
+        const store = getStore('chatData');
+
         if (event.httpMethod === 'GET') {
-            const fileData = await getFileFromGitHub();
-            
-            if (!fileData) {
-                // Fichier n'existe pas, retourner une structure vide
+            try {
+                const data = await store.get('data', { type: 'json' });
+                
+                if (!data) {
+                    return {
+                        statusCode: 200,
+                        headers,
+                        body: JSON.stringify({ conversations: [], messages: [] })
+                    };
+                }
+                
+                return {
+                    statusCode: 200,
+                    headers,
+                    body: JSON.stringify(data)
+                };
+            } catch (error) {
+                console.error('Erreur lors de la lecture:', error);
                 return {
                     statusCode: 200,
                     headers,
                     body: JSON.stringify({ conversations: [], messages: [] })
                 };
             }
-            
-            return {
-                statusCode: 200,
-                headers,
-                body: JSON.stringify(fileData.content)
-            };
         }
 
         if (event.httpMethod === 'POST') {
@@ -152,18 +54,22 @@ exports.handler = async (event, context) => {
                 };
             }
 
-            // Récupérer le SHA du fichier actuel pour la mise à jour
-            const currentFile = await getFileFromGitHub();
-            const sha = currentFile ? currentFile.sha : null;
-            
-            // Sauvegarder sur GitHub
-            await saveFileToGitHub(data, sha);
-            
-            return {
-                statusCode: 200,
-                headers,
-                body: JSON.stringify({ success: true })
-            };
+            try {
+                await store.set('data', data);
+                
+                return {
+                    statusCode: 200,
+                    headers,
+                    body: JSON.stringify({ success: true })
+                };
+            } catch (saveError) {
+                console.error('Erreur lors de la sauvegarde:', saveError);
+                return {
+                    statusCode: 500,
+                    headers,
+                    body: JSON.stringify({ error: 'Failed to save data' })
+                };
+            }
         }
 
         return {
