@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@netlify/blobs": "^10.0.6",
+    "aws-sdk": "^2.1692.0"
+  }
+}
