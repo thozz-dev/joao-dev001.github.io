@@ -43,7 +43,14 @@
       "senderId": 2,
       "content": "hola",
       "timestamp": "2025-07-19T11:59:50.599Z"
+    },
+    {
+      "id": "1752926381761",
+      "conversationId": "1752843424967",
+      "senderId": 3,
+      "content": "hola",
+      "timestamp": "2025-07-19T11:59:41.761Z"
     }
   ],
-  "timestamp": "2025-07-19T12:00:00.828Z"
+  "timestamp": "2025-07-19T11:59:42.275Z"
 }
