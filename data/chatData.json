@@ -13,6 +13,18 @@
       "webhookUrl": null,
       "createdBy": 1,
       "accessLevel": "standard"
+    },
+    {
+      "id": "1752943910906",
+      "type": "private",
+      "name": "Conversation avec GGO",
+      "members": [
+        4,
+        1
+      ],
+      "createdAt": "2025-07-19T16:51:50.906Z",
+      "createdBy": 4,
+      "accessLevel": "standard"
     }
   ],
   "messages": [
@@ -52,5 +64,5 @@
       "timestamp": "2025-07-19T11:59:41.761Z"
     }
   ],
-  "timestamp": "2025-07-19T16:51:49.492Z"
+  "timestamp": "2025-07-19T16:51:50.908Z"
 }
