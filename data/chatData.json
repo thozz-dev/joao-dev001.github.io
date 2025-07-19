@@ -25,6 +25,18 @@
       "createdAt": "2025-07-19T16:51:50.906Z",
       "createdBy": 4,
       "accessLevel": "standard"
+    },
+    {
+      "id": "1752943918516",
+      "type": "private",
+      "name": "Conversation avec Membre du Cartel Haut",
+      "members": [
+        4,
+        2
+      ],
+      "createdAt": "2025-07-19T16:51:58.516Z",
+      "createdBy": 4,
+      "accessLevel": "standard"
     }
   ],
   "messages": [
@@ -64,5 +76,5 @@
       "timestamp": "2025-07-19T11:59:41.761Z"
     }
   ],
-  "timestamp": "2025-07-19T16:51:53.219Z"
+  "timestamp": "2025-07-19T16:51:58.518Z"
 }
