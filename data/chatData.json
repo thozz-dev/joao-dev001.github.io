@@ -88,7 +88,14 @@
       "senderId": 2,
       "content": "test",
       "timestamp": "2025-07-19T16:52:30.008Z"
+    },
+    {
+      "id": "1752944071531",
+      "conversationId": "1752843424967",
+      "senderId": 2,
+      "content": "POS : 125 vinewood",
+      "timestamp": "2025-07-19T16:54:31.531Z"
     }
   ],
-  "timestamp": "2025-07-19T16:54:29.447Z"
+  "timestamp": "2025-07-19T16:54:32.038Z"
 }
