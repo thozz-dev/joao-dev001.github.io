@@ -1,4 +1,8 @@
-const { getStore } = require('@netlify/blobs');
+const fs = require('fs').promises;
+const path = require('path');
+
+// Note: This is a temporary solution. For production, use a proper database
+// or Netlify Blobs when properly configured
 
 exports.handler = async (event, context) => {
     const headers = {
@@ -9,30 +13,26 @@ exports.handler = async (event, context) => {
     };
 
     if (event.httpMethod === 'OPTIONS') {
-        return { 
-            statusCode: 200, 
-            headers,
-            body: ''
-        };
+        return { statusCode: 200, headers, body: '' };
     }
 
-    try {
-        const store = getStore({
-            name: 'chatData',
-            siteID: process.env.NETLIFY_SITE_ID
-        });
+    // Use /tmp directory which is writable in Netlify functions
+    const dataPath = '/tmp/chatData.json';
 
+    try {
         if (event.httpMethod === 'GET') {
             try {
-                const data = await store.get('data', { type: 'json' });
+                const fileContent = await fs.readFile(dataPath, 'utf8');
+                const data = JSON.parse(fileContent);
                 
                 return {
                     statusCode: 200,
                     headers,
-                    body: JSON.stringify(data || { conversations: [], messages: [] })
+                    body: JSON.stringify(data)
                 };
             } catch (error) {
-                console.error('Erreur lecture:', error);
+                // File doesn't exist or is corrupted, return default
+                console.log('No data file found, returning default');
                 return {
                     statusCode: 200,
                     headers,
@@ -51,7 +51,6 @@ exports.handler = async (event, context) => {
                 }
                 
             } catch (parseError) {
-                console.error('Parse error:', parseError);
                 return {
                     statusCode: 400,
                     headers,
@@ -63,8 +62,8 @@ exports.handler = async (event, context) => {
             }
 
             try {
-                await store.set('data', data);
-                console.log('Data saved successfully');
+                await fs.writeFile(dataPath, JSON.stringify(data, null, 2));
+                console.log('Data saved to temp file');
                 
                 return {
                     statusCode: 200,
@@ -97,8 +96,7 @@ exports.handler = async (event, context) => {
             headers,
             body: JSON.stringify({ 
                 error: 'Internal server error', 
-                details: error.message,
-                stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+                details: error.message
             })
         };
     }
