@@ -100,12 +100,13 @@
       "id": "1753014698870",
       "conversationId": "1752843424967",
       "senderId": 1,
-      "content": "test",
+      "content": "test 0215",
       "timestamp": "2025-07-20T12:31:38.870Z",
       "fileUrl": null,
       "fileType": null,
-      "replyToMessageId": null
+      "replyToMessageId": null,
+      "edited": true
     }
   ],
-  "timestamp": "2025-07-20T12:31:39.372Z"
+  "timestamp": "2025-07-20T12:32:03.790Z"
 }
