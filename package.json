@@ -1,0 +1,12 @@
+{
+  "name": "netlify-chat-functions",
+  "version": "1.0.0",
+  "description": "Chat functions with GitHub storage",
+  "dependencies": {
+    "netlify": "^22.3.0",
+    "node-fetch": "^2.6.7"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}

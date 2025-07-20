@@ -1,0 +1,3732 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EL CARTEL DE RIVERA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=SF+Pro+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-dark-bg: #000000;
+            --color-medium-bg: #070707;
+            --color-light-bg: #0f0f0f;
+            --color-text-primary: #f0f0f0;
+            --color-text-secondary: #b0b0b0;
+            --color-accent-green: #005842;
+            --color-accent-red: #640500;
+            --color-border: rgba(255, 255, 255, 0.1);
+            --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 5px 20px rgba(0, 0, 0, 0.2);
+            --shadow-deep: 0 10px 40px rgba(0, 0, 0, 0.4);
+            --border-radius-small: 6px;
+            --border-radius-medium: 12px;
+            --border-radius-large: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--color-dark-bg);
+            color: var(--color-text-primary);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            perspective: 1000px;
+        }
+
+        .security-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--color-dark-bg);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1.2s ease-out;
+        }
+
+        .security-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .terminal-window {
+            width: 90vw;
+            max-width: 900px;
+            height: 60vh;
+            max-height: 700px;
+            background: var(--color-medium-bg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-medium);
+            box-shadow: var(--shadow-deep);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-family: 'SF Pro Display', monospace;
+            transform: translateZ(0);
+        }
+
+        .terminal-header {
+            background: var(--color-light-bg);
+            padding: 0.8rem 1.2rem;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-top-left-radius: var(--border-radius-medium);
+            border-top-right-radius: var(--border-radius-medium);
+        }
+
+        .terminal-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        .terminal-button {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            box-shadow: none;
+        }
+
+        .terminal-button:nth-child(2) { background: #ffe66d; }
+        .terminal-button:nth-child(3) { background: var(--color-accent-green); }
+
+        .terminal-title {
+            color: var(--color-accent-green);
+            font-size: 0.9rem;
+            font-weight: 500;
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .terminal-content {
+            padding: 1.5rem;
+            height: calc(100% - 50px);
+            overflow-y: auto;
+            position: relative;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            flex-grow: 1;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--color-accent-green);
+        }
+
+        .terminal-content::-webkit-scrollbar {
+            display: none;
+        }
+
+        .terminal-line {
+            margin: 0.6rem 0;
+            opacity: 0;
+            animation: typeIn 0.04s ease-in-out forwards;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .terminal-line.error {
+            color: var(--color-accent-red);
+        }
+
+        .terminal-line.warning {
+            color: #ffcc00;
+        }
+
+        .terminal-line.success {
+            color: var(--color-accent-green);
+        }
+
+        .terminal-line.info {
+            color: #00bfff;
+        }
+
+        .cursor {
+            display: inline-block;
+            background: var(--color-accent-green);
+            width: 2px;
+            height: 1em;
+            animation: blink 0.8s infinite step-end;
+            vertical-align: middle;
+        }
+
+        @keyframes typeIn {
+            to { opacity: 1; }
+        }
+
+        @keyframes blink {
+            50% { background: transparent; }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(0, 230, 118, 0.08);
+            border: 1px solid rgba(0, 230, 118, 0.2);
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 1.5rem 0;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--color-accent-green);
+            width: 0%;
+            transition: width 0.3s ease-out;
+            position: relative;
+            border-radius: 5px;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shimmer 1.8s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .main-content {
+            opacity: 0;
+            transition: opacity 1s ease-in;
+            background: var(--color-dark-bg);
+            min-height: 100vh;
+            color: var(--color-text-primary);
+            font-family: 'Inter', sans-serif;
+            width: 100%;
+            padding-top: 20px;
+            padding-bottom: 20px;
+            overflow-y: auto;
+        }
+
+        .main-content.visible {
+            opacity: 1;
+        }
+
+        .background-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(0, 230, 118, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 59, 48, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.01) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .nav-header {
+            background: rgba(26, 26, 26, 0.9);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-medium);
+            padding: 15px 25px;
+            margin-bottom: 60px;
+            margin-top: 20px;
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-medium);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+            transform: translateZ(0);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-logo img {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: 2px solid var(--color-accent-red);
+            box-shadow: var(--shadow-light);
+        }
+
+        .nav-title {
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--color-accent-green), #ffffff, var(--color-accent-red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background: var(--color-medium-bg);
+            color: var(--color-text-primary);
+            text-decoration: none;
+            border-radius: var(--border-radius-small);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid var(--color-border);
+            cursor: pointer;
+            font-size: 0.9rem;
+            box-shadow: var(--shadow-light);
+            transform: translateZ(0);
+        }
+
+        .nav-btn:hover {
+            background: var(--color-light-bg);
+            border-color: var(--color-accent-green);
+            transform: translateY(-2px) translateZ(5px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .nav-btn.danger {
+            background: var(--color-accent-red);
+            border-color: var(--color-accent-red);
+        }
+
+        .nav-btn.danger:hover {
+            background: #ff6b6b;
+            border-color: #ff6b6b;
+            box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);
+        }
+
+        .page {
+            display: none;
+            animation: fadeInScale 0.6s ease-out forwards;
+            transform: scale(0.99) translateZ(-10px);
+            opacity: 0;
+        }
+
+        .page.active {
+            display: block;
+            transform: scale(1) translateZ(0);
+            opacity: 1;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(0.99) translateZ(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1) translateZ(0);
+            }
+        }
+
+        .auth-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: var(--color-medium-bg);
+            padding: 35px;
+            border-radius: var(--border-radius-medium);
+            border: 1px solid var(--color-border);
+            backdrop-filter: blur(15px);
+            box-shadow: var(--shadow-deep);
+            position: relative;
+            overflow: hidden;
+            transform: translateZ(0);
+        }
+
+        .auth-title {
+            text-align: center;
+            color: var(--color-text-primary);
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--color-text-secondary);
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--color-dark-bg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-small);
+            color: var(--color-text-primary);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            outline: none;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-group input:focus {
+            border-color: var(--color-accent-green);
+            box-shadow: 0 0 15px rgba(0, 230, 118, 0.2), inset 0 0 5px rgba(0, 230, 118, 0.05);
+            background: #000000;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--color-accent-green);
+            border: none;
+            border-radius: var(--border-radius-small);
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 20px;
+            box-shadow: var(--shadow-medium);
+            transform: translateZ(0);
+        }
+
+        .btn:hover {
+            background: #00c853;
+            box-shadow: 0 5px 20px rgba(0, 230, 118, 0.4);
+            transform: translateY(-2px) translateZ(5px);
+        }
+
+        .error-message {
+            background: rgba(255, 59, 48, 0.1);
+            border: 1px solid rgba(255, 59, 48, 0.3);
+            color: #ff8c9a;
+            padding: 15px;
+            border-radius: var(--border-radius-small);
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: var(--color-accent-green);
+            margin-top: 20px;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--color-accent-green);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .shop-container {
+            background: var(--color-medium-bg);
+            border-radius: var(--border-radius-large);
+            padding: 40px;
+            border: 1px solid var(--color-border);
+            backdrop-filter: blur(15px);
+            box-shadow: var(--shadow-deep);
+            margin-top: 40px;
+            transform: translateZ(0);
+        }
+
+        .shop-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .shop-title {
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--color-text-primary);
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+        }
+
+        .shop-description {
+            color: var(--color-text-secondary);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        .shop-filters {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            padding: 20px;
+            background: var(--color-dark-bg);
+            border-radius: var(--border-radius-medium);
+            border: 1px solid var(--color-border);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .filter-group label {
+            font-family: 'SF Pro Display', sans-serif;
+            color: var(--color-accent-green);
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .filter-group select {
+            background: var(--color-dark-bg);
+            border: 1px solid rgba(0, 230, 118, 0.4);
+            border-radius: var(--border-radius-small);
+            color: var(--color-text-primary);
+            padding: 12px 18px;
+            font-size: 1rem;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 %22%20viewBox%3D%220%200%20256%20256%22%3E%3Cpath%20fill%3D%22%2300e676%22%20d%3D%22M208%2096L128%20176L48%2096z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 14px;
+        }
+
+        .filter-group select:hover {
+            border-color: var(--color-accent-green);
+            box-shadow: 0 0 20px rgba(0, 230, 118, 0.3);
+        }
+
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 35px;
+            margin-top: 40px;
+        }
+
+        .product-card {
+            background: var(--color-dark-bg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-medium);
+            padding: 30px;
+            transition: all 0.4s ease;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: var(--shadow-medium);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transform-style: preserve-3d;
+            transform: translateZ(0);
+        }
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 230, 118, 0.05), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .product-card:hover::before {
+            left: 100%;
+        }
+
+        .product-card:hover {
+            border-color: var(--color-accent-green);
+            box-shadow: 0 18px 60px rgba(0, 230, 118, 0.2);
+            transform: translateY(-10px) translateZ(20px);
+        }
+
+        .product-image-container {
+            width: 100%;
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: var(--border-radius-small);
+            overflow: hidden;
+            transform: translateZ(10px);
+        }
+
+        .product-image-container img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .product-image-container img {
+            transform: scale(1.08) translateZ(5px);
+        }
+
+        .product-content {
+            flex-grow: 1;
+            transform: translateZ(5px);
+        }
+
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .product-title {
+            font-family: 'SF Pro Display', sans-serif;
+            color: var(--color-text-primary);
+            font-size: 1.2rem;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .product-category {
+            color: var(--color-text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        .product-price {
+            font-family: 'SF Pro Display', sans-serif;
+            color: var(--color-accent-red);
+            font-size: 1.5rem;
+            font-weight: 800;
+            white-space: nowrap;
+            text-shadow: 0 0 10px rgba(255, 59, 48, 0.1);
+        }
+
+        .product-description {
+            color: var(--color-text-secondary);
+            margin-bottom: 25px;
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            transform: translateZ(10px);
+        }
+
+        .product-actions .btn {
+            flex: 1;
+            margin: 0;
+            padding: 15px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: var(--border-radius-small);
+            box-shadow: var(--shadow-light);
+        }
+
+        .cart-widget {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(26, 26, 26, 0.9);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-medium);
+            padding: 15px;
+            z-index: 1000;
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-medium);
+            transition: all 0.2s ease;
+            transform: translateZ(0);
+        }
+
+        .cart-header {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .cart-header:hover {
+            transform: scale(1.05) translateZ(5px);
+        }
+
+        .cart-icon {
+            color: var(--color-accent-red);
+            font-size: 1.4rem;
+            margin-right: 10px;
+            transition: transform 0.2s ease;
+        }
+
+        .cart-icon.animated {
+            animation: bounce 0.4s;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .cart-count {
+            background: var(--color-accent-red);
+            color: white;
+            border-radius: 14px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            box-shadow: 0 1px 5px rgba(255, 59, 48, 0.2);
+        }
+
+        #cartModal .modal-content {
+            max-width: 550px;
+            padding: 25px;
+        }
+
+        #cartModal .modal-title {
+            color: var(--color-accent-red);
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 59, 48, 0.15);
+            padding-bottom: 8px;
+        }
+
+        .cart-items-list {
+            max-height: 500px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding-right: 8px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.95rem;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .cart-item-info {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            margin-right: 5px;
+        }
+
+        .cart-item-name {
+            color: var(--color-text-primary);
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+
+        .cart-item-price {
+            color: var(--color-accent-red);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .cart-item-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cart-item-controls button {
+            background: rgba(255, 59, 48, 0.1);
+            border: 1px solid rgba(255, 59, 48, 0.3);
+            color: var(--color-accent-red);
+            width: 32px;
+            height: 32px;
+            border-radius: var(--border-radius-small);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+            box-shadow: var(--shadow-light);
+        }
+
+        .cart-item-controls button:hover {
+            background: rgba(255, 59, 48, 0.2);
+            transform: scale(1.05);
+        }
+
+        .cart-item-quantity {
+            color: var(--color-text-primary);
+            font-weight: 600;
+            min-width: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .cart-total {
+            color: var(--color-text-primary);
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-align: right;
+            margin-top: 15px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .cart-modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .cart-modal-actions .btn {
+            width: 100%;
+            margin-top: 0;
+            padding: 12px;
+            font-size: 0.95rem;
+        }
+
+        .cart-modal-actions .btn.clear-cart {
+            background: var(--color-light-bg);
+            border: 1px solid var(--color-border);
+            color: var(--color-text-primary);
+        }
+
+        .cart-modal-actions .btn.clear-cart:hover {
+            background: var(--color-medium-bg);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) translateZ(100px);
+            background: var(--color-medium-bg);
+            border: 1px solid var(--color-accent-green);
+            border-radius: var(--border-radius-medium);
+            padding: 30px;
+            text-align: center;
+            z-index: 2000;
+            display: none;
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-deep);
+            max-width: 500px;
+            animation: modalAppear 0.4s ease forwards;
+        }
+
+        .notification.show {
+            display: block;
+        }
+
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.9) translateZ(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1) translateZ(100px);
+            }
+        }
+
+        .notification h3 {
+            color: var(--color-accent-green);
+            font-size: 1.6rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .notification p {
+            color: var(--color-text-secondary);
+            margin-bottom: 10px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .notification .btn {
+            margin-top: 25px;
+            width: auto;
+            padding: 10px 25px;
+            font-size: 0.95rem;
+        }
+
+        .modal {
+            display: flex;
+            position: fixed;
+            z-index: 2001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--color-medium-bg);
+            margin: auto;
+            padding: 30px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-large);
+            width: 90%;
+            max-width: 700px;
+            box-shadow: var(--shadow-deep);
+            transform: scale(0.95) translateZ(50px);
+            transition: transform 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1) translateZ(0);
+        }
+
+        .close-button {
+            color: var(--color-text-secondary);
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: var(--color-accent-red);
+            text-decoration: none;
+            transform: scale(1.1) rotate(3deg);
+        }
+
+        .modal-image {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: var(--border-radius-small);
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 59, 48, 0.2);
+            box-shadow: var(--shadow-medium);
+            transform: translateZ(10px);
+        }
+
+        .modal-title {
+            font-family: 'SF Pro Display', sans-serif;
+            color: var(--color-text-primary);
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .modal-category {
+            color: var(--color-text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .modal-price {
+            font-family: 'SF Pro Display', sans-serif;
+            color: var(--color-accent-red);
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 59, 48, 0.1);
+        }
+
+        .modal-description {
+            color: var(--color-text-secondary);
+            line-height: 1.6;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+            text-align: center;
+            max-width: 550px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            width: 100%;
+            max-width: 350px;
+            transform: translateZ(10px);
+        }
+
+        .modal-actions .btn {
+            width: auto;
+            flex-grow: 1;
+            padding: 12px 20px;
+            font-size: 0.95rem;
+        }
+
+        .mdt-section {
+            background: var(--color-medium-bg);
+            border-radius: var(--border-radius-large);
+            padding: 35px;
+            border: 1px solid var(--color-border);
+            backdrop-filter: blur(15px);
+            box-shadow: var(--shadow-deep);
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: translateZ(0);
+        }
+
+        .mdt-title {
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--color-accent-green);
+            margin-bottom: 25px;
+            text-shadow: 0 0 10px rgba(0, 230, 118, 0.1);
+            text-align: center;
+        }
+
+        .mdt-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .mdt-card {
+            background: var(--color-dark-bg);
+            border: 1px solid rgba(0, 230, 118, 0.15);
+            border-radius: var(--border-radius-medium);
+            padding: 18px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: var(--shadow-medium);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            transform: translateZ(0);
+        }
+
+        .mdt-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(0, 230, 118, 0.03), transparent);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 0;
+        }
+
+        .mdt-card:hover::before {
+            opacity: 1;
+        }
+
+        .mdt-card:hover {
+            transform: translateY(-5px) translateZ(10px);
+            box-shadow: 0 10px 30px rgba(0, 230, 118, 0.2);
+            border-color: rgba(0, 230, 118, 0.3);
+        }
+
+        .mdt-card-content {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            transform: translateZ(5px);
+        }
+
+        .mdt-card img {
+            width: 100%;
+            max-height: 160px;
+            object-fit: cover;
+            border-radius: var(--border-radius-small);
+            margin-bottom: 12px;
+            border: 1px solid rgba(0, 230, 118, 0.08);
+            box-shadow: var(--shadow-light);
+            transform: translateZ(5px);
+        }
+
+        .mdt-card-title {
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 1.4rem;
+            color: var(--color-accent-green);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .mdt-card-subtitle {
+            color: var(--color-text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .mdt-detail-modal .modal-content {
+            max-width: 800px;
+            padding: 35px;
+        }
+
+        .mdt-detail-modal .modal-image {
+            max-height: 350px;
+            margin-bottom: 25px;
+        }
+
+        .mdt-detail-modal .modal-title {
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 2.2rem;
+            margin-bottom: 12px;
+        }
+
+        .mdt-detail-modal .modal-subtitle {
+            font-size: 1.1rem;
+            color: var(--color-accent-green);
+            margin-bottom: 18px;
+        }
+
+        .mdt-detail-modal .modal-section-title {
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 1.3rem;
+            color: #00bfff;
+            margin-top: 20px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid rgba(0, 191, 255, 0.15);
+            padding-bottom: 4px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .mdt-detail-modal .modal-text {
+            color: var(--color-text-secondary);
+            line-height: 1.6;
+            margin-bottom: 12px;
+            text-align: left;
+            width: 100%;
+            font-size: 0.95rem;
+        }
+
+        .mdt-detail-modal ul {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 15px;
+            width: 100%;
+            text-align: left;
+        }
+
+        .mdt-detail-modal ul li {
+            color: var(--color-text-secondary);
+            margin-bottom: 6px;
+            padding-left: 20px;
+            position: relative;
+            font-size: 0.9rem;
+        }
+
+        .mdt-detail-modal ul li::before {
+            content: "»";
+            color: var(--color-accent-green);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-size: 1.1em;
+        }
+
+        .mdt-detail-modal .modal-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 8px;
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .mdt-detail-modal .modal-gallery img {
+            width: 100%;
+            height: 90px;
+            object-fit: cover;
+            border-radius: var(--border-radius-small);
+            border: 1px solid var(--color-border);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            box-shadow: var(--shadow-light);
+        }
+
+        .mdt-detail-modal .modal-gallery img:hover {
+            transform: scale(1.05) translateZ(5px);
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                padding: 15px;
+            }
+            .nav-header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px;
+                top: 10px;
+            }
+            .nav-actions {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .shop-grid {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            }
+            .product-card {
+                padding: 25px;
+            }
+            .product-title {
+                font-size: 1.2rem;
+            }
+            .product-price {
+                font-size: 1.4rem;
+            }
+            .mdt-grid {
+                grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            }
+            .mdt-card {
+                padding: 18px;
+            }
+            .mdt-card-title {
+                font-size: 1.2rem;
+            }
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+            .modal-title {
+                font-size: 1.6rem;
+            }
+            .modal-price {
+                font-size: 2.2rem;
+            }
+            .mdt-detail-modal .modal-title {
+                font-size: 2rem;
+            }
+            .mdt-detail-modal .modal-subtitle {
+                font-size: 1rem;
+            }
+            .mdt-detail-modal .modal-section-title {
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                align-items: flex-start;
+            }
+            .terminal-window {
+                width: 95vw;
+                height: 80vh;
+                margin-top: 20px;
+            }
+            .terminal-content {
+                padding: 1rem;
+                font-size: 0.85rem;
+            }
+            .nav-logo img {
+                width: 38px;
+                height: 38px;
+            }
+            .nav-title {
+                font-size: 1.4rem;
+            }
+            .nav-btn {
+                padding: 7px 12px;
+                font-size: 0.75rem;
+            }
+            .auth-container {
+                padding: 25px 18px;
+            }
+            .auth-title {
+                font-size: 1.5rem;
+            }
+            .form-group input {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+            .btn {
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+            .shop-container, .mdt-section {
+                padding: 25px 18px;
+            }
+            .shop-title {
+                font-size: 2.5rem;
+            }
+            .shop-grid {
+                grid-template-columns: 1fr;
+            }
+            .cart-widget {
+                top: 15px;
+                right: 15px;
+                padding: 12px;
+            }
+            .modal-content {
+                padding: 18px;
+            }
+            .close-button {
+                font-size: 26px;
+                top: 10px;
+                right: 12px;
+            }
+            .modal-image {
+                max-height: 180px;
+            }
+            .modal-title {
+                font-size: 1.5rem;
+            }
+            .modal-price {
+                font-size: 2rem;
+            }
+            .modal-description {
+                font-size: 0.85rem;
+            }
+            .modal-actions {
+                flex-direction: column;
+            }
+            .mdt-detail-modal .modal-title {
+                font-size: 1.8rem;
+            }
+            .mdt-detail-modal .modal-section-title {
+                font-size: 1.1rem;
+            }
+        }
+
+        .biometric-scanner {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--color-medium-bg);
+            border-radius: var(--border-radius-medium);
+            padding: 40px;
+            box-shadow: var(--shadow-deep);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            position: fixed;
+            left: 50%;
+            transform: translate(-50%);
+            overflow: hidden;
+        }
+
+        .biometric-scanner.active {
+            display: flex;
+        }
+
+        .scanner-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: var(--color-accent-green);
+            animation: pulse 1.5s infinite alternate;
+        }
+
+        .scanner-message {
+            font-size: 1.2rem;
+            color: var(--color-text-primary);
+            margin-bottom: 30px;
+        }
+
+        .fingerprint-scan {
+            width: 150px;
+            height: 150px;
+            border: 3px solid var(--color-accent-green);
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fingerprint-scan::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent 0%, var(--color-accent-green) 50%, transparent 100%);
+            transform: translateY(-100%);
+            animation: scan-line 2s infinite;
+        }
+
+        .fingerprint-scan img {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+            filter: grayscale(100%) brightness(0.5) drop-shadow(0 0 5px var(--color-accent-green));
+            opacity: 0.7;
+        }
+
+        .voice-scan {
+            width: 200px;
+            height: 100px;
+            background: rgba(0, 230, 118, 0.1);
+            border: 2px solid var(--color-accent-green);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .voice-scan .waveform {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+        }
+
+        .voice-scan .bar {
+            width: 4px;
+            background: var(--color-accent-green);
+            margin: 0 1px;
+            animation: waveform 1s infinite alternate;
+        }
+
+        .voice-scan .bar:nth-child(1) { height: 30%; animation-delay: 0s; }
+        .voice-scan .bar:nth-child(2) { height: 60%; animation-delay: 0.1s; }
+        .voice-scan .bar:nth-child(3) { height: 40%; animation-delay: 0.2s; }
+        .voice-scan .bar:nth-child(4) { height: 70%; animation-delay: 0.3s; }
+        .voice-scan .bar:nth-child(5) { height: 50%; animation-delay: 0.4s; }
+        .voice-scan .bar:nth-child(6) { height: 80%; animation-delay: 0.5s; }
+        .voice-scan .bar:nth-child(7) { height: 35%; animation-delay: 0.6s; }
+        .voice-scan .bar:nth-child(8) { height: 65%; animation-delay: 0.7s; }
+        .voice-scan .bar:nth-child(9) { height: 45%; animation-delay: 0.8s; }
+        .voice-scan .bar:nth-child(10) { height: 75%; animation-delay: 0.9s; }
+
+        @keyframes scan-line {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        @keyframes waveform {
+            0% { height: 20%; }
+            100% { height: 80%; }
+        }
+
+        .intrusion-game {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--color-medium-bg);
+            border-radius: var(--border-radius-medium);
+            padding: 40px;
+            box-shadow: var(--shadow-deep);
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            position: fixed;
+            left: 50%;
+            transform: translate(-50%);
+        }
+
+        .intrusion-game.active {
+            display: flex;
+        }
+
+        .game-title {
+            font-size: 2rem;
+            color: var(--color-accent-red);
+            margin-bottom: 20px;
+        }
+
+        .game-description {
+            color: var(--color-text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .code-input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .code-input {
+            width: 50px;
+            height: 60px;
+            font-size: 2rem;
+            text-align: center;
+            background: var(--color-dark-bg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-small);
+            color: var(--color-accent-green);
+            outline: none;
+        }
+
+        .code-input:focus {
+            border-color: var(--color-accent-green);
+            box-shadow: 0 0 10px rgba(0, 230, 118, 0.3);
+        }
+
+        .timer {
+            font-size: 1.5rem;
+            color: var(--color-accent-red);
+            margin-bottom: 20px;
+        }
+
+        .game-message {
+            color: var(--color-text-primary);
+            margin-top: 20px;
+        }
+
+        #chatModal .modal-content {
+            max-width: 700px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        #chatModal .modal-title {
+            color: var(--color-accent-green);
+            border-bottom: 1px solid rgba(0, 230, 118, 0.15);
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-small);
+            margin-bottom: 15px;
+            background: var(--color-dark-bg);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-message {
+            margin-bottom: 10px;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        .chat-message.user-ghost { color: #00bfff; }
+        .chat-message.user-hand { color: #ffcc00; }
+        .chat-message.user-smuggler { color: #ff8c9a; }
+        .chat-message.user-nexus { color: var(--color-accent-green); }
+        .chat-message.user-self { color: var(--color-text-primary); text-align: right; }
+
+        .chat-message .username {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex-grow: 1;
+            padding: 10px 15px;
+            background: var(--color-dark-bg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-small);
+            color: var(--color-text-primary);
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .chat-input:focus {
+            border-color: var(--color-accent-green);
+            box-shadow: 0 0 10px rgba(0, 230, 118, 0.3);
+        }
+
+        .chat-send-btn {
+            padding: 10px 20px;
+            background: var(--color-accent-green);
+            border: none;
+            border-radius: var(--border-radius-small);
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .chat-send-btn:hover {
+            background: #00c853;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #mapPage .mdt-section {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 30px;
+        }
+
+        .map-container {
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-medium);
+            overflow: hidden;
+            box-shadow: var(--shadow-medium);
+        }
+
+        .map-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .map-area {
+            position: absolute;
+            background-color: rgba(0, 230, 118, 0.2);
+            border: 1px solid var(--color-accent-green);
+            cursor: pointer;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .map-area:hover {
+            background-color: rgba(0, 230, 118, 0.4);
+            border-color: #00e676;
+        }
+
+        .map-area.flashing {
+            animation: flash-red 1s infinite alternate;
+        }
+
+        @keyframes flash-red {
+            0% { background-color: rgba(255, 59, 48, 0.2); border-color: var(--color-accent-red); }
+            100% { background-color: rgba(255, 59, 48, 0.6); border-color: #ff6b6b; }
+        }
+
+        .area-vagos { top: 50%; left: 60%; width: 20%; height: 20%; }
+        .area-families { top: 70%; left: 30%; width: 15%; height: 15%; }
+        .area-ballas { top: 40%; left: 20%; width: 18%; height: 18%; }
+        .area-cartel { top: 10%; left: 40%; width: 25%; height: 25%; background-color: grandient(to bottom, rgba(0, 230, 118, 0.2), rgba(255, 255, 255, 0.6), rgba(255, 59, 48, 0.2)); border-color: var(--color-accent-red); }
+
+        #nexusPage .mdt-section {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            height: 70vh;
+        }
+
+        .nexus-output {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: var(--color-dark-bg);
+            border: 1px solid var(--color-accent-green);
+            border-radius: var(--border-radius-small);
+            margin-bottom: 15px;
+            font-family: 'SF Pro Display', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--color-accent-green);
+        }
+
+        .nexus-line {
+            margin-bottom: 8px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .nexus-line.user-input {
+            color: var(--color-text-primary);
+        }
+
+        .nexus-line.ai-response {
+            color: var(--color-accent-green);
+        }
+
+        .nexus-input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nexus-input {
+            flex-grow: 1;
+            padding: 12px 15px;
+            background: var(--color-dark-bg);
+            border: 1px solid var(--color-accent-green);
+            border-radius: var(--border-radius-small);
+            color: var(--color-text-primary);
+            font-size: 1rem;
+            outline: none;
+            font-family: 'SF Pro Display', monospace;
+        }
+
+        .nexus-input:focus {
+            box-shadow: 0 0 10px rgba(0, 230, 118, 0.3);
+        }
+
+        .nexus-send-btn {
+            padding: 12px 20px;
+            background: var(--color-accent-green);
+            border: none;
+            border-radius: var(--border-radius-small);
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .nexus-send-btn:hover {
+            background: #00c853;
+        }
+
+        body.stealth-mode {
+            opacity: 0.6;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        body.stealth-mode * {
+            animation: none !important;
+            transition: none !important;
+        }
+
+        body.stealth-mode .nav-header,
+        body.stealth-mode .cart-widget,
+        body.stealth-mode .modal-content {
+            backdrop-filter: none !important;
+            background: rgba(0,0,0,0.8) !important;
+        }
+
+        body.stealth-mode .nav-btn,
+        body.stealth-mode .btn {
+            box-shadow: none !important;
+        }
+
+        body.stealth-mode .product-card:hover,
+        body.stealth-mode .mdt-card:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        body.stealth-mode .product-card::before,
+        body.stealth-mode .mdt-card::before {
+            display: none !important;
+        }
+
+        body.stealth-mode .cart-icon.animated {
+            animation: none !important;
+        }
+
+        @media (max-width: 1024px) {
+        }
+
+        @media (max-width: 768px) {
+            .code-input {
+                width: 40px;
+                height: 50px;
+                font-size: 1.8rem;
+            }
+            .biometric-scanner, .intrusion-game {
+                padding: 25px;
+            }
+            .scanner-icon {
+                font-size: 3rem;
+            }
+            .fingerprint-scan {
+                width: 120px;
+                height: 120px;
+            }
+            .voice-scan {
+                width: 150px;
+                height: 80px;
+            }
+            #chatModal .modal-content {
+                height: 90vh;
+            }
+            .chat-input-container {
+                flex-direction: column;
+                gap: 5px;
+            }
+            .chat-send-btn {
+                width: 100%;
+            }
+        }
+
+        #cryptoCommsModal .modal-content {
+            max-width: 700px;
+            height: 70vh;
+            display: flex;
+            flex-direction: column;
+            background: #000;
+            border: 1px solid #00bfff;
+            box-shadow: 0 0 20px rgba(0, 191, 255, 0.5);
+        }
+
+        #cryptoCommsModal .modal-title {
+            color: #00bfff;
+            border-bottom: 1px solid rgba(0, 191, 255, 0.15);
+        }
+
+        .comms-output {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: var(--color-dark-bg);
+            border: 1px solid rgba(0, 191, 255, 0.3);
+            border-radius: var(--border-radius-small);
+            margin-bottom: 15px;
+            font-family: 'SF Pro Display', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #00bfff;
+        }
+
+        .comms-line {
+            margin-bottom: 8px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .comms-line.operator {
+            color: #00bfff;
+        }
+
+        .comms-line.user-response {
+            color: var(--color-text-primary);
+            text-align: right;
+        }
+
+        .comms-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .comms-options .btn {
+            background: rgba(0, 191, 255, 0.1);
+            border: 1px solid rgba(0, 191, 255, 0.4);
+            color: #00bfff;
+        }
+
+        .comms-options .btn:hover {
+            background: rgba(0, 191, 255, 0.2);
+            box-shadow: 0 0 15px rgba(0, 191, 255, 0.4);
+        }
+
+        .heat-tracker {
+            position: fixed;
+            top: 100px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(26, 26, 26, 0.9);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-medium);
+            padding: 15px;
+            box-shadow: var(--shadow-medium);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            transform: translateZ(0);
+        }
+
+        .heat-tracker-label {
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 0.9rem;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .heat-bar-container {
+            width: 120px;
+            height: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--color-border);
+        }
+
+        .heat-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, var(--color-accent-green), #ffcc00, var(--color-accent-red));
+            transition: width 0.5s ease-out;
+        }
+
+        .heat-level-text {
+            font-family: 'SF Pro Display', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--color-accent-green);
+        }
+
+        body.heat-glitch::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 0, 0, 0.1);
+            pointer-events: none;
+            z-index: 9998;
+            animation: glitch-bg 0.3s infinite alternate;
+        }
+
+        @keyframes glitch-bg {
+            0% { transform: translate(0, 0); opacity: 0.1; }
+            25% { transform: translate(2px, -2px); opacity: 0.15; }
+            50% { transform: translate(-2px, 2px); opacity: 0.1; }
+            75% { transform: translate(1px, 1px); opacity: 0.12; }
+            100% { transform: translate(-1px, -1px); opacity: 0.1; }
+        }
+
+        body.heat-glitch * {
+            animation-duration: 0.05s !important;
+            animation-timing-function: step-end !important;
+        }
+
+        .heat-alert-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--color-accent-red);
+            color: white;
+            padding: 20px 30px;
+            border-radius: var(--border-radius-medium);
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            overflow: hidden;
+        }
+
+        .heat-alert-message.show {
+            opacity: 1;
+            visibility: visible;
+            overflow: hidden;
+        }
+
+        @keyframes heat-alert-flash {
+            0% { background: var(--color-accent-red); box-shadow: 0 0 20px var(--color-accent-red); }
+            100% { background: #ff6b6b; box-shadow: 0 0 40px #ff6b6b; }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="security-overlay" id="securityOverlay">
+        <div class="terminal-window">
+            <div class="terminal-header">
+                <div class="terminal-buttons">
+                    <div class="terminal-button"></div>
+                    <div class="terminal-button"></div>
+                    <div class="terminal-button"></div>
+                </div>
+                <div class="terminal-title">NEXUS_OBSCUR_PROTOCOL v3.0.1</div>
+            </div>
+            <div class="terminal-content">
+                <div id="terminalOutput"></div>
+                <div class="progress-bar" style="display: none;" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="main-content" id="mainContent">
+        <div class="background-overlay"></div>
+        <div class="container">
+            <div class="nav-header">
+                <div class="nav-logo">
+                    <img src="img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png" alt="El Cartel Logo">
+                    <h1 class="nav-title">RIVERA</h1>
+                </div>
+                <div class="nav-actions">
+                    <button class="nav-btn" id="navShopBtn" onclick="showPage('shopPage')">Boutique</button>
+                    <button class="nav-btn" id="navGangsBtn" onclick="showPage('gangsPage')">Gangs & Orgas</button>
+                    <button class="nav-btn" id="navMapBtn" onclick="showPage('mapPage')">Carte des Zones</button>
+                    <button class="nav-btn" id="navChatBtn" onclick="openModal('chatModal')">Messagerie</button>
+                    <button class="nav-btn" id="navNexusBtn" onclick="showPage('nexusPage')">NEXUS IA</button>
+                    <button class="nav-btn" id="navAuthBtn" onclick="showPage('authPage')">Authentification</button>
+                    <button class="nav-btn danger" id="navLogoutBtn" onclick="logout()">Déconnexion</button>
+                    <button class="nav-btn" id="stealthModeBtn" onclick="toggleStealthMode()">Mode Furtif</button>
+                </div>
+            </div>
+
+            <div class="page active" id="authPage">
+                <div class="auth-container" id="authFormContainer">
+                    <h2 class="auth-title">ACCÈS SÉCURISÉ</h2>
+                    <form id="authForm">
+                        <div class="form-group">
+                            <label for="name">Identifiant</label>
+                            <input type="text" id="name" name="name" placeholder="Entrez votre identifiant" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Code d'accès / Message</label>
+                            <input type="password" id="message" name="message" placeholder="Entrez votre code d'accès" required>
+                        </div>
+                        <button type="submit" class="btn">AUTHENTIFIER</button>
+                        <div class="loading" id="loading">Vérification en cours...</div>
+                        <div class="error-message" id="errorMessage">Accès refusé. Vérifiez vos identifiants.</div>
+                    </form>
+                </div>
+
+                <div class="biometric-scanner" id="biometricScanner">
+                    <span class="scanner-icon" id="scannerIcon"></span>
+                    <p class="scanner-message" id="scannerMessage"></p>
+                    <div class="fingerprint-scan" id="fingerprintScan">
+                        <img src="img/fingerprint.png" alt="Fingerprint Scan">
+                    </div>
+                    <div class="voice-scan" id="voiceScan" style="display: none;">
+                        <div class="waveform">
+                            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="intrusion-game" id="intrusionGame">
+                    <h2 class="game-title">INTRUSION NUMÉRIQUE</h2>
+                    <p class="game-description">Déchiffrez le code d'accès à 4 chiffres pour continuer. Temps limité !</p>
+                    <div class="code-input-container">
+                        <input type="text" class="code-input" maxlength="1" id="codeInput1">
+                        <input type="text" class="code-input" maxlength="1" id="codeInput2">
+                        <input type="text" class="code-input" maxlength="1" id="codeInput3">
+                        <input type="text" class="code-input" maxlength="1" id="codeInput4">
+                    </div>
+                    <p class="timer" id="gameTimer">Temps restant: 30s</p>
+                    <button class="btn" id="submitCodeBtn">SOUMETTRE</button>
+                    <p class="game-message" id="gameMessage"></p>
+                </div>
+            </div>
+
+            <div class="page" id="shopPage">
+                <div class="cart-widget">
+                    <div class="cart-header" onclick="openModal('cartModal')">
+                        <span class="cart-icon">🛒</span>
+                        <span class="cart-count" id="cartCount">0</span>
+                    </div>
+                </div>
+                <div class="heat-tracker" id="heatTracker">
+                    <span class="heat-tracker-label">Heat Level</span>
+                    <div class="heat-bar-container">
+                        <div class="heat-bar-fill" id="heatBarFill"></div>
+                    </div>
+                    <span class="heat-level-text" id="heatLevelText">0%</span>
+                </div>
+                <div class="shop-container">
+                    <div class="shop-header">
+                        <h2 class="shop-title">MARCHÉ NOIR</h2>
+                        <p class="shop-description">Découvrez notre sélection exclusive d'équipements de pointe. Chaque article est rigoureusement testé pour garantir performance et fiabilité dans les situations les plus exigeantes. Qualité supérieure, discrétion assurée.</p>
+                    </div>
+                    <div class="shop-filters">
+                    <div class="filter-group">
+                        <label for="categoryFilter">Filtrer par Catégorie:</label>
+                        <select id="categoryFilter" onchange="applyFiltersAndSort()">
+                            <option value="all">Toutes</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="priceSort">Classer par Prix:</label>
+                        <select id="priceSort" onchange="applyFiltersAndSort()">
+                            <option value="none">Aucun</option>
+                            <option value="asc">Prix Croissant</option>
+                            <option value="desc">Prix Décroissant</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="alphaSort">Classer par Nom:</label>
+                        <select id="alphaSort" onchange="applyFiltersAndSort()">
+                            <option value="none">Aucun </option>
+                            <option value="asc">A-Z</option>
+                            <option value="desc">Z-A</option>
+                        </select>
+                    </div>
+                    </div>
+                    <div class="shop-grid" id="productGrid">
+                    </div>
+                </div>
+            </div>
+
+            <div class="page" id="gangsPage">
+                <div class="mdt-section">
+                    <h2 class="mdt-title">DOSSIERS DES ORGANISATIONS</h2>
+                    <div class="mdt-grid" id="gangsGrid">
+                    </div>
+                </div>
+            </div>
+
+            <div class="page" id="mapPage">
+                <div class="mdt-section">
+                    <h2 class="mdt-title">CARTE DES ZONES DE CONTRÔLE</h2>
+                    <div class="map-container">
+                        <img src="img/los_santos_map.jpg" alt="Los Santos Map">
+                        <div class="map-area area-vagos" data-gang-id="gang001" style="left: 55%; top: 60%; width: 20%; height: 15%;"></div>
+                        <div class="map-area area-families" data-gang-id="gang002" style="left: 20%; top: 70%; width: 18%; height: 12%;"></div>
+                        <div class="map-area area-ballas" data-gang-id="gang003" style="left: 35%; top: 50%; width: 15%; height: 10%;"></div>
+                        <div class="map-area area-cartel" data-gang-id="cartel" style="left: 8%; top: 5%; width: 85%; height: 40%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page" id="nexusPage">
+                <div class="mdt-section">
+                    <h2 class="mdt-title">NEXUS IA - CONSEIL STRATÉGIQUE</h2>
+                    <div class="nexus-output" id="nexusOutput">
+                        <div class="nexus-line ai-response">NEXUS: Initialisation du module de conseil stratégique. Comment puis-je vous assister, Opérateur ?</div>
+                    </div>
+                    <div class="nexus-input-container">
+                        <input type="text" class="nexus-input" id="nexusInput" placeholder="Tapez votre question ici...">
+                        <button class="nexus-send-btn" id="nexusSendBtn">Envoyer</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page" id="cartelPage">
+                <div class="mdt-section">
+                    <h2 class="mdt-title">LE CARTEL : INFORMATIONS CLASSIFIÉES</h2>
+                    <div id="cartelContent" style="width: 100%; max-width: 900px; text-align: left;">
+                        <p style="color: var(--color-text-secondary); text-align: center;">Chargement des données du cartel...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="productModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('productModal')">&times;</span>
+                <img id="modalImage" src="" alt="Product Image" class="modal-image">
+                <h3 id="modalTitle" class="modal-title"></h3>
+                <p id="modalCategory" class="modal-category"></p>
+                <p id="modalPrice" class="modal-price"></p>
+                <p id="modalDescription" class="modal-description"></p>
+                <div class="modal-actions">
+                    <button class="btn" id="modalAddToCartBtn">AJOUTER AU PANIER 🛒</button>
+                    <button class="btn danger" id="modalBuyDirectBtn">ACHETER DIRECT 💰</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="cartModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('cartModal')">&times;</span>
+                <h3 class="modal-title">PANIER 🛒</h3>
+                <div class="cart-items-list" id="cartItems">
+                </div>
+                <div class="cart-total" id="cartTotal">Total: $0</div>
+                <div class="cart-modal-actions">
+                    <button class="btn" onclick="checkout()">ACHETER 💰</button>
+                    <button class="btn clear-cart" onclick="clearCart()">VIDER LE PANIER 🗑️</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="chatModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('chatModal')">&times;</span>
+                <h3 class="modal-title">MESSAGERIE SÉCURISÉE</h3>
+                <div class="chat-messages" id="chatMessagesOutput">
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Tapez votre message...">
+                    <button class="chat-send-btn" id="chatSendBtn">Envoyer</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="mdtDetailModal" class="modal mdt-detail-modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('mdtDetailModal')">&times;</span>
+                <img id="mdtDetailImage" src="" alt="Organization Image" class="modal-image">
+                <h3 id="mdtDetailTitle" class="modal-title"></h3>
+                <p id="mdtDetailSubtitle" class="modal-subtitle"></p>
+                <p id="mdtDetailDescription" class="modal-description"></p>
+
+                <h4 class="modal-section-title">Informations Clés</h4>
+                <ul id="mdtDetailKeyInfo"></ul>
+
+                <h4 class="modal-section-title">Membres Notables</h4>
+                <ul id="mdtDetailMembers"></ul>
+
+                <h4 class="modal-section-title">Activités et Historique</h4>
+                <p id="mdtDetailActivities" class="modal-text"></p>
+
+                <h4 class="modal-section-title">Galerie</h4>
+                <div id="mdtDetailGallery" class="modal-gallery"></div>
+            </div>
+        </div>
+
+        <div class="notification" id="notification">
+            <h3>COMMANDE ENREGISTRÉE</h3>
+            <p>Votre demande a été transmise avec succès.</p>
+            <p>Un membre de notre équipe vous contactera dans les plus brefs délais via des canaux sécurisés.</p>
+            <p style="font-size: 0.9rem; color: #666;">Référence: <span id="orderRef"></span></p>
+            <button class="btn" onclick="closeNotification()">FERMER</button>
+        </div>
+
+        <div id="cryptoCommsModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('cryptoCommsModal')">&times;</span>
+                <h3 class="modal-title">COMMUNICATION CRYPTÉE</h3>
+                <div class="comms-output" id="commsOutput">
+                    <div class="comms-line operator">Opérateur: Initialisation du canal sécurisé...</div>
+                </div>
+                <div class="comms-options" id="commsOptions">
+                </div>
+            </div>
+            <audio id="commsBeepSound" src="audio/comms_beep.mp3" preload="auto"></audio>
+        </div>
+
+        <div class="heat-alert-message" id="heatAlertMessage">
+            ⚠️ Surveillance détectée. Reconnexion via proxy recommandée.
+        </div>
+
+        <audio id="metalClickSound" src="audio/metal_click.mp3" preload="auto"></audio>
+        <audio id="unlockSound" src="audio/unlock.mp3" preload="auto"></audio>
+        <audio id="scanSound" src="audio/scan.mp3" preload="auto"></audio>
+        <audio id="errorSound" src="audio/error.mp3" preload="auto"></audio>
+        <audio id="successSound" src="audio/success.mp3" preload="auto"></audio>
+        <audio id="typingSound" src="audio/typing.mp3" preload="auto"></audio>
+        <audio id="chatNotificationSound" src="audio/chat_notification.mp3" preload="auto"></audio>
+
+    </div>
+
+    <script>
+        class SecurityAnimation {
+            constructor() {
+                this.terminalOutput = document.getElementById('terminalOutput');
+                this.progressBar = document.getElementById('progressBar');
+                this.progressFill = document.getElementById('progressFill');
+                this.securityOverlay = document.getElementById('securityOverlay');
+                this.mainContent = document.getElementById('mainContent');
+                this.commands = [
+                    { text: ">>> Initialisation du module de sécurité cryptographique...", type: "info", delay: 70 },
+                    { text: ">>> Vérification des protocoles de communication chiffrés...", type: "success", delay: 110 },
+                    { text: ">>> Établissement d'une connexion quantique sécurisée (Q-AES-512)...", type: "info", delay: 90 },
+                    { text: ">>> Validation des certificats d'identité numérique...", type: "success", delay: 100 },
+                    { text: ">>> Routage des paquets via des nœuds TOR dissimulés...", type: "info", delay: 120 },
+                    { text: "ALERTE: Tentative d'analyse de port détectée - IP: 192.168.1.105", type: "warning", delay: 200 },
+                    { text: ">>> Activation des contre-mesures défensives (Firewall L7)...", type: "info", delay: 90 },
+                    { text: "ERREUR: Tentative d'injection de code bloquée - Signature: XSS_ATTACK_VECTOR_007", type: "error", delay: 180 },
+                    { text: ">>> Réinitialisation des identifiants de session (Token Rotation)...", type: "info", delay: 100 },
+                    { text: ">>> Obfuscation de l'empreinte numérique (Stealth Mode Active)...", type: "success", delay: 90 },
+                    { text: ">>> Vérification de l'intégrité du système (Checksum Validation)...", type: "info", delay: 120 },
+                    { text: ">>> Génération de clés éphémères (Perfect Forward Secrecy)...", type: "success", delay: 110 },
+                    { text: ">>> Établissement du tunnel sécurisé (VPN Quantum-Resistant)...", type: "info", delay: 130 },
+                    { text: "AVERTISSEMENT: Authentification multi-facteurs requise pour accès complet.", type: "warning", delay: 250 },
+                    { text: ">>> Vérification des identifiants biométriques (Iris Scan / Voice Print)...", type: "info", delay: 300 },
+                    { text: ">>> Accès au Nexus Obscur accordé - Bienvenue, Opérateur.", type: "success", delay: 120 },
+                    { text: ">>> Chargement de l'interface EL CARTEL RIVERA - Version 4.7.0...", type: "success", delay: 90 }
+                ];
+            }
+            init() {
+                setTimeout(() => {
+                    this.startSecuritySequence();
+                }, 500);
+            }
+            async startSecuritySequence() {
+                for (const command of this.commands) {
+                    await this.typeCommand(command);
+                    await this.sleep(command.delay);
+                }
+                await this.showProgressBar();
+                await this.sleep(1000);
+                this.completeAccess();
+            }
+            async typeCommand(command) {
+                return new Promise((resolve) => {
+                    const line = document.createElement('div');
+                    line.className = `terminal-line ${command.type}`;
+                    line.textContent = command.text;
+                    this.terminalOutput.appendChild(line);
+                    this.terminalOutput.scrollTop = this.terminalOutput.scrollHeight;
+                    setTimeout(resolve, 30);
+                });
+            }
+            async showProgressBar() {
+                this.progressBar.style.display = 'block';
+                const line = document.createElement('div');
+                line.className = 'terminal-line success';
+                line.innerHTML = '>>> Finalisation de la connexion sécurisée... <span class="cursor"></span>';
+                this.terminalOutput.appendChild(line);
+                this.terminalOutput.scrollTop = this.terminalOutput.scrollHeight;
+
+                return new Promise((resolve) => {
+                    let progress = 0;
+                    const interval = setInterval(() => {
+                        progress += Math.random() * 10 + 5;
+                        if (progress >= 100) {
+                            progress = 100;
+                            clearInterval(interval);
+                            this.progressFill.style.width = '100%';
+                            setTimeout(resolve, 300);
+                        } else {
+                            this.progressFill.style.width = progress + '%';
+                        }
+                    }, 100);
+                });
+            }
+            completeAccess() {
+                const finalLine = document.createElement('div');
+                finalLine.className = 'terminal-line success';
+                finalLine.innerHTML = '<strong>✓ ACCÈS SÉCURISÉ ÉTABLI - REDIRECTION VERS LE PORTAIL...</strong>';
+                this.terminalOutput.appendChild(finalLine);
+                this.terminalOutput.scrollTop = this.terminalOutput.scrollHeight;
+
+                setTimeout(() => {
+                    this.securityOverlay.classList.add('hidden');
+                    setTimeout(() => {
+                        this.mainContent.classList.add('visible');
+                        document.body.style.overflow = 'auto';
+                        showPage('authPage');
+                        updateNavigationVisibility();
+                    }, 1200);
+                }, 1800);
+            }
+
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const animation = new SecurityAnimation();
+            animation.init();
+        });
+        let currentUserRole = 'guest';
+        let cart = [];
+        let currentUser = null;
+        let currentProductInModal = null;
+        const WEBHOOK_PATH = '/.netlify/functions/send-darkweb';
+        const ORDER_WEBHOOK_PATH = '/.netlify/functions/send-darkweb-order';
+
+        const metalClickSound = document.getElementById('metalClickSound');
+        const unlockSound = document.getElementById('unlockSound');
+        const scanSound = document.getElementById('scanSound');
+        const errorSound = document.getElementById('errorSound');
+        const successSound = document.getElementById('successSound');
+        const typingSound = document.getElementById('typingSound');
+        const chatNotificationSound = document.getElementById('chatNotificationSound');
+        const commsBeepSound = document.getElementById('commsBeepSound');
+
+
+        let isStealthMode = false;
+
+        function playSound(audioElement) {
+            if (!isStealthMode) {
+                audioElement.currentTime = 0;
+                audioElement.play().catch(e => console.error("Error playing sound:", e));
+            }
+        }
+
+        const darkwebAccess = [
+            {
+                credentials: { name: "US1T7045GC041C", message: "2350" },
+                role: "user",
+                webhookMessage: "⚡ Accès détecté pour un membre des TGC"
+            },
+            {
+                credentials: { name: "US1CR7045B041O", message: "5360" },
+                role: "user",
+                webhookMessage: "⚡ Accès détecté pour un membre du Nie du Corbeau"
+            },
+            {
+                credentials: { name: "Admin", message: "code" },
+                role: "admin",
+                webhookMessage: "⚠️ Accès admin détecté"
+            },
+            {
+                credentials: { name: "CartelMember", message: "cartelpass" },
+                role: "cartel",
+                webhookMessage: "👑 Accès membre du Cartel détecté"
+            }
+        ];
+
+        const products = [
+            {
+                id: 'prod001',
+                name: '15 Balles de pistolet',
+                category: 'Munitions',
+                price: 20000,
+                description: 'Chargeur de pistolet à usage unique. Garanti de sécurité maximale et résistance à toutes les conditions.'
+            },
+
+            {
+                id: 'prod009',
+                name: 'PISTOLET',
+                category: 'Arme',
+                price: 250000,
+                description: 'Pistolet arme de poing. Conçu pour une precision et une puissance exceptionnelle.'
+            },
+            {
+                id: 'prod010',
+                name: 'CERAMIQUE',
+                category: 'Arme',
+                price: 250000,
+                description: 'Pistolet arme de poing. Conçu pour une discrétion et une tracabilité indeniable.'
+            },
+        ];
+
+        const staticGangsData = {
+            "gangs": [
+                {
+                    "id": "gang001",
+                    "name": "Los Santos Vagos",
+                    "type": "Gang de rue",
+                    "description_short": "Le plus grand gang hispanique de Los Santos, connu pour le trafic de drogue et la violence.",
+                    "description_long": "Les Los Santos Vagos sont un gang de rue hispanique principalement basé dans l'est de Los Santos. Ils sont connus pour leur couleur jaune, leur rivalité avec les Families et les Ballas, et leur implication dans le trafic de drogue, les extorsions et les vols de voitures. Leur influence s'étend sur plusieurs quartiers, et ils sont particulièrement violents envers leurs rivaux.",
+                    "image": "img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png",
+                    "territory": "East Los Santos, Rancho, Jamestown Street",
+                    "status": "Actif, en expansion",
+                    "founded": "Années 1980",
+                    "activities": ["Trafic de drogue", "Extorsion", "Vol de véhicules", "Meurtres"],
+                    "members": [
+                        {"name": "El Jefe", "role": "Chef de gang"},
+                        {"name": "Mano Negra", "role": "Bras droit"},
+                        {"name": "Loco", "role": "Capitaine"}
+                    ],
+                    "history": "Les Vagos ont une longue histoire de violence et de contrôle territorial à Los Santos. Ils ont été impliqués dans de nombreuses guerres de gangs, consolidant leur pouvoir grâce à des alliances temporaires et une brutalité implacable. Leur structure décentralisée les rend difficiles à éradiquer.",
+                    "gallery": [
+                        "img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png",
+                        "img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png"
+                    ]
+                },
+                {
+                    "id": "gang002",
+                    "name": "Families",
+                    "type": "Gang de rue",
+                    "description_short": "Ancien gang afro-américain, luttant pour le contrôle de leurs quartiers contre les Ballas.",
+                    "description_long": "Les Families sont un gang de rue afro-américain basé dans le sud de Los Santos. Ils se distinguent par leur couleur verte et leur code d'honneur, bien que leur influence ait diminué au fil des ans. Ils sont en guerre constante avec les Ballas et les Vagos, cherchant à protéger leurs territoires et leurs communautés. Leurs activités incluent la vente d'armes, le vol et la protection de quartier.",
+                    "image": "img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png",
+                    "territory": "Strawberry, Davis, Grove Street",
+                    "status": "Actif, en déclin",
+                    "founded": "Années 1970",
+                    "members": [
+                        {"name": "OG Loc", "role": "Ancien chef"},
+                        {"name": "Sweet Johnson", "role": "Leader actuel"},
+                        {"name": "Big Smoke", "role": "Ancien membre influent"}
+                    ],
+                    "history": "Les Families ont connu leur apogée dans les années 90, mais ont depuis été affaiblis par des conflits internes et la montée d'autres gangs. Ils tentent de retrouver leur gloire passée en s'unissant contre leurs ennemis communs.",
+                    "gallery": [
+                        "img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png",
+                        "img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png"
+                    ]
+                },
+                {
+                    "id": "gang003",
+                    "name": "Ballas",
+                    "type": "Gang de rue",
+                    "description_short": "Gang afro-américain rival des Families, impliqué dans le trafic de drogue et la prostitution.",
+                    "description_long": "Les Ballas sont un gang de rue afro-américain, reconnaissable à leur couleur violette. Ils sont les principaux rivaux des Families et sont fortement impliqués dans le trafic de crack, la prostitution, le vol à main armée et la violence de gang. Ils contrôlent de vastes territoires à Los Santos et sont connus pour leur brutalité et leur manque de scrupules.",
+                    "image": "img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png",
+                    "territory": "Idlewood, East Los Santos, Jefferson",
+                    "status": "Actif, en expansion",
+                    "founded": "Années 1980",
+                    "activities": ["Trafic de drogue (crack)", "Prostitution", "Vol à main armée", "Violence de gang"],
+                    "members": [
+                        {"name": "Kane", "role": "Chef de gang"},
+                        {"name": "Little Weasel", "role": "Lieutenant"}
+                    ],
+                    "history": "Les Ballas ont toujours été une force dominante dans le monde souterrain de Los Santos. Leur organisation est plus structurée que celle de nombreux autres gangs, ce qui leur permet de maintenir un contrôle strict sur leurs opérations illégales.",
+                    "gallery": [
+                        "img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png",
+                        "img/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png"
+                    ]
+                }
+            ]
+        };
+
+        const staticCartelData = {
+            "name": "El Cartel",
+            "tagline": "L'ombre qui gouverne les rues",
+            "description": "El Cartel est une organisation criminelle transnationale dont l'influence s'étend bien au-delà des frontières de Los Santos. Fondé sur des principes de loyauté, de discrétion et de brutalité calculée, le Cartel contrôle une grande partie du marché noir, du trafic d'armes et de stupéfiants, ainsi que des opérations de blanchiment d'argent. Ses membres sont triés sur le volet, et la trahison est punie avec une extrême sévérité. Le Cartel opère dans l'ombre, utilisant des réseaux complexes et des technologies de pointe pour maintenir son anonymat et son efficacité.",
+            "image": "https://media.discordapp.net/attachments/1232583375181582366/1387087700313505852/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png?ex=685c1196&is=685ac016&hm=0b98e6a808a15974a5bf2b1dd9d6467734bb0c31341970e093e34bee56b17fbb&=&format=webp&quality=lossless&width=930&height=930",
+            "key_info": {
+                "fondation": "Inconnue (estimée début des années 2000)",
+                "principales_activites": "Trafic d'armes, stupéfiants, blanchiment d'argent, extorsion, cybercriminalité",
+                "zone_d_influence": "Los Santos, Blaine County, et réseaux internationaux",
+                "structure": "Hiérarchique et compartimentée, avec des cellules autonomes"
+            },
+            "leadership": [
+                {"name": "Le Fantôme", "role": "Leader Inconnu", "status": "Actif, jamais identifié"},
+                {"name": "La Main", "role": "Commandant des Opérations", "status": "Actif, exécuteur principal"},
+                {"name": "L'Architecte", "role": "Maître des Finances et de la Logistique", "status": "Actif, cerveau financier"}
+            ],
+            "operations": [
+                {"name": "Opération 'Silent Harvest'", "date": "2022", "description": "Acquisition discrète de plusieurs entrepôts clés pour le stockage de marchandises illicites."},
+                {"name": "Projet 'Nexus'", "date": "2023", "description": "Développement d'une infrastructure de communication et de transaction ultra-sécurisée sur le dark web."},
+                {"name": "Infiltration 'Ghost Protocol'", "date": "2024", "description": "Neutralisation d'une opération de police majeure par l'infiltration de leurs réseaux."}
+            ],
+            "gallery": [
+                "https://media.discordapp.net/attachments/1232583375181582366/1387087700313505852/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png?ex=685c1196&is=685ac016&hm=0b98e6a808a15974a5bf2b1dd9d6467734bb0c31341970e093e34bee56b17fbb&=&format=webp&quality=lossless&width=930&height=930",
+                "https://media.discordapp.net/attachments/1232583375181582366/1387087700313505852/3fcf2fe3-dd13-4798-9041-e8af8b338b51.png?ex=685c1196&is=685ac016&hm=0b98e6a808a15974a5bf2b1dd9d6467734bb0c31341970e093e34bee56b17fbb&=&format=webp&quality=lossless&width=930&height=930"
+            ]
+        };
+
+        const authFormContainer = document.getElementById('authFormContainer');
+        const biometricScanner = document.getElementById('biometricScanner');
+        const scannerIcon = document.getElementById('scannerIcon');
+        const scannerMessage = document.getElementById('scannerMessage');
+        const fingerprintScan = document.getElementById('fingerprintScan');
+        const voiceScan = document.getElementById('voiceScan');
+
+        document.getElementById('authForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = {
+                name: document.getElementById('name').value.trim(),
+                message: document.getElementById('message').value.trim()
+            };
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('errorMessage').classList.remove('show');
+
+            setTimeout(() => {
+                const accessGranted = validateAccess(formData);
+                document.getElementById('loading').classList.remove('show');
+                if (accessGranted) {
+                    currentUser = accessGranted;
+                    startBiometricScan(accessGranted);
+                } else {
+                    document.getElementById('errorMessage').classList.add('show');
+                    playSound(errorSound);
+                }
+            }, 1500);
+        });
+
+        async function startBiometricScan(accessConfig) {
+            authFormContainer.style.display = 'none';
+            biometricScanner.classList.add('active');
+            playSound(metalClickSound);
+
+            scannerIcon.textContent = '👆';
+            scannerMessage.textContent = 'Scan d\'empreinte digitale en cours...';
+            fingerprintScan.style.display = 'flex';
+            voiceScan.style.display = 'none';
+            playSound(scanSound);
+            await sleep(3000);
+
+            scannerIcon.textContent = '🎤';
+            scannerMessage.textContent = 'Analyse vocale en cours... Veuillez prononcer votre identifiant.';
+            fingerprintScan.style.display = 'none';
+            voiceScan.style.display = 'flex';
+            playSound(scanSound);
+            await sleep(3000);
+
+            scannerIcon.textContent = '✅';
+            scannerMessage.textContent = 'Authentification réussie ! Accès accordé.';
+            playSound(unlockSound);
+            await sleep(1500);
+
+            biometricScanner.classList.remove('active');
+            biometricScanner.style.display = 'none';
+            authFormContainer.style.display = 'block';
+
+            startIntrusionGame(accessConfig);
+        }
+
+        const intrusionGame = document.getElementById('intrusionGame');
+        const codeInputs = [
+            document.getElementById('codeInput1'),
+            document.getElementById('codeInput2'),
+            document.getElementById('codeInput3'),
+            document.getElementById('codeInput4')
+        ];
+        const gameTimerElement = document.getElementById('gameTimer');
+        const gameMessageElement = document.getElementById('gameMessage');
+        const submitCodeBtn = document.getElementById('submitCodeBtn');
+
+        let correctCode = '';
+        let gameTimer = null;
+        let timeLeft = 0;
+        let currentAccessConfig = null;
+        let attemptsLeft = 3;
+
+        function startIntrusionGame(accessConfig) {
+            currentAccessConfig = accessConfig;
+            showPage('authPage');
+            authFormContainer.style.display = 'none';
+            biometricScanner.style.display = 'none';
+            intrusionGame.classList.add('active');
+            gameMessageElement.textContent = '';
+            attemptsLeft = 3;
+            codeInputs.forEach(input => {
+                input.value = '';
+                input.disabled = false;
+            });
+            codeInputs[0].focus();
+
+            correctCode = Math.floor(1000 + Math.random() * 9000).toString();
+            console.log("Intrusion Game Code:", correctCode);
+
+            timeLeft = 30;
+            gameTimerElement.textContent = `Temps restant: ${timeLeft}s`;
+            submitCodeBtn.onclick = checkIntrusionCode;
+
+            gameTimer = setInterval(() => {
+                timeLeft--;
+                gameTimerElement.textContent = `Temps restant: ${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    clearInterval(gameTimer);
+                    handleIntrusionFailure("Temps écoulé.");
+                }
+            }, 1000);
+
+            codeInputs.forEach((input, index) => {
+                input.addEventListener('input', () => {
+                    if (input.value.length === input.maxLength && index < codeInputs.length - 1) {
+                        codeInputs[index + 1].focus();
+                    }
+                });
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && input.value.length === 0 && index > 0) {
+                        codeInputs[index - 1].focus();
+                    }
+                });
+            });
+        }
+
+        function checkIntrusionCode() {
+            clearInterval(gameTimer);
+            const enteredCode = codeInputs.map(input => input.value).join('');
+            
+            if (enteredCode === correctCode) {
+                handleIntrusionSuccess();
+            } else {
+                attemptsLeft--;
+                if (attemptsLeft > 0) {
+                    gameMessageElement.textContent = `Code incorrect. Il vous reste ${attemptsLeft} essai(s).`;
+                } else {
+                    handleIntrusionFailure("Aucun essai restant.");
+                }
+            }
+        }
+
+        function handleIntrusionSuccess() {
+            gameMessageElement.textContent = "Accès validé ! Redirection...";
+            playSound(successSound);
+            codeInputs.forEach(input => input.disabled = true);
+            setTimeout(() => {
+                intrusionGame.classList.remove('active');
+                intrusionGame.style.display = 'none';
+                grantAccess(currentAccessConfig);
+            }, 1500);
+        }
+
+        async function handleIntrusionFailure(reason) {
+            gameMessageElement.textContent = `Accès refusé: ${reason}`;
+            playSound(errorSound);
+            codeInputs.forEach(input => input.disabled = true);
+            submitCodeBtn.disabled = true;
+
+            const logMessage = `TENTATIVE D'INTRUSION DÉTECTÉE: ${reason} - Identifiant: ${currentUser  ? currentUser .credentials.name : 'Inconnu'} - Code tenté: ${codeInputs.map(input => input.value).join('')}`;
+            const fakeLogs = [
+                `[${new Date().toISOString()}] ERREUR: Tentative d'accès non autorisé détectée. Source IP: 192.168.1.${Math.floor(Math.random() * 255)}`,
+                `[${new Date().toISOString()}] ALERTE SÉCURITÉ: Injection de code suspecte bloquée. Signature: SQL_INJECTION_ATTEMPT_${Math.floor(Math.random() * 1000)}`,
+                `[${new Date().toISOString()}] SYSTÈME: Port 443 (HTTPS) bloqué pour l'adresse distante. Connexion refusée.`,
+                `[${new Date().toISOString()}] AVERTISSEMENT: Tentative de brute-force sur le module d'authentification.`,
+                `[${new Date().toISOString()}] ERREUR CRITIQUE: Accès au répertoire racine refusé. Permissions insuffisantes.`,
+                `[${new Date().toISOString()}] LOG: Tentative de connexion échouée pour l'utilisateur '${currentUser  ? currentUser .credentials.name : 'Inconnu'}'.`
+            ];
+
+            for (const log of fakeLogs) {
+                const logLine = document.createElement('div');
+                logLine.className = 'terminal-line error';
+                logLine.textContent = log;
+                document.getElementById('terminalOutput').appendChild(logLine);
+                document.getElementById('terminalOutput').scrollTop = document.getElementById('terminalOutput').scrollHeight;
+                await sleep(Math.random() * 200 + 50);
+            }
+
+            sendDiscordWebhook(`**Tentative d'intrusion**\n${logMessage}`, 0xFF4500);
+
+            document.body.classList.add('hacking-effect'); 
+            playSound(hackingSound); 
+
+            const alertMessage = document.createElement('div');
+            alertMessage.className = 'alert-message';
+            alertMessage.textContent = "ALERTE: Tentative d'intrusion détectée !";
+            document.body.appendChild(alertMessage);
+
+            setTimeout(() => {
+                alertMessage.remove();
+                document.body.classList.remove('hacking-effect');
+                location.reload();
+            }, 5000);
+        }
+        function validateAccess(formData) {
+            for (const access of darkwebAccess) {
+                if (access.credentials.name === formData.name && access.credentials.message === formData.message) {
+                    return access;
+                }
+            }
+            return null;
+        }
+
+        function grantAccess(accessConfig) {
+            console.log(`Webhook envoyé: ${accessConfig.webhookMessage}`);
+            console.log(`Utilisateur: ${accessConfig.credentials.name}`);
+            sendDiscordWebhook(`**Accès au portail**\nUtilisateur: \`${accessConfig.credentials.name}\`\nStatut: Accès accordé (${accessConfig.webhookMessage})`, 0x228B22);
+
+            currentUserRole = accessConfig.role;
+            updateNavigationVisibility();
+            showPage('shopPage');
+            populateCategoryFilter();
+            applyFiltersAndSort();
+
+            renderGangsGrid(staticGangsData.gangs);
+            renderCartelContent(staticCartelData);
+            initMapAreas();
+            initHeatTracker();
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function logout() {
+            currentUserRole = 'guest';
+            cart = [];
+            currentUser = null;
+            updateCartDisplay();
+            updateNavigationVisibility();
+            showPage('authPage');
+            document.getElementById('name').value = '';
+            document.getElementById('message').value = '';
+            sendDiscordWebhook(`**Déconnexion du portail**\nUtilisateur déconnecté.`, 0xFF0000);
+            resetHeatLevel();
+        }
+
+        function updateNavigationVisibility() {
+            document.getElementById('navAuthBtn').style.display = 'block';
+            document.getElementById('navLogoutBtn').style.display = 'none';
+            document.getElementById('navShopBtn').style.display = 'none';
+            document.getElementById('navGangsBtn').style.display = 'none';
+            document.getElementById('navMapBtn').style.display = 'none';
+            document.getElementById('navChatBtn').style.display = 'none';
+            document.getElementById('navNexusBtn').style.display = 'none';
+
+            if (currentUserRole !== 'guest') {
+                document.getElementById('navAuthBtn').style.display = 'none';
+                document.getElementById('navLogoutBtn').style.display = 'block';
+                document.getElementById('navShopBtn').style.display = 'block';
+                document.getElementById('navMapBtn').style.display = 'block';
+                document.getElementById('navChatBtn').style.display = 'block';
+                document.getElementById('navNexusBtn').style.display = 'block';
+            }
+
+            if (currentUserRole === 'admin' || currentUserRole === 'cartel') {
+                //document.getElementById('navGangsBtn').style.display = 'block';
+                document.getElementById('navMapBtn').style.display = 'block';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', updateNavigationVisibility);
+
+        function populateCategoryFilter() {
+            const categoryFilter = document.getElementById('categoryFilter');
+            const categories = [...new Set(products.map(p => p.category))];
+            while (categoryFilter.options.length > 1) {
+                categoryFilter.remove(1);
+            }
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categoryFilter.appendChild(option);
+            });
+        }
+
+        function applyFiltersAndSort() {
+            let filteredProducts = [...products];
+            const selectedCategory = document.getElementById('categoryFilter').value;
+            if (selectedCategory !== 'all') {
+                filteredProducts = filteredProducts.filter(product => product.category === selectedCategory);
+            }
+            const priceSort = document.getElementById('priceSort').value;
+            if (priceSort === 'asc') {
+                filteredProducts.sort((a, b) => a.price - b.price);
+            } else if (priceSort === 'desc') {
+                filteredProducts.sort((a, b) => b.price - a.price);
+            }
+            const alphaSort = document.getElementById('alphaSort').value;
+            if (alphaSort === 'asc') {
+                filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
+            } else if (alphaSort === 'desc') {
+                filteredProducts.sort((a, b) => b.name.localeCompare(a.name));
+            }
+            renderProducts(filteredProducts);
+        }
+
+        function renderProducts(productsToRender = products) {
+            const productGrid = document.getElementById('productGrid');
+            productGrid.innerHTML = '';
+            
+            if (productsToRender.length === 0) {
+                productGrid.innerHTML = '<p class="no-products">Aucun produit ne correspond à vos critères de filtrage.</p>';
+                return;
+            }
+            
+            productsToRender.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.classList.add('product-card');
+                productCard.setAttribute('data-product-id', product.id);
+                productCard.onclick = () => openProductModal(product.id);
+                productCard.innerHTML = `
+                    <div class="product-image-container">
+                        <img src="img/${product.id}.png" alt="${product.name}">
+                    </div>
+                    <div class="product-content">
+                        <div class="product-header">
+                            <div>
+                                <h3 class="product-title">${product.name}</h3>
+                                <p class="product-category">${product.category}</p>
+                            </div>
+                            <div class="product-price">$${product.price.toLocaleString()}</div>
+                        </div>
+                        <p class="product-description">${product.description}</p>
+                    </div>
+                    <div class="product-actions">
+                        <button class="btn" onclick="event.stopPropagation(); addToCart('${product.id}')">AJOUTER 🛒</button>
+                        <button class="btn danger" onclick="event.stopPropagation(); buyDirect('${product.id}')">ACHETER 💰</button>
+                    </div>
+                `;
+                productGrid.appendChild(productCard);
+            });
+        }
+        function addToCart(productId) {
+            const existingItem = cart.find(item => item.productId === productId);
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ productId: productId, quantity: 1 });
+            }
+            updateCartDisplay();
+            animateCartIcon();
+            increaseHeat(15);
+        }
+
+        function updateCartDisplay() {
+            const cartCount = document.getElementById('cartCount');
+            const cartItemsContainer = document.getElementById('cartItems');
+            const cartTotalElement = document.getElementById('cartTotal');
+            cartCount.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+            cartItemsContainer.innerHTML = '';
+
+            let totalAmount = 0;
+
+            if (cart.length === 0) {
+                cartItemsContainer.innerHTML = '<p style="color: var(--color-text-secondary); text-align: center;">Votre panier est vide.</p>';
+            } else {
+                cart.forEach(cartItem => {
+                    const product = products.find(p => p.id === cartItem.productId);
+                    if (product) {
+                        const itemTotalPrice = product.price * cartItem.quantity;
+                        totalAmount += itemTotalPrice;
+                        const itemHTML = `
+                            <div class="cart-item">
+                                <div class="cart-item-info">
+                                    <span class="cart-item-name">${product.name}</span>
+                                    <span class="cart-item-price">$${product.price.toLocaleString()} / unité</span>
+                                </div>
+                                <div class="cart-item-controls">
+                                    <button onclick="decreaseQuantity('${product.id}')">-</button>
+                                    <span class="cart-item-quantity">${cartItem.quantity}</span>
+                                    <button onclick="increaseQuantity('${product.id}')">+</button>
+                                    <button onclick="removeItem('${product.id}')">🗑️</button>
+                                </div>
+                            </div>
+                        `;
+                        cartItemsContainer.innerHTML += itemHTML;
+                    }
+                });
+            }
+            cartTotalElement.textContent = `Total: $${totalAmount.toLocaleString()}`;
+        }
+
+        function increaseQuantity(productId) {
+            const item = cart.find(i => i.productId === productId);
+            if (item) {
+                item.quantity += 1;
+                updateCartDisplay();
+                increaseHeat(10);
+            }
+        }
+
+        function decreaseQuantity(productId) {
+            const itemIndex = cart.findIndex(i => i.productId === productId);
+            if (itemIndex !== -1) {
+                if (cart[itemIndex].quantity > 1) {
+                    cart[itemIndex].quantity -= 1;
+                } else {
+                    cart.splice(itemIndex, 1);
+                }
+                updateCartDisplay();
+                decreaseHeat(10);
+            }
+        }
+
+        function removeItem(productId) {
+            cart = cart.filter(item => item.productId !== productId);
+            updateCartDisplay();
+            decreaseHeat(5);
+        }
+
+        function clearCart() {
+            cart = [];
+            updateCartDisplay();
+            alert('Le panier a été vidé.');
+            closeModal('cartModal');
+            decreaseHeat(10);
+        }
+
+        function animateCartIcon() {
+            const cartIcon = document.querySelector('.cart-icon');
+            cartIcon.classList.add('animated');
+            setTimeout(() => {
+                cartIcon.classList.remove('animated');
+            }, 500);
+        }
+
+        function checkout() {
+            if (cart.length === 0) {
+                alert('Votre panier est vide !');
+                return;
+            }
+            const orderDetails = cart.map(cartItem => {
+                const product = products.find(p => p.id === cartItem.productId);
+                return product ? `${product.name} (${cartItem.quantity}x) - $${(product.price * cartItem.quantity).toLocaleString()}` : '';
+            }).filter(Boolean).join('\n');
+
+            const totalAmount = cart.reduce((sum, cartItem) => {
+                const product = products.find(p => p.id === cartItem.productId);
+                return sum + (product ? product.price * cartItem.quantity : 0);
+            }, 0);
+
+            const orderRef = 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+            sendDarkwebOrderWebhook({
+                type: 'checkout',
+                orderRef: orderRef,
+                userName: currentUser  ? currentUser .credentials.name : 'Inconnu',
+                orderDetails: orderDetails,
+                totalAmount: totalAmount,
+                heatLevel: heatLevel,
+                items: cart.map(cartItem => ({
+                    productId: cartItem.productId,
+                    quantity: cartItem.quantity,
+                    name: products.find(p => p.id === cartItem.productId)?.name,
+                    price: products.find(p => p.id === cartItem.productId)?.price
+                }))
+            });
+            showNotification(orderRef);
+            cart = [];
+            updateCartDisplay();
+            closeModal('cartModal');
+            increaseHeat(30);
+        }
+
+        function buyDirect(productId) {
+            const product = products.find(p => p.id === productId);
+            if (product) {
+                const orderRef = 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+                sendDarkwebOrderWebhook({
+                    type: 'direct_buy',
+                    orderRef: orderRef,
+                    userName: currentUser  ? currentUser .credentials.name : 'Inconnu',
+                    product: {
+                        productId: product.id,
+                        name: product.name,
+                        price: product.price,
+                        quantity: 1
+                    },
+                    totalAmount: product.price,
+                    heatLevel: heatLevel
+                });
+                showNotification(orderRef);
+                closeModal('productModal');
+                increaseHeat(20);
+            }
+        }
+        async function sendDarkwebOrderWebhook(orderData) {
+            try {
+                const response = await fetch(ORDER_WEBHOOK_PATH, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Erreur lors de l\'envoi de la commande darkweb:', errorData.error);
+                } else {
+                    console.log('Commande darkweb envoyée avec succès via Netlify Function');
+                }
+            } catch (error) {
+                console.error('Erreur réseau lors de l\'envoi de la commande darkweb:', error);
+            }
+        }
+
+        async function sendDiscordWebhook(message, color) {
+            try {
+                const response = await fetch(WEBHOOK_PATH, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'general_alert',
+                        message: message,
+                        color: color,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Erreur lors de l\'envoi du webhook Discord:', errorData.error);
+                } else {
+                    console.log('Webhook Discord envoyé avec succès.');
+                }
+            } catch (error) {
+                console.error('Erreur réseau lors de l\'envoi du webhook Discord:', error);
+            }
+        }
+
+        function openProductModal(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            currentProductInModal = product;
+
+            document.getElementById('modalImage').src = `img/${product.id}.png`;
+            document.getElementById('modalTitle').textContent = product.name;
+            document.getElementById('modalCategory').textContent = product.category;
+            document.getElementById('modalPrice').textContent = `$${product.price.toLocaleString()}`;
+            document.getElementById('modalDescription').textContent = product.description;
+
+            document.getElementById('modalAddToCartBtn').onclick = () => {
+                addToCart(currentProductInModal.id);
+                closeModal('productModal');
+            };
+            document.getElementById('modalBuyDirectBtn').onclick = () => {
+                buyDirect(currentProductInModal.id);
+            };
+
+            openModal('productModal');
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+            if (modalId === 'cartModal') {
+                updateCartDisplay();
+            }
+            if (modalId === 'chatModal') {
+                startChatSimulation();
+            }
+            if (modalId === 'cryptoCommsModal') {
+                startCryptoComms();
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+            if (modalId === 'productModal') {
+                currentProductInModal = null;
+            }
+            if (modalId === 'chatModal') {
+                stopChatSimulation();
+            }
+            if (modalId === 'cryptoCommsModal') {
+                stopCryptoComms();
+            }
+        }
+
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('show');
+            }
+        }
+
+        function showNotification(orderRef) {
+            const notification = document.getElementById('notification');
+            document.getElementById('orderRef').textContent = orderRef;
+            notification.classList.add('show');
+        }
+
+        function closeNotification() {
+            const notification = document.getElementById('notification');
+            notification.classList.remove('show');
+        }
+
+        function renderGangsGrid(gangs) {
+            const gangsGrid = document.getElementById('gangsGrid');
+            gangsGrid.innerHTML = '';
+            if (gangs && Array.isArray(gangs)) {
+                gangs.forEach(gang => {
+                    const gangCard = document.createElement('div');
+                    gangCard.classList.add('mdt-card');
+                    gangCard.onclick = () => openMdtDetailModal(gang);
+                    gangCard.innerHTML = `
+                        <div class="mdt-card-content">
+                            <img src="${gang.image || 'https://via.placeholder.com/300x180?text=Image+Manquante'}" alt="${gang.name}">
+                            <h3 class="mdt-card-title">${gang.name}</h3>
+                            <p class="mdt-card-subtitle">${gang.description_short || 'Aucune description courte disponible.'}</p>
+                        </div>
+                    `;
+                    gangsGrid.appendChild(gangCard);
+                });
+            } else {
+                gangsGrid.innerHTML = '<p style="color: var(--color-text-secondary); text-align: center; width: 100%;">Aucune donnée d\'organisation disponible.</p>';
+            }
+        }
+
+        function openMdtDetailModal(data) {
+            document.getElementById('mdtDetailImage').src = data.image || 'https://via.placeholder.com/800x400?text=Image+Manquante';
+            document.getElementById('mdtDetailTitle').textContent = data.name;
+            document.getElementById('mdtDetailSubtitle').textContent = data.type || 'Organisation';
+            document.getElementById('mdtDetailDescription').textContent = data.description_long || data.description_short || 'Aucune description détaillée disponible.';
+
+            const keyInfoList = document.getElementById('mdtDetailKeyInfo');
+            keyInfoList.innerHTML = '';
+            if (data.territory) keyInfoList.innerHTML += `<li><strong>Territoire:</strong> ${data.territory}</li>`;
+            if (data.status) keyInfoList.innerHTML += `<li><strong>Statut:</strong> ${data.status}</li>`;
+            if (data.founded) keyInfoList.innerHTML += `<li><strong>Fondation:</strong> ${data.founded}</li>`;
+            if (data.activities && data.activities.length > 0) keyInfoList.innerHTML += `<li><strong>Activités Principales:</strong> ${data.activities.join(', ')}</li>`;
+
+            const membersList = document.getElementById('mdtDetailMembers');
+            membersList.innerHTML = '';
+            if (data.members && data.members.length > 0) {
+                data.members.forEach(member => {
+                    membersList.innerHTML += `<li>${member.name} (${member.role})</li>`;
+                });
+            } else {
+                membersList.innerHTML = '<li>Aucun membre notable listé.</li>';
+            }
+
+            document.getElementById('mdtDetailActivities').textContent = data.history || 'Aucun historique ou activité détaillée disponible.';
+
+            const gallery = document.getElementById('mdtDetailGallery');
+            gallery.innerHTML = '';
+            if (data.gallery && data.gallery.length > 0) {
+                data.gallery.forEach(imgSrc => {
+                    gallery.innerHTML += `<img src="${imgSrc}" alt="Gallery Image" onclick="zoomImage(this.src)">`;
+                });
+            } else {
+                gallery.innerHTML = '<p style="color: var(--color-text-secondary); width: 100%; text-align: center;">Aucune image supplémentaire.</p>';
+            }
+
+            openModal('mdtDetailModal');
+        }
+
+        function zoomImage(src) {
+            window.open(src, '_blank');
+        }
+
+        function renderCartelContent(data) {
+            const cartelContentDiv = document.getElementById('cartelContent');
+            cartelContentDiv.innerHTML = '';
+
+            if (data) {
+                let htmlContent = `
+                    <h3 class="modal-title" style="text-align: left;">${data.name || 'Le Cartel'}</h3>
+                    <p class="modal-subtitle" style="text-align: left;">${data.tagline || 'Organisation Criminelle Transnationale'}</p>
+                    <img src="${data.image || 'https://via.placeholder.com/800x400?text=Image+Cartel'}" alt="Cartel Image" class="modal-image" style="max-height: 300px; width: auto; margin: 0 auto 25px;">
+                    <p class="modal-description" style="text-align: left;">${data.description || 'Description détaillée du Cartel.'}</p>
+                `;
+
+                if (data.key_info && Object.keys(data.key_info).length > 0) {
+                    htmlContent += `<h4 class="modal-section-title">Informations Clés</h4><ul>`;
+                    for (const key in data.key_info) {
+                        htmlContent += `<li><strong>${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong> ${data.key_info[key]}</li>`;
+                    }
+                    htmlContent += `</ul>`;
+                }
+
+                if (data.leadership && data.leadership.length > 0) {
+                    htmlContent += `<h4 class="modal-section-title">Leadership</h4><ul>`;
+                    data.leadership.forEach(member => {
+                        htmlContent += `<li><strong>${member.name}</strong> (${member.role}) - ${member.status || 'Actif'}</li>`;
+                    });
+                    htmlContent += `</ul>`;
+                }
+
+                if (data.operations && data.operations.length > 0) {
+                    htmlContent += `<h4 class="modal-section-title">Opérations Majeures</h4><ul>`;
+                    data.operations.forEach(op => {
+                        htmlContent += `<li><strong>${op.name}</strong> (${op.date}) - ${op.description}</li>`;
+                    });
+                    htmlContent += `</ul>`;
+                }
+
+                if (data.gallery && data.gallery.length > 0) {
+                    htmlContent += `<h4 class="modal-section-title">Galerie du Cartel</h4><div class="modal-gallery">`;
+                    data.gallery.forEach(imgSrc => {
+                        htmlContent += `<img src="${imgSrc}" alt="Cartel Gallery Image" onclick="zoomImage(this.src)">`;
+                    });
+                    htmlContent += `</div>`;
+                }
+
+                cartelContentDiv.innerHTML = htmlContent;
+            } else {
+                cartelContentDiv.innerHTML = '<p style="color: var(--color-text-secondary); text-align: center;">Aucune donnée de cartel disponible.</p>';
+            }
+        }
+
+        const chatMessagesOutput = document.getElementById('chatMessagesOutput');
+        const chatInput = document.getElementById('chatInput');
+        const chatSendBtn = document.getElementById('chatSendBtn');
+
+        const chatMessages = [
+            { user: "Le Fantôme", class: "user-ghost", message: "Opération 'Ombre Verte' lancée. Attendez mes instructions." },
+            { user: "La Main", class: "user-hand", message: "Compris, Fantôme. Les équipes sont en position." },
+            { user: "Le Passeur", class: "user-smuggler", message: "Marchandise sécurisée et prête pour le transit. Où livrer ?" },
+            { user: "Le Fantôme", class: "user-ghost", message: "Passeur, destination 'Point Zéro'. Soyez discret. La Main, assurez la diversion." },
+            { user: "La Main", class: "user-hand", message: "La diversion sera spectaculaire. Confiance." },
+            { user: "Le Passeur", class: "user-smuggler", message: "Bien reçu. Le colis sera à l'heure." },
+            { user: "NEXUS", class: "user-nexus", message: "Analyse des flux de données en cours. Activité anormale détectée près du secteur 7." },
+            { user: "Le Fantôme", class: "user-ghost", message: "NEXUS, détaillez. La Main, soyez vigilant." },
+            { user: "NEXUS", class: "user-nexus", message: "Augmentation des communications cryptées non identifiées. Potentielle interférence." },
+            { user: "La Main", class: "user-hand", message: "Je m'en occupe. Personne ne perturbera l'opération." },
+            { user: "Le Fantôme", class: "user-ghost", message: "Excellent. La réussite est notre seule option." }
+        ];
+
+        let chatMessageIndex = 0;
+        let chatInterval = null;
+
+        function addChatMessage(user, message, className) {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('chat-message', className);
+            msgDiv.innerHTML = `<span class="username">${user}:</span> ${message}`;
+            chatMessagesOutput.appendChild(msgDiv);
+            chatMessagesOutput.scrollTop = chatMessagesOutput.scrollHeight;
+            playSound(chatNotificationSound);
+        }
+
+        function startChatSimulation() {
+            if (chatInterval) clearInterval(chatInterval);
+            chatMessagesOutput.innerHTML = '';
+            chatMessageIndex = 0;
+            
+            const displayNext = () => {
+                if (chatMessageIndex < chatMessages.length) {
+                    const msg = chatMessages[chatMessageIndex];
+                    addChatMessage(msg.user, msg.message, msg.class);
+                    chatMessageIndex++;
+                    const delay = Math.floor(Math.random() * 3000) + 1500;
+                    chatInterval = setTimeout(displayNext, delay);
+                } else {
+                    chatMessageIndex = 0;
+                    chatInterval = setTimeout(displayNext, 5000);
+                }
+            };
+            displayNext();
+
+            chatSendBtn.onclick = sendSimulatedChatMessage;
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendSimulatedChatMessage();
+                }
+            });
+        }
+
+        function stopChatSimulation() {
+            if (chatInterval) {
+                clearInterval(chatInterval);
+                chatInterval = null;
+            }
+        }
+
+        function sendSimulatedChatMessage() {
+            const message = chatInput.value.trim();
+            if (message) {
+                addChatMessage(currentUser ? currentUser.credentials.name : "Opérateur", message, "user-self");
+                chatInput.value = '';
+                setTimeout(() => {
+                    addChatMessage("NEXUS", "Message reçu. Traitement en cours...", "user-nexus");
+                }, 1000);
+            }
+        }
+
+        const mapAreas = document.querySelectorAll('.map-area');
+
+        function initMapAreas() {
+            mapAreas.forEach(area => {
+                area.addEventListener('click', () => {
+                    const gangId = area.dataset.gangId;
+                    if (gangId === 'cartel') {
+                        openMdtDetailModal(staticCartelData);
+                    } else {
+                        const gangData = staticGangsData.gangs.find(g => g.id === gangId);
+                        if (gangData) {
+                            openMdtDetailModal(gangData);
+                        } else {
+                            console.warn("No data found for gang ID:", gangId);
+                        }
+                    }
+                });
+            });
+
+            setInterval(() => {
+                const cartelArea = document.querySelector('.map-area.area-cartel');
+                if (cartelArea) {
+                    cartelArea.classList.toggle('flashing');
+                }
+            }, 1500);
+        }
+
+        const nexusOutput = document.getElementById('nexusOutput');
+        const nexusInput = document.getElementById('nexusInput');
+        const nexusSendBtn = document.getElementById('nexusSendBtn');
+
+        const nexusResponses = {
+            "produits": "Les produits les plus demandés sont actuellement les munitions de gros calibre et les accessoires de dissimulation. La demande en armes de poing céramiques est également en hausse.",
+            "risques": "Les risques actuels incluent une surveillance accrue des réseaux de communication non sécurisés et une présence policière renforcée dans les zones portuaires. Évitez les transactions en clair.",
+            "stratégie": "Pour optimiser vos opérations, concentrez-vous sur la diversification des points de livraison et l'utilisation exclusive de canaux de communication chiffrés. La discrétion est primordiale.",
+            "prix": "Les prix sont stables pour la plupart des articles. Cependant, les silencieux et les chargeurs améliorés connaissent une légère augmentation due à la forte demande.",
+            "salut": "Salutations, Opérateur. Comment puis-je vous assister ?",
+            "bonjour": "Bonjour, Opérateur. Je suis NEXUS, votre assistant stratégique. Que souhaitez-vous savoir ?",
+            "merci": "De rien, Opérateur. Mon objectif est d'optimiser vos opérations. N'hésitez pas si vous avez d'autres questions.",
+            "default": "Requête non reconnue. Veuillez reformuler votre question ou demander de l'aide sur un sujet spécifique (ex: 'produits', 'risques', 'stratégie')."
+        };
+
+        nexusSendBtn.onclick = handleNexusInput;
+        nexusInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleNexusInput();
+            }
+        });
+
+        async function handleNexusInput() {
+            const input = nexusInput.value.trim();
+            if (!input) return;
+
+            addNexusLine(`> ${input}`, 'user-input');
+            nexusInput.value = '';
+            nexusInput.disabled = true;
+            nexusSendBtn.disabled = true;
+            playSound(typingSound);
+
+            await sleep(Math.random() * 1000 + 500);
+
+            let response = nexusResponses.default;
+            const lowerInput = input.toLowerCase();
+
+            if (lowerInput.includes("produits") || lowerInput.includes("demande")) {
+                response = nexusResponses.produits;
+            } else if (lowerInput.includes("risques") || lowerInput.includes("sécurité")) {
+                response = nexusResponses.risques;
+            } else if (lowerInput.includes("stratégie") || lowerInput.includes("optimiser")) {
+                response = nexusResponses.stratégie;
+            } else if (lowerInput.includes("prix") || lowerInput.includes("coût")) {
+                response = nexusResponses.prix;
+            } else if (lowerInput.includes("salut") || lowerInput.includes("bonjour")) {
+                response = nexusResponses.salut;
+            } else if (lowerInput.includes("merci")) {
+                response = nexusResponses.merci;
+            }
+
+            await typeNexusResponse(`NEXUS: ${response}`);
+            nexusInput.disabled = false;
+            nexusSendBtn.disabled = false;
+            nexusInput.focus();
+        }
+
+        function addNexusLine(text, className) {
+            const line = document.createElement('div');
+            line.classList.add('nexus-line', className);
+            nexusOutput.appendChild(line);
+            nexusOutput.scrollTop = nexusOutput.scrollHeight;
+            return line;
+        }
+
+        async function typeNexusResponse(text) {
+            const line = addNexusLine('', 'ai-response');
+            for (let i = 0; i < text.length; i++) {
+                line.textContent += text.charAt(i);
+                nexusOutput.scrollTop = nexusOutput.scrollHeight;
+                await sleep(20);
+            }
+            playSound(typingSound).pause();
+        }
+
+        const stealthModeBtn = document.getElementById('stealthModeBtn');
+
+        function toggleStealthMode() {
+            isStealthMode = !isStealthMode;
+            document.body.classList.toggle('stealth-mode', isStealthMode);
+            stealthModeBtn.textContent = isStealthMode ? 'Mode Normal' : 'Mode Furtif';
+
+            const audioElements = document.querySelectorAll('audio');
+            audioElements.forEach(audio => {
+                audio.muted = isStealthMode;
+            });
+
+            if (isStealthMode) {
+                audioElements.forEach(audio => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                });
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        const commsOutput = document.getElementById('commsOutput');
+        const commsOptions = document.getElementById('commsOptions');
+
+        const operatorComms = [
+            {
+                message: "Opérateur: Canal sécurisé établi. Que souhaitez-vous savoir ?",
+                tts: "Canal sécurisé établi. Que souhaitez-vous savoir ?",
+                options: [
+                    { text: "Demander des infos sur un produit.", action: "product_info" },
+                    { text: "Demander des infos sur une opération.", action: "operation_info" },
+                    { text: "Terminer la communication.", action: "end_comms" }
+                ]
+            },
+            {
+                id: "product_info",
+                message: "Opérateur: Quel produit vous intéresse ? Donnez l'ID ou le nom.",
+                tts: "Quel produit vous intéresse ? Donnez l'ID ou le nom.",
+                options: [
+                    { text: "Silencieux armes lourdes", action: "product_details", productId: "prod008" },
+                    { text: "Pistolet Céramique", action: "product_details", productId: "prod010" },
+                    { text: "Retour", action: "back" }
+                ]
+            },
+            {
+                id: "operation_info",
+                message: "Opérateur: Nous avons plusieurs opérations en cours. Laquelle ?",
+                tts: "Nous avons plusieurs opérations en cours. Laquelle ?",
+                options: [
+                    { text: "Opération Phantom IV", action: "op_phantom_iv" },
+                    { text: "Projet Nightfall", action: "op_nightfall" },
+                    { text: "Retour", action: "back" }
+                ]
+            },
+            {
+                id: "product_details",
+                message: (productId) => {
+                    const product = products.find(p => p.id === productId);
+                    if (product) {
+                        return `Opérateur: Ce ${product.name} a été testé dans l'opération Phantom IV. Fiable à 98%. Prix: $${product.price.toLocaleString()}.`;
+                    }
+                    return "Opérateur: Produit non trouvé.";
+                },
+                tts: (productId) => {
+                    const product = products.find(p => p.id === productId);
+                    if (product) {
+                        return `Ce ${product.name} a été testé dans l'opération Phantom IV. Fiable à 98%. Prix: ${product.price} dollars.`;
+                    }
+                    return "Produit non trouvé.";
+                },
+                options: [
+                    { text: "Retour", action: "back" }
+                ]
+            },
+            {
+                id: "op_phantom_iv",
+                message: "Opérateur: Opération Phantom IV : Transfert sécurisé de données sensibles. Restez hors ligne pendant 3h après cette commande.",
+                tts: "Opération Phantom IV : Transfert sécurisé de données sensibles. Restez hors ligne pendant 3h après cette commande.",
+                options: [
+                    { text: "Retour", action: "back" }
+                ]
+            },
+            {
+                id: "op_nightfall",
+                message: "Opérateur: Projet Nightfall : Infiltration d'un réseau ennemi. Nécessite une discrétion absolue. Évitez toute activité suspecte.",
+                tts: "Projet Nightfall : Infiltration d'un réseau ennemi. Nécessite une discrétion absolue. Évitez toute activité suspecte.",
+                options: [
+                    { text: "Retour", action: "back" }
+                ]
+            },
+            {
+                id: "end_comms",
+                message: "Opérateur: Communication terminée. Restez vigilant. Déconnexion.",
+                tts: "Communication terminée. Restez vigilant. Déconnexion.",
+                options: []
+            }
+        ];
+
+        let currentCommsState = 0;
+        let synth = window.speechSynthesis;
+        let speaking = false;
+
+        function addCommsLine(user, message, className) {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('comms-line', className);
+            commsOutput.appendChild(msgDiv);
+            commsOutput.scrollTop = commsOutput.scrollHeight;
+
+            if (className === 'operator' && synth && !isStealthMode) {
+                speakMessage(message);
+            } else {
+                playSound(commsBeepSound);
+            }
+        }
+
+        function speakMessage(message) {
+            if (synth && !speaking) {
+                const utterance = new SpeechSynthesisUtterance(message);
+                utterance.lang = 'fr-FR';
+                utterance.rate = 0.9;
+                utterance.pitch = 1.1;
+                utterance.onstart = () => { speaking = true; };
+                utterance.onend = () => { speaking = false; };
+                synth.speak(utterance);
+            }
+        }
+
+        async function startCryptoComms() {
+            commsOutput.innerHTML = '';
+            currentCommsState = 0;
+            await displayOperatorMessage(operatorComms[currentCommsState]);
+        }
+
+        async function displayOperatorMessage(commsData, productId = null) {
+            let messageText = typeof commsData.message === 'function' ? commsData.message(productId) : commsData.message;
+            let ttsText = typeof commsData.tts === 'function' ? commsData.tts(productId) : commsData.tts;
+
+            addCommsLine("Opérateur", messageText, "operator");
+            await sleep(messageText.length * 30);
+
+            commsOptions.innerHTML = '';
+            commsData.options.forEach(option => {
+                const btn = document.createElement('button');
+                btn.classList.add('btn');
+                btn.textContent = option.text;
+                btn.onclick = () => handleCommsOption(option);
+                commsOptions.appendChild(btn);
+            });
+        }
+
+        async function handleCommsOption(option) {
+            addCommsLine("Vous", option.text, "user-response");
+            playSound(commsBeepSound);
+            commsOptions.innerHTML = '';
+
+            await sleep(1000);
+
+            if (option.action === "end_comms") {
+                await displayOperatorMessage(operatorComms.find(c => c.id === "end_comms"));
+                await sleep(2000);
+                closeModal('cryptoCommsModal');
+                return;
+            }
+
+            let nextCommsData;
+            if (option.action === "back") {
+                nextCommsData = operatorComms[0];
+            } else {
+                nextCommsData = operatorComms.find(c => c.id === option.action);
+            }
+
+            if (nextCommsData) {
+                await displayOperatorMessage(nextCommsData, option.productId);
+            } else {
+                addCommsLine("Opérateur", "Erreur de protocole. Veuillez réessayer.", "operator");
+                await sleep(1000);
+                await displayOperatorMessage(operatorComms[0]);
+            }
+        }
+
+        function stopCryptoComms() {
+            if (synth && speaking) {
+                synth.cancel();
+                speaking = false;
+            }
+        }
+
+        let heatLevel = 0;
+        const heatBarFill = document.getElementById('heatBarFill');
+        const heatLevelText = document.getElementById('heatLevelText');
+        const heatAlertMessage = document.getElementById('heatAlertMessage');
+        let heatDecayInterval = null;
+        let lastHeatIncreaseTime = Date.now();
+
+        const HEAT_DECAY_RATE = 0.5;
+        const HEAT_DECAY_DELAY = 5000;
+
+        const HEAT_THRESHOLDS = {
+            low: 0,
+            medium: 30,
+            high: 60,
+            critical: 85
+        };
+
+        function initHeatTracker() {
+            updateHeatDisplay();
+            if (heatDecayInterval) clearInterval(heatDecayInterval);
+            heatDecayInterval = setInterval(decayHeat, 1000);
+        }
+
+        let alertTimeout;
+
+        function updateHeatDisplay() {
+            heatBarFill.style.width = `${heatLevel}%`;
+            heatLevelText.textContent = `${Math.round(heatLevel)}%`;
+            let color = getComputedStyle(document.documentElement).getPropertyValue('--color-accent-green').trim();
+            let alertDuration = 0;
+            if (heatLevel >= HEAT_THRESHOLDS.critical) {
+                color = getComputedStyle(document.documentElement).getPropertyValue('--color-accent-red').trim();
+                document.body.classList.add('heat-glitch');
+                heatAlertMessage.classList.add('show');
+                alertDuration = 5000;
+            } else if (heatLevel >= HEAT_THRESHOLDS.high) {
+                color = '#ffcc00';
+                document.body.classList.remove('heat-glitch');
+            } else if (heatLevel >= HEAT_THRESHOLDS.medium) {
+                color = '#ffa500';
+                document.body.classList.remove('heat-glitch');
+            } else {
+                document.body.classList.remove('heat-glitch');
+            }
+            heatLevelText.style.color = color;
+            if (alertTimeout) {
+                clearTimeout(alertTimeout);
+            }
+
+            if (alertDuration > 0) {
+                alertTimeout = setTimeout(() => {
+                    heatAlertMessage.classList.remove('show');
+                }, alertDuration);
+            }
+        }
+
+        function increaseHeat(amount) {
+            heatLevel = Math.min(100, heatLevel + amount);
+            lastHeatIncreaseTime = Date.now();
+            updateHeatDisplay();
+        }
+
+        function decreaseHeat(amount) {
+            heatLevel = Math.max(0, heatLevel - amount);
+            updateHeatDisplay();
+        }
+
+        function decayHeat() {
+            if (Date.now() - lastHeatIncreaseTime > HEAT_DECAY_DELAY) {
+                decreaseHeat(HEAT_DECAY_RATE);
+            }
+        }
+
+        function resetHeatLevel() {
+            heatLevel = 0;
+            updateHeatDisplay();
+            document.body.classList.remove('heat-glitch');
+            heatAlertMessage.classList.remove('show');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+        });
+
+    </script>
+</body>
+</html>
