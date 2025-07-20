@@ -100,12 +100,13 @@
       "id": "1753017672327",
       "conversationId": "1752843424967",
       "senderId": 1,
-      "content": "@Membre du Cartel Haut : \"POS : 125 vinewood...\"  test",
+      "content": "test",
       "timestamp": "2025-07-20T13:21:12.327Z",
       "fileUrl": null,
       "fileType": null,
-      "replyToMessageId": "1752944071531"
+      "replyToMessageId": "1752944071531",
+      "edited": true
     }
   ],
-  "timestamp": "2025-07-20T13:22:05.800Z"
+  "timestamp": "2025-07-20T13:22:09.825Z"
 }
